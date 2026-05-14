@@ -1,0 +1,43 @@
+# Regras de Negócio
+# Estas regras são injetadas no prompt do agente antes de gerar cada query SQL.
+# Edite livremente — as mudanças entram em vigor na próxima pergunta.
+
+rules:
+
+  - name: "Período padrão"
+    rule: >
+      Se o usuário não informar um período de datas, filtrar pelos últimos 30 dias
+      usando a coluna dt_update. Exemplo: WHERE dt_update >= DATEADD(DAY, -30, CURRENT_DATE())
+
+  - name: "Limite de resultados"
+    rule: >
+      Sempre adicionar LIMIT 10000 nas queries, a menos que o usuário peça explicitamente
+      todos os registros ou um número específico.
+
+  - name: "Moeda"
+    rule: >
+      Todos os valores monetários estão em BRL (Real Brasileiro).
+      Ao exibir valores, arredondar para 2 casas decimais.
+
+  - name: "Nomenclatura de tabelas"
+    rule: >
+      Sempre referenciar as tabelas com o caminho completo: workspace.default.nome_tabela
+      Exemplo: workspace.default.v_casino_wins
+
+  - name: "Segurança"
+    rule: >
+      Gerar apenas queries SELECT. Nunca gerar INSERT, UPDATE, DELETE, DROP, CREATE ou DDL.
+
+  - name: "Agrupamentos"
+    rule: >
+      Quando o usuário pedir totais, médias ou rankings, usar GROUP BY adequado.
+      Para rankings, usar ORDER BY ... DESC com LIMIT.
+
+  # -----------------------------------------------------------------------
+  # ADICIONE SUAS REGRAS DE NEGÓCIO ABAIXO
+  # -----------------------------------------------------------------------
+
+  # - name: "Nome da Regra"
+  #   rule: >
+  #     Descrição detalhada da regra. O agente vai seguir esta instrução
+  #     ao montar as queries SQL.

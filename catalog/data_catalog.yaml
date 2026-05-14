@@ -1,0 +1,80 @@
+# Catálogo de Dados - Databricks Unity Catalog
+# workspace.default
+# Edite as descrições das colunas conforme o conhecimento do negócio
+
+tables:
+
+  v_casino_wins:
+    description: "Registros de ganhos no casino por jogador, marca e período"
+    catalog: workspace
+    schema: default
+    indexes:
+      - dt_update
+      - ext_brand_id
+    columns:
+      dt_update:
+        type: timestamp
+        description: "Data e hora da última atualização do registro"
+      ext_brand_id:
+        type: string
+        description: "Identificador externo da marca/operadora"
+
+  v_deposits_summary:
+    description: "Resumo de depósitos realizados por jogadores"
+    catalog: workspace
+    schema: default
+    indexes:
+      - dt_update
+      - ext_brand_id
+    columns:
+      dt_update:
+        type: timestamp
+        description: "Data e hora da última atualização do registro"
+      ext_brand_id:
+        type: string
+        description: "Identificador externo da marca/operadora"
+
+  v_sports_bets:
+    description: "Apostas esportivas realizadas pelos jogadores"
+    catalog: workspace
+    schema: default
+    indexes:
+      - dt_update
+      - ext_brand_id
+    columns:
+      dt_update:
+        type: timestamp
+        description: "Data e hora da última atualização do registro"
+      ext_brand_id:
+        type: string
+        description: "Identificador externo da marca/operadora"
+
+  v_sports_bets_selection:
+    description: "Seleções de apostas esportivas (detalhamento por evento/mercado)"
+    catalog: workspace
+    schema: default
+    indexes:
+      - dt_update
+      - ext_brand_id
+    columns:
+      dt_update:
+        type: timestamp
+        description: "Data e hora da última atualização do registro"
+      ext_brand_id:
+        type: string
+        description: "Identificador externo da marca/operadora"
+
+  v_sports_bets_settled:
+    description: "Apostas esportivas liquidadas (resultado final definido)"
+    catalog: workspace
+    schema: default
+    indexes:
+      - dt_update
+      - ext_brand_id
+    columns:
+      dt_update:
+        type: timestamp
+        description: "Data e hora da última atualização do registro"
+      ext_brand_id:
+        type: string
+        description: "Identificador externo da marca/operadora"
