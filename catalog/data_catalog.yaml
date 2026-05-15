@@ -23,11 +23,11 @@ tables:
       game_cateogry:              { type: string,     description: "Categoria do jogo (slots, live, etc.)" }
       game_category_id:           { type: int,        description: "Identificador da categoria do jogo" }
       game_provider:              { type: string,     description: "Provedor/fornecedor do jogo" }
-      casino_last_bet_game_vendor:{ type: string,     description: "Vendor do último jogo apostado no casino" }
-      game_provider_id:           { type: int,        description: "Identificador do provedor do jogo" }
-      acc_bonus_balance:          { type: double,     description: "Saldo bônus da conta no momento da aposta" }
-      acc_real_balance:           { type: double,     description: "Saldo real da conta no momento da aposta" }
-      acc_total_balance:          { type: double,     description: "Saldo total da conta no momento da aposta" }
+      casino_last_bet_game_vendor: { type: string, description: "Vendor do último jogo apostado no casino" }
+      game_provider_id:           { type: int,    description: "Identificador do provedor do jogo" }
+      acc_bonus_balance:          { type: double, description: "Saldo bônus da conta no momento da aposta" }
+      acc_real_balance:           { type: double, description: "Saldo real da conta no momento da aposta" }
+      acc_total_balance:          { type: double, description: "Saldo total da conta no momento da aposta" }
       reference_transaction_id:   { type: bigint,     description: "ID da transação de referência" }
       platform:                   { type: string,     description: "Plataforma de acesso (web, mobile, etc.)" }
 
@@ -51,7 +51,7 @@ tables:
       game_category_id:           { type: int,        description: "Identificador da categoria do jogo" }
       game_provider:              { type: string,     description: "Provedor/fornecedor do jogo" }
       game_provider_id:           { type: int,        description: "Identificador do provedor do jogo" }
-      casino_last_bet_game_vendor:{ type: string,     description: "Vendor do último jogo" }
+      casino_last_bet_game_vendor: { type: string, description: "Vendor do último jogo" }
       acc_bonus_balance:          { type: double,     description: "Saldo bônus da conta no momento do ganho" }
       acc_real_balance:           { type: double,     description: "Saldo real da conta no momento do ganho" }
       acc_total_balance:          { type: double,     description: "Saldo total da conta no momento do ganho" }
@@ -90,7 +90,7 @@ tables:
       sport_last_bet_odds:        { type: double,     description: "Odds (cotação) da última aposta" }
       sport_last_bet_type:        { type: string,     description: "Tipo da aposta (simples, múltipla, etc.)" }
       sport_last_bet_amount_real: { type: double,     description: "Valor apostado com saldo real" }
-      sport_last_bet_amount_bonus:{ type: double,     description: "Valor apostado com saldo bônus" }
+      sport_last_bet_amount_bonus: { type: double,     description: "Valor apostado com saldo bônus" }
       sport_last_bet_date:        { type: timestamp,  description: "Data e hora da última aposta" }
       sport_last_bet_timing:      { type: string,     description: "Timing da aposta (pré-jogo, ao vivo)" }
       sport_bet_status:           { type: string,     description: "Status da aposta (pendente, ganha, perdida)" }
@@ -132,12 +132,12 @@ tables:
       sport_last_bet_odds:        { type: double,     description: "Odds da aposta" }
       sport_last_bet_type:        { type: string,     description: "Tipo da aposta" }
       sport_last_bet_amount_real: { type: double,     description: "Valor apostado com saldo real" }
-      sport_last_bet_amount_bonus:{ type: double,     description: "Valor apostado com saldo bônus" }
+      sport_last_bet_amount_bonus: { type: double,     description: "Valor apostado com saldo bônus" }
       sport_last_bet_date:        { type: timestamp,  description: "Data e hora da aposta" }
       sport_last_bet_timing:      { type: string,     description: "Timing da aposta" }
-      sport_bet_settlement_status:{ type: string,     description: "Status de liquidação (won, lost, void)" }
+      sport_bet_settlement_status: { type: string,     description: "Status de liquidação (won, lost, void)" }
       sport_last_win_amount:      { type: double,     description: "Valor total ganho" }
-      sport_last_win_amount_bonus:{ type: double,     description: "Valor ganho em bônus" }
+      sport_last_win_amount_bonus: { type: double,     description: "Valor ganho em bônus" }
       sport_last_win_amount_real: { type: double,     description: "Valor ganho em saldo real" }
       acc_bonus_balance:          { type: double,     description: "Saldo bônus da conta" }
       acc_real_balance:           { type: double,     description: "Saldo real da conta" }
@@ -176,7 +176,7 @@ tables:
       phone_type:                       { type: string,     description: "Tipo de telefone" }
       core_external_account_status:     { type: string,     description: "Status externo da conta" }
       core_account_status:              { type: string,     description: "Status da conta (ativo, bloqueado, etc.)" }
-      core_is_push_disabled_by_platform:{ type: int,        description: "Push notification desabilitado (1=sim)" }
+      core_is_push_disabled_by_platform: { type: int, description: "Push notification desabilitado (1=sim)" }
       user_first_name_hash:             { type: string,     description: "Hash do primeiro nome" }
       user_last_name_hash:              { type: string,     description: "Hash do sobrenome" }
       user_birthdate:                   { type: date,       description: "Data de nascimento do jogador" }
