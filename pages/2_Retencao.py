@@ -285,7 +285,10 @@ try:
     df_raw = load_cohort_matrix(ini_str, fim_str, cohort_trunc, activity_sql, canal_filter, max_weeks)
 
     if not df_raw.empty:
-        df_raw["cohort_week"] = pd.to_datetime(df_raw["cohort_week"])
+        df_raw["cohort_week"]   = pd.to_datetime(df_raw["cohort_week"])
+        df_raw["retention_pct"] = pd.to_numeric(df_raw["retention_pct"], errors="coerce")
+        df_raw["week_num"]      = pd.to_numeric(df_raw["week_num"],      errors="coerce")
+        df_raw["cohort_size"]   = pd.to_numeric(df_raw["cohort_size"],   errors="coerce")
         cohorts = sorted(df_raw["cohort_week"].unique())
 
         # Pivotear
@@ -354,6 +357,8 @@ with col_curve:
     st.markdown('<div class="section-title">CURVA DE RETENÇÃO MÉDIA</div>', unsafe_allow_html=True)
     try:
         if not df_raw.empty:
+            df_raw["retention_pct"] = pd.to_numeric(df_raw["retention_pct"], errors="coerce")
+            df_raw["week_num"]      = pd.to_numeric(df_raw["week_num"],      errors="coerce")
             avg_curve = df_raw.groupby("week_num")["retention_pct"].mean().reset_index()
             avg_curve = avg_curve[avg_curve["week_num"] <= max_weeks]
 
