@@ -429,14 +429,14 @@ KALLAS_CSS = """
     font-family: 'Plus Jakarta Sans', sans-serif !important;
   }
 
-  /* ── Logo: forçar tamanho da img diretamente (sem background-image) ── */
-  [data-testid="stSidebar"] [data-testid="stLogo"],
-  [data-testid="stSidebar"] [data-testid="stLogoLink"],
-  [data-testid="stLogo"],
+  /* ── Logo ──
+     Em Streamlit 1.35+, data-testid="stLogo" fica no proprio <img>.
+     data-testid="stLogoLink" fica no <a> que envolve o <img>.
+     Portanto [data-testid="stLogo"] img nao existe — precisamos
+     selecionar o <img> diretamente. ── */
+
+  /* O <a> que envolve o logo */
   [data-testid="stLogoLink"] {
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -444,20 +444,23 @@ KALLAS_CSS = """
     min-height: 100px !important;
     height: auto !important;
     max-height: none !important;
-    padding: 24px 20px 16px !important;
+    padding: 24px 20px 12px !important;
     box-sizing: border-box !important;
     overflow: visible !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
   }
-  [data-testid="stSidebar"] [data-testid="stLogo"] img,
-  [data-testid="stSidebar"] [data-testid="stLogoLink"] img,
-  [data-testid="stLogo"] img,
+
+  /* O <img> com data-testid="stLogo" (seletor direto) */
+  img[data-testid="stLogo"],
   [data-testid="stLogoLink"] img {
     display: block !important;
-    width: 100% !important;
-    max-width: 180px !important;
+    width: 180px !important;
+    min-width: 120px !important;
     height: auto !important;
     max-height: none !important;
-    min-height: 40px !important;
+    min-height: 44px !important;
     object-fit: contain !important;
   }
 
