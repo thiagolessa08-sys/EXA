@@ -361,14 +361,15 @@ KALLAS_CSS = """
   [data-testid="stLogo"],
   [data-testid="stLogoLink"] {
     background: var(--green-deep) !important;
-    padding: 16px 20px 12px !important;
+    padding: 20px 20px 16px !important;
     display: flex !important;
     align-items: center !important;
   }
   [data-testid="stLogo"] img,
   [data-testid="stLogoLink"] img {
-    max-height: 34px !important;
+    max-height: 52px !important;
     width: auto !important;
+    object-fit: contain !important;
   }
 
   /* ── EXA Blue Sidebar ── */
@@ -409,6 +410,9 @@ KALLAS_CSS = """
     font-size: 13.5px !important;
     padding: 10px 14px !important;
     transition: background .15s, color .15s !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
   }
   [data-testid="stSidebarNavLink"]:hover {
     background: rgba(255,255,255,.1) !important;
@@ -419,8 +423,30 @@ KALLAS_CSS = """
     color: #fff !important;
     font-weight: 700 !important;
   }
-  [data-testid="stSidebarNavLink"] span {
+  [data-testid="stSidebarNavLink"] span,
+  [data-testid="stSidebarNavLink"] p {
     color: inherit !important;
+  }
+  /* Ícone do nav link (emoji/imagem) */
+  [data-testid="stSidebarNavLinkIcon"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    background: rgba(255,255,255,.12) !important;
+    border-radius: 8px !important;
+    font-size: 15px !important;
+    flex-shrink: 0 !important;
+  }
+  [data-testid="stSidebarNavLink"][aria-current="page"] [data-testid="stSidebarNavLinkIcon"] {
+    background: rgba(255,255,255,.22) !important;
+  }
+  [data-testid="stSidebarNavLink"] img {
+    width: 18px !important;
+    height: 18px !important;
+    object-fit: contain !important;
   }
 
   /* Sidebar buttons */
