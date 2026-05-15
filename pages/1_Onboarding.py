@@ -396,7 +396,7 @@ st.markdown('<div class="section-title-red">EVOLUÇÃO DO CHURN — FTD & FTS</d
 try:
     evol_ch = load_evolucao(safra_tipo, ini_str, fim_str)
     evol_ch["periodo"] = pd.to_datetime(evol_ch["periodo"])
-    fmt_map = {"Dia": "%d/%m", "Semana": "%d/%m", "Mês": "%b/%y", "Data aberta": "%b/%y"}
+    fmt_map = {"Ano": "%b/%y", "Dia": "%d/%m", "Semana": "%d/%m", "Mês": "%b/%y", "Data aberta": "%b/%y"}
     evol_ch["label"] = evol_ch["periodo"].dt.strftime(fmt_map[safra_tipo])
     evol_ch["churn_ftd_pct"] = (1 - evol_ch["ftd"] / evol_ch["cadastros"].clip(lower=1)) * 100
     evol_ch["churn_fts_pct"] = (1 - evol_ch["fts"] / evol_ch["ftd"].clip(lower=1)) * 100
