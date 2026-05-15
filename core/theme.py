@@ -37,11 +37,13 @@ def kpi_card(
     icon: str = "",
     variant: str = "default",
     sub_type: str = "neutral",
+    sparkline: list | None = None,
 ) -> str:
     """
     Generates HTML for a KPI card.
-    variant:  "default" | "feature" | "churn"
-    sub_type: "up" | "down" | "churn" | "neutral"
+    variant:   "default" | "feature" | "churn"
+    sub_type:  "up" | "down" | "churn" | "neutral"
+    sparkline: optional list of 4-5 heights 0-1 for decorative mini bars
     """
     card_cls = {
         "default": "kpi-card",
@@ -56,10 +58,18 @@ def kpi_card(
         "churn": "kpi-churn",
     }.get(sub_type, "kpi-sub")
 
-    icon_html = f'<div class="kpi-icon">{ICONS[icon]}</div>' if icon in ICONS else ""
-    sub_html  = f'<div class="{sub_cls}">{sub}</div>' if sub else ""
+    icon_html  = f'<div class="kpi-icon">{ICONS[icon]}</div>' if icon in ICONS else ""
+    sub_html   = f'<div class="{sub_cls}">{sub}</div>' if sub else ""
+    spark_html = ""
+    if sparkline:
+        bars = "".join(
+            f'<span class="kpi-bar" style="height:{int(h*48)}px"></span>'
+            for h in sparkline
+        )
+        spark_html = f'<div class="kpi-spark">{bars}</div>'
     return (
         f'<div class="{card_cls}">'
+        f"{spark_html}"
         f"{icon_html}"
         f'<div class="kpi-text">'
         f'<div class="{label_cls}">{label}</div>'
@@ -95,9 +105,9 @@ KALLAS_CSS = """
     --rose:        #EF4444;
     --radius:      22px;
     --radius-sm:   14px;
-    --shadow-sm:   0 1px 3px rgba(0,0,0,.07);
-    --shadow-md:   0 4px 16px rgba(0,0,0,.08);
-    --shadow-lg:   0 8px 32px rgba(0,0,0,.10);
+    --shadow-sm:   0 4px 14px rgba(11,46,107,.07);
+    --shadow-md:   0 10px 28px rgba(11,46,107,.09);
+    --shadow-lg:   0 20px 48px rgba(11,46,107,.14);
   }
 
   html, body, [class*="css"] {
@@ -129,6 +139,27 @@ KALLAS_CSS = """
     box-shadow: var(--shadow-sm);
   }
 
+  /* ── KPI Sparkline bars (HTML reference pattern) ── */
+  .kpi-spark {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 48px;
+    opacity: .55;
+    pointer-events: none;
+  }
+  .kpi-bar {
+    width: 6px;
+    border-radius: 4px;
+    background: var(--green);
+    display: inline-block;
+  }
+  .kpi-card-feature .kpi-bar { background: rgba(255,255,255,.7); }
+  .kpi-card-churn   .kpi-bar { background: var(--rose); }
+
   /* ── KPI Cards ── */
   .kpi-card {
     background: var(--surface);
@@ -136,26 +167,28 @@ KALLAS_CSS = """
     border-radius: var(--radius);
     padding: 18px 20px;
     box-shadow: var(--shadow-sm);
-    transition: box-shadow .18s, transform .18s;
+    transition: box-shadow .2s, transform .2s;
     height: 100%;
     display: flex;
     align-items: center;
     gap: 16px;
     text-align: left;
+    position: relative;
+    overflow: hidden;
   }
   .kpi-card:hover {
     box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
   }
   .kpi-card-feature {
-    background: var(--green-deep);
+    background: linear-gradient(135deg, #1e3fa8 0%, #0d1f6e 100%);
     border: none;
     border-radius: var(--radius);
     padding: 18px 20px;
     box-shadow: var(--shadow-md);
     position: relative;
     overflow: hidden;
-    transition: box-shadow .18s, transform .18s;
+    transition: box-shadow .2s, transform .2s;
     display: flex;
     align-items: center;
     gap: 16px;
@@ -163,7 +196,7 @@ KALLAS_CSS = """
   }
   .kpi-card-feature:hover {
     box-shadow: var(--shadow-lg);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
   }
   .kpi-card-churn {
     background: var(--surface);
@@ -171,33 +204,32 @@ KALLAS_CSS = """
     border-radius: var(--radius);
     padding: 18px 20px;
     box-shadow: var(--shadow-sm);
-    transition: box-shadow .18s, transform .18s;
+    transition: box-shadow .2s, transform .2s;
     display: flex;
     align-items: center;
     gap: 16px;
     text-align: left;
+    position: relative;
+    overflow: hidden;
   }
   .kpi-card-churn:hover {
-    box-shadow: 0 4px 16px rgba(212,84,74,.12);
-    transform: translateY(-1px);
+    box-shadow: 0 10px 28px rgba(212,84,74,.12);
+    transform: translateY(-2px);
   }
 
   /* ── KPI Text wrapper ── */
-  .kpi-text {
-    flex: 1;
-    min-width: 0;
-  }
+  .kpi-text { flex: 1; min-width: 0; }
 
   /* ── KPI Icon ── */
   .kpi-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
-    min-width: 42px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
     background: var(--green-soft);
-    border-radius: 12px;
+    border-radius: 50%;
     color: var(--green);
     flex-shrink: 0;
   }
@@ -210,44 +242,44 @@ KALLAS_CSS = """
     color: var(--rose);
   }
 
-  /* ── KPI Typography ── */
+  /* ── KPI Typography (bold heavy sans-serif, HTML reference style) ── */
   .kpi-label {
     font-size: 10px;
     font-weight: 700;
     color: var(--ink-3);
     letter-spacing: .12em;
     text-transform: uppercase;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
   }
   .kpi-label-light {
     font-size: 10px;
     font-weight: 700;
-    color: rgba(255,255,255,.6);
+    color: rgba(255,255,255,.55);
     letter-spacing: .12em;
     text-transform: uppercase;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
   }
   .kpi-value {
-    font-family: 'Instrument Serif', serif;
-    font-size: 34px;
-    font-weight: 400;
-    letter-spacing: -.02em;
-    line-height: 1;
-    color: var(--ink);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    line-height: 1.1;
+    color: var(--green-deep);
     margin: 0 0 4px;
   }
   .kpi-value-light {
-    font-family: 'Instrument Serif', serif;
-    font-size: 34px;
-    font-weight: 400;
-    letter-spacing: -.02em;
-    line-height: 1;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    line-height: 1.1;
     color: #ffffff;
     margin: 0 0 4px;
   }
-  .kpi-up    { font-size: 11px; color: #16a34a; font-weight: 600; }
-  .kpi-down  { font-size: 11px; color: #ef4444; font-weight: 600; }
-  .kpi-churn { font-size: 11px; color: var(--rose); font-weight: 600; }
+  .kpi-up    { font-size: 11px; color: #16a34a; font-weight: 700; }
+  .kpi-down  { font-size: 11px; color: #ef4444; font-weight: 700; }
+  .kpi-churn { font-size: 11px; color: var(--rose); font-weight: 700; }
   .kpi-sub   { font-size: 10.5px; color: var(--ink-3); margin-top: 1px; }
 
   /* ── Section Titles ── */
@@ -377,7 +409,7 @@ KALLAS_CSS = """
   /* ── Logo area (PNG branco sobre fundo escuro) ── */
   [data-testid="stLogo"],
   [data-testid="stLogoLink"] {
-    background: var(--green-deep) !important;
+    background: linear-gradient(180deg, #1e3fa8 0%, #162f8a 100%) !important;
     padding: 24px 22px 20px !important;
     display: flex !important;
     align-items: center !important;
@@ -391,9 +423,9 @@ KALLAS_CSS = """
 
   /* ── EXA Blue Sidebar ── */
   [data-testid="stSidebar"] {
-    background: var(--green-deep) !important;
+    background: linear-gradient(180deg, #1e3fa8 0%, #0d1f6e 100%) !important;
     border-right: none !important;
-    box-shadow: 4px 0 24px rgba(0,0,0,.12) !important;
+    box-shadow: 4px 0 32px rgba(11,31,110,.22) !important;
     width: 240px !important;
     min-width: 240px !important;
   }
@@ -402,7 +434,7 @@ KALLAS_CSS = """
     min-width: 240px !important;
   }
   [data-testid="stSidebarContent"] {
-    background: var(--green-deep) !important;
+    background: transparent !important;
   }
 
   /* Sidebar text */
