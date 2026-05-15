@@ -429,36 +429,36 @@ KALLAS_CSS = """
     font-family: 'Plus Jakarta Sans', sans-serif !important;
   }
 
-  /* ── Logo: container base (background-image injetado dinamicamente em inject_theme) ── */
+  /* ── Logo: forçar tamanho da img diretamente (sem background-image) ── */
   [data-testid="stSidebar"] [data-testid="stLogo"],
   [data-testid="stSidebar"] [data-testid="stLogoLink"],
   [data-testid="stLogo"],
   [data-testid="stLogoLink"] {
-    background-color: transparent !important;
-    background-repeat: no-repeat !important;
-    background-position: center center !important;
-    background-size: 80% auto !important;
-    height: 110px !important;
-    min-height: 110px !important;
-    max-height: 110px !important;
-    width: 100% !important;
-    display: block !important;
-    padding: 28px 0 12px !important;
-    margin-top: 12px !important;
-    box-sizing: border-box !important;
+    background: transparent !important;
     box-shadow: none !important;
     border: none !important;
-    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-height: 100px !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 24px 20px 16px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
   }
-  /* Ocultar a <img> que o Streamlit injeta com tamanho fixo */
   [data-testid="stSidebar"] [data-testid="stLogo"] img,
   [data-testid="stSidebar"] [data-testid="stLogoLink"] img,
   [data-testid="stLogo"] img,
   [data-testid="stLogoLink"] img {
-    display: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    opacity: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 180px !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 40px !important;
+    object-fit: contain !important;
   }
 
   /* ── Esconder botão de colapsar sidebar ── */
@@ -713,27 +713,8 @@ def inject_theme():
     import streamlit as st
     st.markdown(KALLAS_CSS, unsafe_allow_html=True)
 
-    # Injeta o logo como background-image no container (bypassa o max-height do Streamlit)
     try:
-        logo_b64 = _load_logo_b64()
-        st.markdown(
-            f"<style>"
-            f"[data-testid='stSidebar'] [data-testid='stLogo'],"
-            f"[data-testid='stSidebar'] [data-testid='stLogoLink'],"
-            f"[data-testid='stLogo'],"
-            f"[data-testid='stLogoLink']"
-            f"{{background-image: url('{logo_b64}') !important;"
-            f" background-size: 80% auto !important;"
-            f" background-repeat: no-repeat !important;"
-            f" background-position: center center !important;"
-            f" height: 110px !important;"
-            f" min-height: 110px !important;"
-            f" padding: 28px 0 12px !important;"
-            f" margin-top: 12px !important;}}"
-            f"</style>",
-            unsafe_allow_html=True,
-        )
-        st.logo(logo_b64, size="large")
+        st.logo(_load_logo_b64(), size="large")
     except Exception:
         pass
 
