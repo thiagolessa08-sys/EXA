@@ -61,9 +61,11 @@ def kpi_card(
     return (
         f'<div class="{card_cls}">'
         f"{icon_html}"
+        f'<div class="kpi-text">'
         f'<div class="{label_cls}">{label}</div>'
         f'<div class="{value_cls}">{value}</div>'
         f"{sub_html}"
+        f"</div>"
         f"</div>"
     )
 
@@ -132,11 +134,14 @@ KALLAS_CSS = """
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    padding: 20px 18px 18px;
-    text-align: center;
+    padding: 18px 20px;
     box-shadow: var(--shadow-sm);
     transition: box-shadow .18s, transform .18s;
     height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-align: left;
   }
   .kpi-card:hover {
     box-shadow: var(--shadow-md);
@@ -146,12 +151,15 @@ KALLAS_CSS = """
     background: var(--green-deep);
     border: none;
     border-radius: var(--radius);
-    padding: 20px 18px 18px;
-    text-align: center;
+    padding: 18px 20px;
     box-shadow: var(--shadow-md);
     position: relative;
     overflow: hidden;
     transition: box-shadow .18s, transform .18s;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-align: left;
   }
   .kpi-card-feature:hover {
     box-shadow: var(--shadow-lg);
@@ -161,14 +169,23 @@ KALLAS_CSS = """
     background: var(--surface);
     border: 1px solid #fecaca;
     border-radius: var(--radius);
-    padding: 20px 18px 18px;
-    text-align: center;
+    padding: 18px 20px;
     box-shadow: var(--shadow-sm);
     transition: box-shadow .18s, transform .18s;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-align: left;
   }
   .kpi-card-churn:hover {
     box-shadow: 0 4px 16px rgba(212,84,74,.12);
     transform: translateY(-1px);
+  }
+
+  /* ── KPI Text wrapper ── */
+  .kpi-text {
+    flex: 1;
+    min-width: 0;
   }
 
   /* ── KPI Icon ── */
@@ -176,11 +193,11 @@ KALLAS_CSS = """
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
     background: var(--green-soft);
-    border-radius: 10px;
-    margin: 0 auto 10px;
+    border-radius: 12px;
     color: var(--green);
     flex-shrink: 0;
   }
@@ -195,43 +212,43 @@ KALLAS_CSS = """
 
   /* ── KPI Typography ── */
   .kpi-label {
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 700;
     color: var(--ink-3);
     letter-spacing: .12em;
     text-transform: uppercase;
-    margin-bottom: 6px;
+    margin-bottom: 3px;
   }
   .kpi-label-light {
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 700;
     color: rgba(255,255,255,.6);
     letter-spacing: .12em;
     text-transform: uppercase;
-    margin-bottom: 6px;
+    margin-bottom: 3px;
   }
   .kpi-value {
     font-family: 'Instrument Serif', serif;
-    font-size: 38px;
+    font-size: 34px;
     font-weight: 400;
     letter-spacing: -.02em;
     line-height: 1;
     color: var(--ink);
-    margin: 2px 0 6px;
+    margin: 0 0 4px;
   }
   .kpi-value-light {
     font-family: 'Instrument Serif', serif;
-    font-size: 38px;
+    font-size: 34px;
     font-weight: 400;
     letter-spacing: -.02em;
     line-height: 1;
     color: #ffffff;
-    margin: 2px 0 6px;
+    margin: 0 0 4px;
   }
-  .kpi-up    { font-size: 11.5px; color: #16a34a; font-weight: 600; }
-  .kpi-down  { font-size: 11.5px; color: #ef4444; font-weight: 600; }
-  .kpi-churn { font-size: 11.5px; color: var(--rose); font-weight: 600; }
-  .kpi-sub   { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+  .kpi-up    { font-size: 11px; color: #16a34a; font-weight: 600; }
+  .kpi-down  { font-size: 11px; color: #ef4444; font-weight: 600; }
+  .kpi-churn { font-size: 11px; color: var(--rose); font-weight: 600; }
+  .kpi-sub   { font-size: 10.5px; color: var(--ink-3); margin-top: 1px; }
 
   /* ── Section Titles ── */
   .section-title {
