@@ -378,13 +378,13 @@ KALLAS_CSS = """
   [data-testid="stLogo"],
   [data-testid="stLogoLink"] {
     background: var(--green-deep) !important;
-    padding: 22px 20px 18px !important;
+    padding: 24px 22px 20px !important;
     display: flex !important;
     align-items: center !important;
   }
   [data-testid="stLogo"] img,
   [data-testid="stLogoLink"] img {
-    max-height: 72px !important;
+    max-height: 100px !important;
     width: auto !important;
     object-fit: contain !important;
   }
@@ -545,14 +545,13 @@ KALLAS_CSS = """
     background: var(--surface) !important;
     border: 1px solid var(--line) !important;
     border-radius: var(--radius) !important;
-    padding: 20px 16px 12px !important;
+    padding: 12px 4px 4px !important;
     box-shadow: var(--shadow-sm) !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
   [data-testid="stPlotlyChart"] > div,
   div[class*="stPlotlyChart"] > div {
-    border-radius: calc(var(--radius) - 2px) !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
 
   /* Spinner */

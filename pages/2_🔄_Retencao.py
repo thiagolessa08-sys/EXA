@@ -322,7 +322,7 @@ with col_curve:
                 fill="tozeroy", fillcolor="rgba(37,99,235,0.08)",
             ))
             fig_curve.update_layout(
-                height=300, margin=dict(l=0, r=10, t=10, b=10),
+                height=300, margin=dict(l=50, r=20, t=36, b=44),
                 plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
                 xaxis=dict(showgrid=False),
                 yaxis=dict(showgrid=True, gridcolor="#DBEAFE",

@@ -298,7 +298,7 @@ with col_evol:
             yaxis="y2",
         ))
         fig.update_layout(
-            height=300, margin=dict(l=0, r=40, t=10, b=10),
+            height=300, margin=dict(l=50, r=40, t=36, b=44),
             plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
             legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
             xaxis=dict(showgrid=False),
@@ -329,7 +329,7 @@ with col_dist:
             textposition="outside",
         ))
         fig_dist.update_layout(
-            height=300, margin=dict(l=0, r=10, t=10, b=10),
+            height=300, margin=dict(l=50, r=20, t=36, b=44),
             plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
             xaxis=dict(showgrid=False),
             yaxis=dict(showgrid=True, gridcolor="#DBEAFE"),
@@ -384,7 +384,7 @@ with col_prov:
                 textfont=dict(color="white", size=11),
             ))
             fig_prov.update_layout(
-                height=340, margin=dict(l=0, r=10, t=10, b=10),
+                height=340, margin=dict(l=50, r=20, t=36, b=44),
                 plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
                 xaxis=dict(showgrid=False, showticklabels=False, zeroline=False),
                 yaxis=dict(showgrid=False, tickfont=dict(size=12)),

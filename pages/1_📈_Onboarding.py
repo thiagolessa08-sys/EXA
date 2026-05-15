@@ -299,7 +299,7 @@ with col_funil:
             ))
 
         fig_funil.update_layout(
-            height=240, margin=dict(l=0, r=10, t=10, b=10),
+            height=240, margin=dict(l=50, r=20, t=36, b=44),
             plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
             xaxis=dict(range=[0, 115], showgrid=False, showticklabels=False, zeroline=False),
             yaxis=dict(showgrid=False, tickfont=dict(size=13)),
@@ -327,7 +327,7 @@ with col_evol:
             line=dict(color="#2563EB", width=2), marker=dict(size=7),
         ))
         fig_evol.update_layout(
-            height=240, margin=dict(l=0, r=10, t=10, b=10),
+            height=240, margin=dict(l=50, r=20, t=36, b=44),
             plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
             legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
             xaxis=dict(showgrid=False),
@@ -361,7 +361,7 @@ try:
         fill="tozeroy", fillcolor="rgba(212,152,42,0.05)",
     ))
     fig_churn.update_layout(
-        height=280, margin=dict(l=0, r=10, t=10, b=10),
+        height=280, margin=dict(l=50, r=20, t=36, b=44),
         plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
         xaxis=dict(showgrid=False),
