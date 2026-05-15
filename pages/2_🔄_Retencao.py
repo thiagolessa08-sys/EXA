@@ -24,7 +24,6 @@ def cell_class(val):
 
 # ── Filtros ───────────────────────────────────────────────────────────────────
 with st.container():
-    st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
     f1, f1b, f2, f3, f4, f5, f6 = st.columns([2, 2, 2, 2, 2, 2, 2])
 
     today = date.today()
@@ -63,7 +62,6 @@ with st.container():
     with f6:
         max_weeks = st.selectbox("Semanas", [4, 6, 8, 12], label_visibility="visible", index=1)
 
-    st.markdown("</div>", unsafe_allow_html=True)
 page_header("Retenção", "Cohorts, recorrência e sobrevivência de usuários", "Retenção")
 
 ini_str = str(dt_ini)

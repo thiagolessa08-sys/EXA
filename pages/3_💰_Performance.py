@@ -24,7 +24,6 @@ def fmt_num(v):
 
 # ── Filtros ───────────────────────────────────────────────────────────────────
 with st.container():
-    st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
     f1, f2, f3, f4, f5 = st.columns([2, 2, 2, 2, 2])
     today = date.today()
 
@@ -56,7 +55,6 @@ with st.container():
     with f5:
         granular = st.selectbox("Granularidade", ["Mensal", "Semanal", "Diária"], label_visibility="visible")
 
-    st.markdown("</div>", unsafe_allow_html=True)
 page_header("Performance", "Volume de apostas, monetização e comportamento", "Performance")
 
 ini_str = str(dt_ini)

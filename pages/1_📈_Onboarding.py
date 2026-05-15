@@ -22,7 +22,6 @@ def pct(n, d):
 
 # ── Filtros de Safra ──────────────────────────────────────────────────────────
 with st.container():
-    st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
     f1, f2, f3, f4 = st.columns([2, 2, 3, 2])
 
     with f1:
@@ -69,7 +68,6 @@ with st.container():
         st.caption(f"📅 {dt_ini.strftime('%d/%m/%Y')} → {dt_fim.strftime('%d/%m/%Y')}")
         st.caption(f"Base: **{base_safra}**")
 
-    st.markdown("</div>", unsafe_allow_html=True)
 page_header("Onboarding", "Aquisição, ativação e velocidade de jornada", "Onboarding")
 
 # coluna de data conforme base da safra

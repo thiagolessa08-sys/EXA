@@ -370,16 +370,8 @@ KALLAS_CSS = """
     border-radius: 50%;
   }
 
-  /* ── Filter Bar ── */
-  .filter-bar {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    padding: 8px 16px;
-    margin-top: -0.25rem;
-    margin-bottom: 0;
-    box-shadow: var(--shadow-sm);
-  }
+  /* ── Filter Bar (removido — não usado mais; mantido vazio por segurança) ── */
+  .filter-bar { display: contents !important; }
 
   /* ── Streamlit widget overrides ── */
   div[data-baseweb="select"] > div {
