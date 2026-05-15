@@ -73,15 +73,28 @@ with col_ts:
 # ── Filtros ───────────────────────────────────────────────────────────────────
 with st.container():
     st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
-    f1, f2, f3, f4, f5, f6 = st.columns([2, 2, 2, 2, 2, 2])
+    f1, f1b, f2, f3, f4, f5, f6 = st.columns([2, 2, 2, 2, 2, 2, 2])
 
     today = date.today()
 
     with f1:
-        meses = pd.date_range(end=today, periods=18, freq="MS").strftime("%Y-%m").tolist()[::-1]
-        mes_sel = st.selectbox("Período", meses, label_visibility="visible", format_func=lambda x: datetime.strptime(x, "%Y-%m").strftime("%b/%y"))
-        dt_ini = datetime.strptime(mes_sel, "%Y-%m").date()
-        dt_fim = (dt_ini.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+        safra_tipo = st.selectbox("Granularidade", ["Ano", "Mês", "Data aberta"], label_visibility="visible")
+
+    with f1b:
+        if safra_tipo == "Ano":
+            anos = list(range(today.year, today.year - 5, -1))
+            ano_sel = st.selectbox("Ano", anos, label_visibility="visible")
+            dt_ini = date(ano_sel, 1, 1)
+            dt_fim = date(ano_sel, 12, 31) if ano_sel < today.year else today
+        elif safra_tipo == "Mês":
+            meses = pd.date_range(end=today, periods=18, freq="MS").strftime("%Y-%m").tolist()[::-1]
+            mes_sel = st.selectbox("Mês", meses, label_visibility="visible",
+                                   format_func=lambda x: datetime.strptime(x, "%Y-%m").strftime("%b/%y"))
+            dt_ini = datetime.strptime(mes_sel, "%Y-%m").date()
+            dt_fim = (dt_ini.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+        else:
+            dt_ini = st.date_input("De", value=today - timedelta(days=30), label_visibility="visible")
+            dt_fim = st.date_input("Até", value=today, label_visibility="visible")
 
     with f2:
         visao = st.selectbox("Visão", ["Semanal", "Quinzenal", "Mensal"], label_visibility="visible")
@@ -125,9 +138,9 @@ else:
     SELECT user_ext_id, DATE_TRUNC('WEEK', dt_update) AS aw, SUM(sport_last_bet_amount) AS stake
     FROM workspace.default.v_sports_bets GROUP BY 1,2"""
 
-# granularidade do cohort
+# granularidade do cohort — Ano sempre usa MONTH para ver os 12 meses
 trunc_map = {"Semanal": "WEEK", "Quinzenal": "WEEK", "Mensal": "MONTH"}
-cohort_trunc = trunc_map[visao]
+cohort_trunc = "MONTH" if safra_tipo == "Ano" else trunc_map[visao]
 
 if base_ret == "Cadastro":
     cohort_date = "u.core_registration_date"
@@ -288,6 +301,8 @@ try:
         # Rótulo da linha
         def cohort_label(dt):
             mes = dt.strftime("%b").capitalize()
+            if safra_tipo == "Ano" or cohort_trunc == "MONTH":
+                return f"{mes}/{dt.strftime('%y')}"
             week_of_month = (dt.day - 1) // 14 + 1
             return f"{mes} W{week_of_month}"
 
