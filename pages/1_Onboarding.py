@@ -64,7 +64,7 @@ with st.container():
     with f1:
         safra_tipo = st.selectbox(
             "Granularidade",
-            ["Dia", "Semana", "Mês", "Data aberta"],
+            ["Ano", "Mês", "Semana", "Dia", "Data aberta"],
             label_visibility="collapsed",
         )
 
@@ -78,19 +78,24 @@ with st.container():
     today = date.today()
 
     with f3:
-        if safra_tipo == "Dia":
-            data_sel = st.date_input("Dia", value=today, label_visibility="collapsed")
-            dt_ini = dt_fim = data_sel
+        if safra_tipo == "Ano":
+            anos = list(range(today.year, today.year - 5, -1))
+            ano_sel = st.selectbox("Ano", anos, label_visibility="collapsed")
+            dt_ini = date(ano_sel, 1, 1)
+            dt_fim = date(ano_sel, 12, 31) if ano_sel < today.year else today
+        elif safra_tipo == "Mês":
+            meses = pd.date_range(end=today, periods=24, freq="MS").strftime("%Y-%m").tolist()[::-1]
+            mes_sel = st.selectbox("Mês", meses, label_visibility="collapsed")
+            dt_ini = datetime.strptime(mes_sel, "%Y-%m").date()
+            dt_fim = (dt_ini.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
         elif safra_tipo == "Semana":
             semana_ini = today - timedelta(days=today.weekday())
             data_sel = st.date_input("Semana", value=semana_ini, label_visibility="collapsed")
             dt_ini = data_sel - timedelta(days=data_sel.weekday())
             dt_fim = dt_ini + timedelta(days=6)
-        elif safra_tipo == "Mês":
-            meses = pd.date_range(end=today, periods=12, freq="MS").strftime("%Y-%m").tolist()[::-1]
-            mes_sel = st.selectbox("Mês", meses, label_visibility="collapsed")
-            dt_ini = datetime.strptime(mes_sel, "%Y-%m").date()
-            dt_fim = (dt_ini.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+        elif safra_tipo == "Dia":
+            data_sel = st.date_input("Dia", value=today, label_visibility="collapsed")
+            dt_ini = dt_fim = data_sel
         else:
             cols_date = st.columns(2)
             dt_ini = cols_date[0].date_input("De", value=today - timedelta(days=30), label_visibility="collapsed")
@@ -168,8 +173,8 @@ def load_kpis(ini: str, fim: str, base: str):
 
 
 @st.cache_data(ttl=300, show_spinner=False)
-def load_evolucao(granular: str):
-    trunc = {"Dia": "DAY", "Semana": "WEEK", "Mês": "MONTH", "Data aberta": "MONTH"}[granular]
+def load_evolucao(granular: str, ini: str, fim: str):
+    trunc = {"Ano": "MONTH", "Mês": "MONTH", "Semana": "WEEK", "Dia": "DAY", "Data aberta": "MONTH"}[granular]
     q = f"""
     SELECT
       DATE_TRUNC('{trunc}', u.core_registration_date) AS periodo,
@@ -181,8 +186,7 @@ def load_evolucao(granular: str):
     FROM workspace.default.v_users_summary u
     LEFT JOIN workspace.default.v_deposits_summary d ON u.user_ext_id = d.user_ext_id
     LEFT JOIN workspace.default.v_sports_bets      s ON u.user_ext_id = s.user_ext_id
-    WHERE u.core_registration_date >=
-      DATEADD(MONTH, -5, DATE_TRUNC('MONTH', CURRENT_DATE()))
+    WHERE u.core_registration_date BETWEEN '{ini}' AND '{fim} 23:59:59'
     GROUP BY 1 ORDER BY 1
     """
     return execute_query(q)
@@ -361,9 +365,9 @@ with col_funil:
 with col_evol:
     st.markdown('<div class="section-title">EVOLUÇÃO — CADASTROS & FTDS</div>', unsafe_allow_html=True)
     try:
-        evol = load_evolucao(safra_tipo)
+        evol = load_evolucao(safra_tipo, ini_str, fim_str)
         evol["periodo"] = pd.to_datetime(evol["periodo"])
-        fmt_map = {"Dia": "%d/%m", "Semana": "%d/%m", "Mês": "%b/%y", "Data aberta": "%b/%y"}
+        fmt_map = {"Ano": "%b/%y", "Dia": "%d/%m", "Semana": "%d/%m", "Mês": "%b/%y", "Data aberta": "%b/%y"}
         evol["label"] = evol["periodo"].dt.strftime(fmt_map[safra_tipo])
 
         fig_evol = go.Figure()
@@ -390,7 +394,7 @@ with col_evol:
 # ── Gráfico Churn ─────────────────────────────────────────────────────────────
 st.markdown('<div class="section-title-red">EVOLUÇÃO DO CHURN — FTD & FTS</div>', unsafe_allow_html=True)
 try:
-    evol_ch = load_evolucao(safra_tipo)
+    evol_ch = load_evolucao(safra_tipo, ini_str, fim_str)
     evol_ch["periodo"] = pd.to_datetime(evol_ch["periodo"])
     fmt_map = {"Dia": "%d/%m", "Semana": "%d/%m", "Mês": "%b/%y", "Data aberta": "%b/%y"}
     evol_ch["label"] = evol_ch["periodo"].dt.strftime(fmt_map[safra_tipo])
