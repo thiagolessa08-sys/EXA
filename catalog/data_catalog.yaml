@@ -4,77 +4,199 @@
 
 tables:
 
-  v_casino_wins:
-    description: "Registros de ganhos no casino por jogador, marca e período"
+  v_casino_bets:
+    description: "Apostas realizadas no casino por jogador, jogo e marca"
     catalog: workspace
     schema: default
-    indexes:
-      - dt_update
-      - ext_brand_id
+    indexes: [dt, ext_brand_id, user_ext_id, bet_id, game_id]
     columns:
-      dt_update:
-        type: timestamp
-        description: "Data e hora da última atualização do registro"
-      ext_brand_id:
-        type: string
-        description: "Identificador externo da marca/operadora"
+      dt:                         { type: timestamp, description: "Data e hora da aposta" }
+      ext_brand_id:               { type: string,    description: "Identificador externo da marca/operadora" }
+      user_ext_id:                { type: int,        description: "Identificador externo do jogador" }
+      bet_id:                     { type: int,        description: "Identificador único da aposta" }
+      bet_date:                   { type: timestamp,  description: "Data e hora da aposta" }
+      bet_amount:                 { type: double,     description: "Valor total apostado (real + bônus)" }
+      game_name:                  { type: string,     description: "Nome do jogo" }
+      game_id:                    { type: int,        description: "Identificador do jogo" }
+      bet_amount_real:            { type: double,     description: "Valor apostado com saldo real" }
+      bet_amount_bonus:           { type: double,     description: "Valor apostado com saldo bônus" }
+      game_cateogry:              { type: string,     description: "Categoria do jogo (slots, live, etc.)" }
+      game_category_id:           { type: int,        description: "Identificador da categoria do jogo" }
+      game_provider:              { type: string,     description: "Provedor/fornecedor do jogo" }
+      casino_last_bet_game_vendor:{ type: string,     description: "Vendor do último jogo apostado no casino" }
+      game_provider_id:           { type: int,        description: "Identificador do provedor do jogo" }
+      acc_bonus_balance:          { type: double,     description: "Saldo bônus da conta no momento da aposta" }
+      acc_real_balance:           { type: double,     description: "Saldo real da conta no momento da aposta" }
+      acc_total_balance:          { type: double,     description: "Saldo total da conta no momento da aposta" }
+      reference_transaction_id:   { type: bigint,     description: "ID da transação de referência" }
+      platform:                   { type: string,     description: "Plataforma de acesso (web, mobile, etc.)" }
+
+  v_casino_wins:
+    description: "Ganhos obtidos no casino por jogador, jogo e marca"
+    catalog: workspace
+    schema: default
+    indexes: [dt, ext_brand_id, user_ext_id, bet_id, game_id]
+    columns:
+      dt:                         { type: timestamp, description: "Data e hora do ganho" }
+      ext_brand_id:               { type: string,    description: "Identificador externo da marca/operadora" }
+      user_ext_id:                { type: int,        description: "Identificador externo do jogador" }
+      bet_id:                     { type: int,        description: "Identificador da aposta relacionada" }
+      win_amount:                 { type: double,     description: "Valor total ganho (real + bônus)" }
+      game_name:                  { type: string,     description: "Nome do jogo" }
+      game_id:                    { type: int,        description: "Identificador do jogo" }
+      win_amount_real:            { type: double,     description: "Valor ganho em saldo real" }
+      win_amount_bonus:           { type: double,     description: "Valor ganho em saldo bônus" }
+      casino_win_multiplier:      { type: double,     description: "Multiplicador do ganho" }
+      game_cateogry:              { type: string,     description: "Categoria do jogo" }
+      game_category_id:           { type: int,        description: "Identificador da categoria do jogo" }
+      game_provider:              { type: string,     description: "Provedor/fornecedor do jogo" }
+      game_provider_id:           { type: int,        description: "Identificador do provedor do jogo" }
+      casino_last_bet_game_vendor:{ type: string,     description: "Vendor do último jogo" }
+      acc_bonus_balance:          { type: double,     description: "Saldo bônus da conta no momento do ganho" }
+      acc_real_balance:           { type: double,     description: "Saldo real da conta no momento do ganho" }
+      acc_total_balance:          { type: double,     description: "Saldo total da conta no momento do ganho" }
+      reference_transaction_id:   { type: bigint,     description: "ID da transação de referência" }
+      platform:                   { type: string,     description: "Plataforma de acesso" }
 
   v_deposits_summary:
     description: "Resumo de depósitos realizados por jogadores"
     catalog: workspace
     schema: default
-    indexes:
-      - dt_update
-      - ext_brand_id
+    indexes: [dt_finalized, ext_brand_id, user_ext_id, transaction_id]
     columns:
-      dt_update:
-        type: timestamp
-        description: "Data e hora da última atualização do registro"
-      ext_brand_id:
-        type: string
-        description: "Identificador externo da marca/operadora"
+      dt_finalized:     { type: timestamp, description: "Data e hora de finalização do depósito" }
+      ext_brand_id:     { type: string,    description: "Identificador externo da marca/operadora" }
+      user_ext_id:      { type: int,        description: "Identificador externo do jogador" }
+      transaction_id:   { type: int,        description: "Identificador único da transação" }
+      transaction_date: { type: timestamp,  description: "Data e hora da transação" }
+      deposit_amount:   { type: double,     description: "Valor do depósito" }
+      bonus_balance:    { type: double,     description: "Saldo bônus após depósito" }
+      real_balance:     { type: double,     description: "Saldo real após depósito" }
+      total_balance:    { type: double,     description: "Saldo total após depósito" }
+      deposit_method:   { type: string,     description: "Método de pagamento utilizado (PIX, cartão, etc.)" }
+      platform:         { type: string,     description: "Plataforma de acesso" }
 
   v_sports_bets:
     description: "Apostas esportivas realizadas pelos jogadores"
     catalog: workspace
     schema: default
-    indexes:
-      - dt_update
-      - ext_brand_id
+    indexes: [dt_update, ext_brand_id, user_ext_id, sport_last_bet_id]
     columns:
-      dt_update:
-        type: timestamp
-        description: "Data e hora da última atualização do registro"
-      ext_brand_id:
-        type: string
-        description: "Identificador externo da marca/operadora"
+      dt_update:                  { type: timestamp, description: "Data e hora da última atualização" }
+      ext_brand_id:               { type: string,    description: "Identificador externo da marca/operadora" }
+      user_ext_id:                { type: int,        description: "Identificador externo do jogador" }
+      sport_last_bet_amount:      { type: double,     description: "Valor da última aposta esportiva" }
+      sport_last_bet_id:          { type: bigint,     description: "Identificador da última aposta esportiva" }
+      sport_last_bet_odds:        { type: double,     description: "Odds (cotação) da última aposta" }
+      sport_last_bet_type:        { type: string,     description: "Tipo da aposta (simples, múltipla, etc.)" }
+      sport_last_bet_amount_real: { type: double,     description: "Valor apostado com saldo real" }
+      sport_last_bet_amount_bonus:{ type: double,     description: "Valor apostado com saldo bônus" }
+      sport_last_bet_date:        { type: timestamp,  description: "Data e hora da última aposta" }
+      sport_last_bet_timing:      { type: string,     description: "Timing da aposta (pré-jogo, ao vivo)" }
+      sport_bet_status:           { type: string,     description: "Status da aposta (pendente, ganha, perdida)" }
+      acc_bonus_balance:          { type: double,     description: "Saldo bônus da conta" }
+      acc_real_balance:           { type: double,     description: "Saldo real da conta" }
+      acc_total_balance:          { type: double,     description: "Saldo total da conta" }
+      platform:                   { type: string,     description: "Plataforma de acesso" }
 
   v_sports_bets_selection:
-    description: "Seleções de apostas esportivas (detalhamento por evento/mercado)"
+    description: "Seleções de apostas esportivas — detalhe por evento, liga e mercado"
     catalog: workspace
     schema: default
-    indexes:
-      - dt_update
-      - ext_brand_id
+    indexes: [dt_update, sports_last_bet_id, sports_last_selection_id]
     columns:
-      dt_update:
-        type: timestamp
-        description: "Data e hora da última atualização do registro"
-      ext_brand_id:
-        type: string
-        description: "Identificador externo da marca/operadora"
+      dt_update:                               { type: timestamp, description: "Data e hora da última atualização" }
+      sports_last_selection_id:                { type: bigint,    description: "Identificador da seleção" }
+      sports_last_bet_id:                      { type: bigint,    description: "Identificador da aposta vinculada" }
+      sport_last_bet_sports:                   { type: string,    description: "Esporte apostado (futebol, basquete, etc.)" }
+      sports_last_selection_league:            { type: string,    description: "Liga/campeonato do evento" }
+      sports_last_selection_competitors:       { type: string,    description: "Competidores do evento" }
+      sports_last_selection_home_team:         { type: string,    description: "Time da casa" }
+      sports_last_selection_away_team:         { type: string,    description: "Time visitante" }
+      sports_last_selection_market:            { type: string,    description: "Mercado apostado (resultado, gols, etc.)" }
+      sports_last_selection_odds:              { type: double,    description: "Odds da seleção" }
+      sports_last_selection_bet_amount:        { type: double,    description: "Valor apostado nesta seleção" }
+      sports_last_selection_settlement_status: { type: string,    description: "Status de liquidação da seleção" }
 
   v_sports_bets_settled:
-    description: "Apostas esportivas liquidadas (resultado final definido)"
+    description: "Apostas esportivas liquidadas com resultado final definido"
     catalog: workspace
     schema: default
-    indexes:
-      - dt_update
-      - ext_brand_id
+    indexes: [dt_update, ext_brand_id, user_ext_id, sport_last_bet_id]
     columns:
-      dt_update:
-        type: timestamp
-        description: "Data e hora da última atualização do registro"
-      ext_brand_id:
-        type: string
-        description: "Identificador externo da marca/operadora"
+      dt_update:                  { type: timestamp, description: "Data e hora da liquidação" }
+      ext_brand_id:               { type: string,    description: "Identificador externo da marca/operadora" }
+      user_ext_id:                { type: int,        description: "Identificador externo do jogador" }
+      sport_last_bet_amount:      { type: double,     description: "Valor apostado" }
+      sport_last_bet_id:          { type: bigint,     description: "Identificador da aposta" }
+      sport_last_bet_odds:        { type: double,     description: "Odds da aposta" }
+      sport_last_bet_type:        { type: string,     description: "Tipo da aposta" }
+      sport_last_bet_amount_real: { type: double,     description: "Valor apostado com saldo real" }
+      sport_last_bet_amount_bonus:{ type: double,     description: "Valor apostado com saldo bônus" }
+      sport_last_bet_date:        { type: timestamp,  description: "Data e hora da aposta" }
+      sport_last_bet_timing:      { type: string,     description: "Timing da aposta" }
+      sport_bet_settlement_status:{ type: string,     description: "Status de liquidação (won, lost, void)" }
+      sport_last_win_amount:      { type: double,     description: "Valor total ganho" }
+      sport_last_win_amount_bonus:{ type: double,     description: "Valor ganho em bônus" }
+      sport_last_win_amount_real: { type: double,     description: "Valor ganho em saldo real" }
+      acc_bonus_balance:          { type: double,     description: "Saldo bônus da conta" }
+      acc_real_balance:           { type: double,     description: "Saldo real da conta" }
+      acc_total_balance:          { type: double,     description: "Saldo total da conta" }
+      platform:                   { type: string,     description: "Plataforma de acesso" }
+
+  v_users_summary:
+    description: "Cadastro e perfil dos jogadores registrados"
+    catalog: workspace
+    schema: default
+    indexes: [dt_update, ext_brand_id, user_ext_id, core_registration_date]
+    columns:
+      dt_update:                        { type: timestamp, description: "Data e hora da última atualização" }
+      ext_brand_id:                     { type: string,    description: "Identificador externo da marca/operadora" }
+      user_ext_id:                      { type: int,        description: "Identificador externo do jogador" }
+      core_is_test_account:             { type: int,        description: "Indica se é conta de teste (1=sim, 0=não)" }
+      core_registration_date:           { type: timestamp,  description: "Data de registro do jogador" }
+      core_user_language:               { type: string,     description: "Idioma preferido do jogador" }
+      core_wallet_currency:             { type: string,     description: "Moeda da carteira (BRL, USD, etc.)" }
+      user_country:                     { type: string,     description: "País do jogador" }
+      user_email_hash:                  { type: string,     description: "Hash do e-mail do jogador" }
+      core_reg_city:                    { type: string,     description: "Cidade de registro" }
+      core_reg_state:                   { type: string,     description: "Estado de registro" }
+      core_pam_phone_verified_dt:       { type: string,     description: "Data de verificação do telefone" }
+      core_kyc_status:                  { type: string,     description: "Status KYC do jogador" }
+      user_phone_hash:                  { type: string,     description: "Hash do telefone do jogador" }
+      core_affiliate_id:                { type: int,        description: "Identificador do afiliado que captou o jogador" }
+      core_is_email_disabled:           { type: int,        description: "E-mail desabilitado (1=sim)" }
+      core_is_sms_disabled:             { type: int,        description: "SMS desabilitado (1=sim)" }
+      core_email_confirmed:             { type: int,        description: "E-mail confirmado (1=sim)" }
+      core_user_last_login_date:        { type: timestamp,  description: "Data do último login" }
+      user_phone_country_hash:          { type: string,     description: "Hash do país do telefone" }
+      core_external_markers:            { type: string,     description: "Marcadores externos do jogador" }
+      core_is_acc_verified:             { type: int,        description: "Conta verificada (1=sim)" }
+      core_phone_confirmed:             { type: int,        description: "Telefone confirmado (1=sim)" }
+      phone_type:                       { type: string,     description: "Tipo de telefone" }
+      core_external_account_status:     { type: string,     description: "Status externo da conta" }
+      core_account_status:              { type: string,     description: "Status da conta (ativo, bloqueado, etc.)" }
+      core_is_push_disabled_by_platform:{ type: int,        description: "Push notification desabilitado (1=sim)" }
+      user_first_name_hash:             { type: string,     description: "Hash do primeiro nome" }
+      user_last_name_hash:              { type: string,     description: "Hash do sobrenome" }
+      user_birthdate:                   { type: date,       description: "Data de nascimento do jogador" }
+      core_user_gender:                 { type: string,     description: "Gênero do jogador" }
+      core_custom_prop1:                { type: string,     description: "Propriedade customizada 1" }
+      platform:                         { type: string,     description: "Plataforma de acesso" }
+
+  v_withdrawals_summary:
+    description: "Resumo de saques realizados pelos jogadores"
+    catalog: workspace
+    schema: default
+    indexes: [dt_finalized, ext_brand_id, user_ext_id, transaction_id]
+    columns:
+      dt_finalized:      { type: timestamp, description: "Data e hora de finalização do saque" }
+      ext_brand_id:      { type: string,    description: "Identificador externo da marca/operadora" }
+      user_ext_id:       { type: int,        description: "Identificador externo do jogador" }
+      transaction_id:    { type: int,        description: "Identificador único da transação" }
+      transaction_date:  { type: timestamp,  description: "Data e hora da transação" }
+      withdrawal_amount: { type: double,     description: "Valor do saque" }
+      bonus_balance:     { type: double,     description: "Saldo bônus após saque" }
+      real_balance:      { type: double,     description: "Saldo real após saque" }
+      total_balance:     { type: double,     description: "Saldo total após saque" }
+      platform:          { type: string,     description: "Plataforma de acesso" }
