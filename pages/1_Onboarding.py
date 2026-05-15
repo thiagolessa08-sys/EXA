@@ -110,103 +110,125 @@ date_col = DATE_COL_USER if base_safra == "Cadastro" else DATE_COL_DEP
 
 # ── Queries ───────────────────────────────────────────────────────────────────
 @st.cache_data(ttl=300, show_spinner=False)
-def load_kpis(ini: str, fim: str, date_col: str):
+def load_kpis(ini: str, fim: str, base: str):
+    # cohort_table/col define quem entra na safra
+    if base == "Cadastro":
+        cohort_sql = f"""
+          SELECT DISTINCT user_ext_id
+          FROM workspace.default.v_users_summary
+          WHERE core_registration_date BETWEEN '{ini}' AND '{fim} 23:59:59'"""
+    else:
+        cohort_sql = f"""
+          SELECT DISTINCT user_ext_id
+          FROM workspace.default.v_deposits_summary
+          WHERE dt_finalized BETWEEN '{ini}' AND '{fim} 23:59:59'"""
+
     q = f"""
-    WITH cad AS (
-      SELECT COUNT(DISTINCT user_ext_id) AS total
-      FROM workspace.default.v_users_summary
-      WHERE {DATE_COL_USER} BETWEEN '{ini}' AND '{fim} 23:59:59'
+    WITH cohort AS ({cohort_sql}),
+    cad AS (
+      SELECT COUNT(DISTINCT u.user_ext_id) AS total
+      FROM workspace.default.v_users_summary u
+      INNER JOIN cohort c ON u.user_ext_id = c.user_ext_id
     ),
     ftd AS (
-      SELECT COUNT(DISTINCT user_ext_id) AS total
-      FROM workspace.default.v_deposits_summary
-      WHERE {DATE_COL_DEP} BETWEEN '{ini}' AND '{fim} 23:59:59'
+      SELECT COUNT(DISTINCT d.user_ext_id) AS total
+      FROM workspace.default.v_deposits_summary d
+      INNER JOIN cohort c ON d.user_ext_id = c.user_ext_id
     ),
     kyc AS (
-      SELECT COUNT(DISTINCT user_ext_id) AS total
-      FROM workspace.default.v_users_summary
-      WHERE {date_col} BETWEEN '{ini}' AND '{fim} 23:59:59'
-        AND core_kyc_status IN ('approved','APPROVED','Approved','verified','VERIFIED')
+      SELECT COUNT(DISTINCT u.user_ext_id) AS total
+      FROM workspace.default.v_users_summary u
+      INNER JOIN cohort c ON u.user_ext_id = c.user_ext_id
+      WHERE u.core_kyc_status IN ('approved','APPROVED','Approved','verified','VERIFIED')
     ),
     fts AS (
-      SELECT COUNT(DISTINCT user_ext_id) AS total
-      FROM workspace.default.v_sports_bets
-      WHERE {date_col} BETWEEN '{ini}' AND '{fim} 23:59:59'
+      SELECT COUNT(DISTINCT s.user_ext_id) AS total
+      FROM workspace.default.v_sports_bets s
+      INNER JOIN cohort c ON s.user_ext_id = c.user_ext_id
     ),
-    cad_ftd AS (
-      SELECT COUNT(DISTINCT u.user_ext_id) AS sem_deposito
-      FROM workspace.default.v_users_summary u
-      LEFT JOIN workspace.default.v_deposits_summary d ON u.user_ext_id = d.user_ext_id
-      WHERE u.{DATE_COL_USER} BETWEEN '{ini}' AND '{fim} 23:59:59'
-        AND d.user_ext_id IS NULL
+    churn_ftd AS (
+      SELECT COUNT(DISTINCT c.user_ext_id) AS sem_deposito
+      FROM cohort c
+      LEFT JOIN workspace.default.v_deposits_summary d ON c.user_ext_id = d.user_ext_id
+      WHERE d.user_ext_id IS NULL
     ),
-    ftd_fts AS (
+    churn_fts AS (
       SELECT COUNT(DISTINCT d.user_ext_id) AS sem_sports
       FROM workspace.default.v_deposits_summary d
+      INNER JOIN cohort c ON d.user_ext_id = c.user_ext_id
       LEFT JOIN workspace.default.v_sports_bets s ON d.user_ext_id = s.user_ext_id
-      WHERE d.{DATE_COL_DEP} BETWEEN '{ini}' AND '{fim} 23:59:59'
-        AND s.user_ext_id IS NULL
+      WHERE s.user_ext_id IS NULL
     )
     SELECT cad.total AS cadastros, ftd.total AS ftds, kyc.total AS kyc,
-           fts.total AS fts, cad_ftd.sem_deposito AS churn_ftd_n,
-           ftd_fts.sem_sports AS churn_fts_n
-    FROM cad, ftd, kyc, fts, cad_ftd, ftd_fts
+           fts.total AS fts, churn_ftd.sem_deposito AS churn_ftd_n,
+           churn_fts.sem_sports AS churn_fts_n
+    FROM cad, ftd, kyc, fts, churn_ftd, churn_fts
     """
     return execute_query(q)
 
 
 @st.cache_data(ttl=300, show_spinner=False)
-def load_evolucao(ini: str, fim: str, date_col: str, granular: str):
+def load_evolucao(granular: str):
     trunc = {"Dia": "DAY", "Semana": "WEEK", "Mês": "MONTH", "Data aberta": "MONTH"}[granular]
     q = f"""
     SELECT
-      DATE_TRUNC('{trunc}', u.{DATE_COL_USER})  AS periodo,
-      COUNT(DISTINCT u.user_ext_id)              AS cadastros,
-      COUNT(DISTINCT d.user_ext_id)              AS ftd,
-      COUNT(DISTINCT CASE WHEN u.core_kyc_status IN ('approved','APPROVED','Approved') THEN u.user_ext_id END) AS kyc,
-      COUNT(DISTINCT s.user_ext_id)              AS fts
+      DATE_TRUNC('{trunc}', u.core_registration_date) AS periodo,
+      COUNT(DISTINCT u.user_ext_id)                   AS cadastros,
+      COUNT(DISTINCT d.user_ext_id)                   AS ftd,
+      COUNT(DISTINCT CASE WHEN u.core_kyc_status IN ('approved','APPROVED','Approved')
+                          THEN u.user_ext_id END)      AS kyc,
+      COUNT(DISTINCT s.user_ext_id)                   AS fts
     FROM workspace.default.v_users_summary u
     LEFT JOIN workspace.default.v_deposits_summary d ON u.user_ext_id = d.user_ext_id
     LEFT JOIN workspace.default.v_sports_bets      s ON u.user_ext_id = s.user_ext_id
-    WHERE u.{DATE_COL_USER} BETWEEN
+    WHERE u.core_registration_date >=
       DATEADD(MONTH, -5, DATE_TRUNC('MONTH', CURRENT_DATE()))
-      AND CURRENT_TIMESTAMP()
     GROUP BY 1 ORDER BY 1
     """
     return execute_query(q)
 
 
 @st.cache_data(ttl=300, show_spinner=False)
-def load_funil(ini: str, fim: str, date_col: str):
+def load_funil(ini: str, fim: str, base: str):
+    if base == "Cadastro":
+        where = f"u.core_registration_date BETWEEN '{ini}' AND '{fim} 23:59:59'"
+    else:
+        where = f"d.dt_finalized BETWEEN '{ini}' AND '{fim} 23:59:59'"
     q = f"""
     SELECT
       COUNT(DISTINCT u.user_ext_id)  AS cadastros,
       COUNT(DISTINCT d.user_ext_id)  AS ftd,
-      COUNT(DISTINCT CASE WHEN u.core_kyc_status IN ('approved','APPROVED','Approved') THEN u.user_ext_id END) AS kyc,
+      COUNT(DISTINCT CASE WHEN u.core_kyc_status IN ('approved','APPROVED','Approved')
+                          THEN u.user_ext_id END) AS kyc,
       COUNT(DISTINCT s.user_ext_id)  AS fts
     FROM workspace.default.v_users_summary u
     LEFT JOIN workspace.default.v_deposits_summary d ON u.user_ext_id = d.user_ext_id
     LEFT JOIN workspace.default.v_sports_bets      s ON u.user_ext_id = s.user_ext_id
-    WHERE u.{date_col} BETWEEN '{ini}' AND '{fim} 23:59:59'
+    WHERE {where}
     """
     return execute_query(q)
 
 
 @st.cache_data(ttl=300, show_spinner=False)
-def load_canal(ini: str, fim: str, date_col: str):
+def load_canal(ini: str, fim: str, base: str):
+    if base == "Cadastro":
+        where = f"u.core_registration_date BETWEEN '{ini}' AND '{fim} 23:59:59'"
+    else:
+        where = f"d.dt_finalized BETWEEN '{ini}' AND '{fim} 23:59:59'"
     q = f"""
     SELECT
       CASE
-        WHEN core_affiliate_id IS NOT NULL AND core_affiliate_id > 0 THEN 'Afiliados'
-        WHEN platform = 'mobile' THEN 'Mobile Orgânico'
+        WHEN u.core_affiliate_id IS NOT NULL AND u.core_affiliate_id > 0 THEN 'Afiliados'
+        WHEN u.platform = 'mobile' THEN 'Mobile Orgânico'
         ELSE 'Orgânico'
       END AS canal,
-      COUNT(DISTINCT u.user_ext_id)  AS cadastros,
-      COUNT(DISTINCT d.user_ext_id)  AS ftd,
-      COUNT(DISTINCT CASE WHEN u.core_kyc_status IN ('approved','APPROVED','Approved') THEN u.user_ext_id END) AS kyc
+      COUNT(DISTINCT u.user_ext_id) AS cadastros,
+      COUNT(DISTINCT d.user_ext_id) AS ftd,
+      COUNT(DISTINCT CASE WHEN u.core_kyc_status IN ('approved','APPROVED','Approved')
+                          THEN u.user_ext_id END) AS kyc
     FROM workspace.default.v_users_summary u
     LEFT JOIN workspace.default.v_deposits_summary d ON u.user_ext_id = d.user_ext_id
-    WHERE u.{date_col} BETWEEN '{ini}' AND '{fim} 23:59:59'
+    WHERE {where}
     GROUP BY 1 ORDER BY 2 DESC
     LIMIT 10
     """
@@ -219,7 +241,7 @@ fim_str = str(dt_fim)
 # ── KPI Cards ─────────────────────────────────────────────────────────────────
 with st.spinner("Carregando indicadores..."):
     try:
-        kpi = load_kpis(ini_str, fim_str, date_col).iloc[0]
+        kpi = load_kpis(ini_str, fim_str, base_safra).iloc[0]
         cadastros   = int(kpi["cadastros"]   or 0)
         ftds        = int(kpi["ftds"]        or 0)
         kyc         = int(kpi["kyc"]         or 0)
@@ -296,7 +318,7 @@ col_funil, col_evol = st.columns([1, 1], gap="large")
 with col_funil:
     st.markdown('<div class="section-title">FUNIL DE ATIVAÇÃO</div>', unsafe_allow_html=True)
     try:
-        f = load_funil(ini_str, fim_str, date_col).iloc[0]
+        f = load_funil(ini_str, fim_str, base_safra).iloc[0]
         cad_f = int(f["cadastros"] or 0)
         ftd_f = int(f["ftd"]       or 0)
         kyc_f = int(f["kyc"]       or 0)
@@ -339,7 +361,7 @@ with col_funil:
 with col_evol:
     st.markdown('<div class="section-title">EVOLUÇÃO — CADASTROS & FTDS</div>', unsafe_allow_html=True)
     try:
-        evol = load_evolucao(ini_str, fim_str, date_col, safra_tipo)
+        evol = load_evolucao(safra_tipo)
         evol["periodo"] = pd.to_datetime(evol["periodo"])
         fmt_map = {"Dia": "%d/%m", "Semana": "%d/%m", "Mês": "%b/%y", "Data aberta": "%b/%y"}
         evol["label"] = evol["periodo"].dt.strftime(fmt_map[safra_tipo])
@@ -368,7 +390,7 @@ with col_evol:
 # ── Gráfico Churn ─────────────────────────────────────────────────────────────
 st.markdown('<div class="section-title-red">EVOLUÇÃO DO CHURN — FTD & FTS</div>', unsafe_allow_html=True)
 try:
-    evol_ch = load_evolucao(ini_str, fim_str, date_col, safra_tipo)
+    evol_ch = load_evolucao(safra_tipo)
     evol_ch["periodo"] = pd.to_datetime(evol_ch["periodo"])
     fmt_map = {"Dia": "%d/%m", "Semana": "%d/%m", "Mês": "%b/%y", "Data aberta": "%b/%y"}
     evol_ch["label"] = evol_ch["periodo"].dt.strftime(fmt_map[safra_tipo])
@@ -405,7 +427,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 # ── Breakdown por Canal ───────────────────────────────────────────────────────
 st.markdown('<div class="section-title">BREAKDOWN POR CANAL</div>', unsafe_allow_html=True)
 try:
-    canal_df = load_canal(ini_str, fim_str, date_col)
+    canal_df = load_canal(ini_str, fim_str, base_safra)
     if not canal_df.empty:
         canal_df["conv_ftd_%"] = (canal_df["ftd"] / canal_df["cadastros"].clip(lower=1) * 100).round(1).astype(str) + "%"
         canal_df["churn_%"]    = ((1 - canal_df["ftd"] / canal_df["cadastros"].clip(lower=1)) * 100).round(1).astype(str) + "%"
