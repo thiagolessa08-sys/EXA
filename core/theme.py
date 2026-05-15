@@ -513,22 +513,72 @@ KALLAS_CSS = """
     fill: rgba(255,255,255,.6) !important;
   }
 
+  /* ── EXA Table (custom HTML table — matches reference dashboard) ── */
+  .exa-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-sm);
+    background: var(--surface);
+  }
+  .exa-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .exa-table thead tr {
+    background: var(--green-deep);
+  }
+  .exa-table thead th {
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    padding: 13px 18px;
+    text-align: left;
+    white-space: nowrap;
+    border: none;
+  }
+  .exa-table thead th.et-num { text-align: right; }
+  .exa-table tbody tr {
+    border-bottom: 1px solid var(--line);
+    transition: background .12s;
+  }
+  .exa-table tbody tr:last-child { border-bottom: none; }
+  .exa-table tbody tr:hover { background: var(--surface-2); }
+  .exa-table tbody td {
+    padding: 10px 18px;
+    color: var(--ink);
+    vertical-align: middle;
+  }
+  .exa-table tbody td.et-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+  .exa-table tbody td.et-first { font-weight: 600; color: var(--ink); }
+
   /* Cohort table */
   .cohort-table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-family: 'Plus Jakarta Sans', sans-serif; }
   .cohort-table th {
-    background: var(--surface-2);
-    color: var(--ink-3);
+    background: var(--green-deep);
+    color: #ffffff;
     font-size: 10.5px;
     font-weight: 700;
     letter-spacing: .08em;
     text-align: center;
-    padding: 10px 6px;
-    border-bottom: 2px solid var(--line);
+    padding: 12px 6px;
+    border-bottom: none;
     text-transform: uppercase;
   }
-  .cohort-table th:first-child { text-align: left; padding-left: 16px; }
-  .cohort-table td { padding: 6px 5px; text-align: center; border-bottom: 1px solid #f4f6f5; }
-  .cohort-table td:first-child { text-align: left; padding-left: 16px; font-weight: 600; color: var(--ink); }
+  .cohort-table th:first-child { text-align: left; padding-left: 18px; }
+  .cohort-table td { padding: 8px 5px; text-align: center; border-bottom: 1px solid var(--line); }
+  .cohort-table td:first-child { text-align: left; padding-left: 18px; font-weight: 600; color: var(--ink); }
   .cell-100 { background: var(--green-deep); color: white;  font-weight: 700; border-radius: 8px; padding: 4px 10px; display: inline-block; width: 88%; }
   .cell-85  { background: var(--green);      color: white;  font-weight: 600; border-radius: 8px; padding: 4px 10px; display: inline-block; width: 88%; }
   .cell-45  { background: #93C5FD; color: #1D3186; border-radius: 8px; padding: 4px 10px; display: inline-block; width: 88%; }
@@ -574,6 +624,38 @@ def inject_theme():
         st.logo(_load_logo_b64(), size="large")
     except Exception:
         pass
+
+
+def render_table(df) -> str:
+    """Renders a DataFrame as a styled HTML table matching the EXA dashboard reference."""
+    import pandas as _pd
+    numeric_cols = set(df.select_dtypes(include="number").columns)
+
+    headers = "".join(
+        f'<th class="et-num">{col}</th>' if col in numeric_cols else f"<th>{col}</th>"
+        for col in df.columns
+    )
+    rows_html = ""
+    for i, (_, row) in enumerate(df.iterrows()):
+        cells = ""
+        for j, (col, val) in enumerate(row.items()):
+            if _pd.isna(val):
+                display = "—"
+            elif col in numeric_cols:
+                display = f"{val:,.0f}" if isinstance(val, (int, float)) and val == int(val) else str(val)
+            else:
+                display = str(val)
+            cls = "et-num" if col in numeric_cols else ("et-first" if j == 0 else "")
+            cells += f'<td class="{cls}">{display}</td>'
+        rows_html += f"<tr>{cells}</tr>"
+
+    return (
+        '<div class="exa-table-wrap">'
+        '<table class="exa-table">'
+        f"<thead><tr>{headers}</tr></thead>"
+        f"<tbody>{rows_html}</tbody>"
+        "</table></div>"
+    )
 
 
 def page_header(title: str, subtitle: str, italic_word: str = ""):

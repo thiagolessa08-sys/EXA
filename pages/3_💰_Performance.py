@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
-from core.theme import inject_theme, page_header, kpi_card
+from core.theme import inject_theme, page_header, kpi_card, render_table
 
 inject_theme()
 
@@ -356,8 +356,7 @@ with col_jogos:
                 "categoria": "Categoria", "apostas": "Apostas",
                 "usuarios": "Usuários", "stake": "Stake", "ggr": "GGR",
             })
-            st.dataframe(jogos[["Jogo","Provider","Categoria","Apostas","Usuários","Stake","GGR"]],
-                         use_container_width=True, hide_index=True)
+            st.markdown(render_table(jogos[["Jogo","Provider","Categoria","Apostas","Usuários","Stake","GGR"]]), unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Erro nos jogos: {e}")
 

@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
-from core.theme import inject_theme, page_header, kpi_card
+from core.theme import inject_theme, page_header, kpi_card, render_table
 
 inject_theme()
 
@@ -357,6 +357,6 @@ with col_detail:
             detail.columns = ["COHORT", "USUÁRIOS W0"] + [f"W{int(c)}" for c in detail.columns[2:]]
             detail = detail.drop(columns=["W0"], errors="ignore")
 
-            st.dataframe(detail, use_container_width=True, hide_index=True)
+            st.markdown(render_table(detail), unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Erro na tabela: {e}")

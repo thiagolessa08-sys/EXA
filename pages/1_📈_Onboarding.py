@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
-from core.theme import inject_theme, page_header, kpi_card
+from core.theme import inject_theme, page_header, kpi_card, render_table
 
 inject_theme()
 
@@ -381,12 +381,9 @@ try:
     if not canal_df.empty:
         canal_df["conv_ftd_%"] = (canal_df["ftd"] / canal_df["cadastros"].clip(lower=1) * 100).round(1).astype(str) + "%"
         canal_df["churn_%"]    = ((1 - canal_df["ftd"] / canal_df["cadastros"].clip(lower=1)) * 100).round(1).astype(str) + "%"
-        st.dataframe(
-            canal_df.rename(columns={"canal": "CANAL", "cadastros": "CADASTROS", "ftd": "FTD", "kyc": "KYC",
+        _tbl = canal_df.rename(columns={"canal": "CANAL", "cadastros": "CADASTROS", "ftd": "FTD", "kyc": "KYC",
                                      "conv_ftd_%": "CONV. FTD", "churn_%": "CHURN FTD"}
-            )[["CANAL", "CADASTROS", "FTD", "KYC", "CONV. FTD", "CHURN FTD"]],
-            use_container_width=True,
-            hide_index=True,
-        )
+            )[["CANAL", "CADASTROS", "FTD", "KYC", "CONV. FTD", "CHURN FTD"]]
+        st.markdown(render_table(_tbl), unsafe_allow_html=True)
 except Exception as e:
     st.error(f"Erro no canal: {e}")
