@@ -430,26 +430,35 @@ KALLAS_CSS = """
   }
 
   /* ── Logo: container base (background-image injetado dinamicamente em inject_theme) ── */
+  [data-testid="stSidebar"] [data-testid="stLogo"],
+  [data-testid="stSidebar"] [data-testid="stLogoLink"],
   [data-testid="stLogo"],
   [data-testid="stLogoLink"] {
     background-color: transparent !important;
     background-repeat: no-repeat !important;
     background-position: center center !important;
     background-size: 80% auto !important;
-    height: 80px !important;
-    min-height: 80px !important;
-    max-height: 80px !important;
+    height: 110px !important;
+    min-height: 110px !important;
+    max-height: 110px !important;
     width: 100% !important;
     display: block !important;
-    padding: 0 !important;
+    padding: 28px 0 12px !important;
+    margin-top: 12px !important;
+    box-sizing: border-box !important;
     box-shadow: none !important;
     border: none !important;
     overflow: hidden !important;
   }
   /* Ocultar a <img> que o Streamlit injeta com tamanho fixo */
+  [data-testid="stSidebar"] [data-testid="stLogo"] img,
+  [data-testid="stSidebar"] [data-testid="stLogoLink"] img,
   [data-testid="stLogo"] img,
   [data-testid="stLogoLink"] img {
     display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    opacity: 0 !important;
   }
 
   /* ── EXA Blue Sidebar ── */
@@ -688,9 +697,18 @@ def inject_theme():
         logo_b64 = _load_logo_b64()
         st.markdown(
             f"<style>"
+            f"[data-testid='stSidebar'] [data-testid='stLogo'],"
+            f"[data-testid='stSidebar'] [data-testid='stLogoLink'],"
             f"[data-testid='stLogo'],"
             f"[data-testid='stLogoLink']"
-            f"{{background-image: url('{logo_b64}') !important;}}"
+            f"{{background-image: url('{logo_b64}') !important;"
+            f" background-size: 80% auto !important;"
+            f" background-repeat: no-repeat !important;"
+            f" background-position: center center !important;"
+            f" height: 110px !important;"
+            f" min-height: 110px !important;"
+            f" padding: 28px 0 12px !important;"
+            f" margin-top: 12px !important;}}"
             f"</style>",
             unsafe_allow_html=True,
         )
