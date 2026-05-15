@@ -117,33 +117,30 @@ KALLAS_CSS = """
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Remove Streamlit defaults */
+  /* ── Remove Streamlit chrome (header, toolbar, decoration) ── */
   #MainMenu, footer, header { visibility: hidden !important; display: none !important; }
   [data-testid="stHeader"],
   [data-testid="stToolbar"],
   [data-testid="stDecoration"],
   [data-testid="stStatusWidget"],
   [data-testid="manage-app-button"],
-  div[class*="StatusWidget"] {
-    display: none !important;
-    height: 0 !important;
-    overflow: hidden !important;
-  }
-  /* Remove a faixa branca/cinza do topo */
-  .stApp > header,
-  .stApp [data-testid="stHeader"],
-  section[data-testid="stMain"] > div:first-child[style*="height"] {
-    display: none !important;
-    height: 0 !important;
-  }
+  div[class*="StatusWidget"],
+  .stApp > header { display: none !important; height: 0 !important; overflow: hidden !important; }
+
+  /* ── BARRA BRANCA: zerar o padding-top que o Streamlit injeta para compensar o header ── */
+  section[data-testid="stMain"]                         { padding-top: 0 !important; margin-top: 0 !important; }
+  section[data-testid="stMain"] > div:first-child       { padding-top: 0 !important; margin-top: 0 !important; }
+  .stMainBlockContainer                                  { padding-top: 0 !important; margin-top: 0 !important; }
+  [data-testid="stAppViewBlockContainer"]                { padding-top: 0 !important; }
+  /* Override inline style="padding-top:Npx" injetado pelo Streamlit */
+  .stMainBlockContainer[style]                           { padding-top: 0 !important; }
+
+  /* ── MARGENS: conteúdo colado nas bordas do conteiner ── */
   .block-container {
-    padding: 0.25rem 0.75rem 1.5rem !important;
-    max-width: 1400px !important;
-    margin-top: 0 !important;
+    padding: 0.5rem 1.25rem 2rem !important;
+    max-width: 100% !important;
+    margin: 0 !important;
   }
-  /* Remove espaço extra que Streamlit injeta antes do conteúdo */
-  .stMainBlockContainer { padding-top: 0.25rem !important; }
-  section[data-testid="stMain"] { padding-top: 0 !important; }
 
   /* ── Esconder labels de seção do sidebar nav ("app", "chat") ── */
   [data-testid="stSidebarNavSectionHeader"],
@@ -440,23 +437,27 @@ KALLAS_CSS = """
     font-family: 'Plus Jakarta Sans', sans-serif !important;
   }
 
-  /* ── Logo area (PNG branco sobre fundo escuro) ── */
+  /* ── Logo: container base (background-image injetado dinamicamente em inject_theme) ── */
   [data-testid="stLogo"],
   [data-testid="stLogoLink"] {
-    background: transparent !important;
-    padding: 20px 16px 12px !important;
-    display: flex !important;
-    align-items: center !important;
+    background-color: transparent !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: 80% auto !important;
+    height: 80px !important;
+    min-height: 80px !important;
+    max-height: 80px !important;
     width: 100% !important;
+    display: block !important;
+    padding: 0 !important;
     box-shadow: none !important;
+    border: none !important;
+    overflow: hidden !important;
   }
+  /* Ocultar a <img> que o Streamlit injeta com tamanho fixo */
   [data-testid="stLogo"] img,
   [data-testid="stLogoLink"] img {
-    max-height: 999px !important;
-    width: 100% !important;
-    height: auto !important;
-    object-fit: contain !important;
-    display: block !important;
+    display: none !important;
   }
 
   /* ── EXA Blue Sidebar ── */
@@ -689,9 +690,19 @@ KALLAS_CSS = """
 def inject_theme():
     import streamlit as st
     st.markdown(KALLAS_CSS, unsafe_allow_html=True)
-    # EXA logo acima da navegação do sidebar (st.logo aparece em todas as páginas)
+
+    # Injeta o logo como background-image no container (bypassa o max-height do Streamlit)
     try:
-        st.logo(_load_logo_b64(), size="large")
+        logo_b64 = _load_logo_b64()
+        st.markdown(
+            f"<style>"
+            f"[data-testid='stLogo'],"
+            f"[data-testid='stLogoLink']"
+            f"{{background-image: url('{logo_b64}') !important;}}"
+            f"</style>",
+            unsafe_allow_html=True,
+        )
+        st.logo(logo_b64, size="large")
     except Exception:
         pass
 
