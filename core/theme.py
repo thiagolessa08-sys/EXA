@@ -410,11 +410,12 @@ KALLAS_CSS = """
   /* ── Logo area (PNG branco sobre fundo escuro) ── */
   [data-testid="stLogo"],
   [data-testid="stLogoLink"] {
-    background: linear-gradient(180deg, #1e3fa8 0%, #162f8a 100%) !important;
-    padding: 20px 16px 16px !important;
+    background: transparent !important;
+    padding: 20px 16px 12px !important;
     display: flex !important;
     align-items: center !important;
     width: 100% !important;
+    box-shadow: none !important;
   }
   [data-testid="stLogo"] img,
   [data-testid="stLogoLink"] img {
