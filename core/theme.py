@@ -2,8 +2,8 @@ import base64 as _b64
 import os as _os
 
 def _load_logo_b64() -> str:
-    """Carrega exa_logo.png e retorna data URL base64."""
-    logo_path = _os.path.join(_os.path.dirname(__file__), "..", "static", "exa_logo.png")
+    """Carrega exa_logo_white.png (fundo transparente, traços brancos) e retorna data URL base64."""
+    logo_path = _os.path.join(_os.path.dirname(__file__), "..", "static", "exa_logo_white.png")
     logo_path = _os.path.normpath(logo_path)
     with open(logo_path, "rb") as f:
         return "data:image/png;base64," + _b64.b64encode(f.read()).decode()
@@ -357,7 +357,7 @@ KALLAS_CSS = """
     font-family: 'Plus Jakarta Sans', sans-serif !important;
   }
 
-  /* ── Logo area — fundo escuro + filtro branco ── */
+  /* ── Logo area (PNG branco sobre fundo escuro) ── */
   [data-testid="stLogo"],
   [data-testid="stLogoLink"] {
     background: var(--green-deep) !important;
@@ -369,7 +369,6 @@ KALLAS_CSS = """
   [data-testid="stLogoLink"] img {
     max-height: 34px !important;
     width: auto !important;
-    filter: brightness(0) invert(1) !important;
   }
 
   /* ── EXA Blue Sidebar ── */
