@@ -1,19 +1,12 @@
-# ── EXA Logo (white SVG, for dark sidebar) ─────────────────────────────────
-EXA_LOGO_SVG = (
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 88" fill="none">'
-    '<g stroke="white" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round">'
-    # "e": open arc on right side + horizontal crossbar
-    '<path d="M 58,63 A 27,27 0 1 0 58,27"/>'
-    '<line x1="11" y1="44" x2="59" y2="44"/>'
-    # "x": two smooth S-curves crossing at center (132,44)
-    '<path d="M 95,27 C 110,27 120,37 132,44 C 144,51 154,61 169,61"/>'
-    '<path d="M 169,27 C 154,27 144,37 132,44 C 120,51 110,61 95,61"/>'
-    # "a": open arc on right side + vertical right stem
-    '<path d="M 233,63 A 27,27 0 1 0 233,27"/>'
-    '<line x1="233" y1="27" x2="233" y2="65"/>'
-    '</g>'
-    '</svg>'
-)
+import base64 as _b64
+import os as _os
+
+def _load_logo_b64() -> str:
+    """Carrega exa_logo.png e retorna data URL base64."""
+    logo_path = _os.path.join(_os.path.dirname(__file__), "..", "static", "exa_logo.png")
+    logo_path = _os.path.normpath(logo_path)
+    with open(logo_path, "rb") as f:
+        return "data:image/png;base64," + _b64.b64encode(f.read()).decode()
 
 # ── Icon Library (Lucide-style, stroke="currentColor") ─────────────────────
 ICONS: dict[str, str] = {
@@ -364,16 +357,19 @@ KALLAS_CSS = """
     font-family: 'Plus Jakarta Sans', sans-serif !important;
   }
 
-  /* ── Logo area ── */
-  [data-testid="stLogo"], [data-testid="stLogoLink"] {
+  /* ── Logo area — fundo escuro + filtro branco ── */
+  [data-testid="stLogo"],
+  [data-testid="stLogoLink"] {
     background: var(--green-deep) !important;
-    border-radius: 0 !important;
-    padding: 14px 18px 10px !important;
+    padding: 16px 20px 12px !important;
+    display: flex !important;
+    align-items: center !important;
   }
   [data-testid="stLogo"] img,
   [data-testid="stLogoLink"] img {
-    max-height: 38px !important;
+    max-height: 34px !important;
     width: auto !important;
+    filter: brightness(0) invert(1) !important;
   }
 
   /* ── EXA Blue Sidebar ── */
@@ -504,12 +500,10 @@ KALLAS_CSS = """
 
 def inject_theme():
     import streamlit as st
-    import base64
     st.markdown(KALLAS_CSS, unsafe_allow_html=True)
     # EXA logo acima da navegação do sidebar (st.logo aparece em todas as páginas)
     try:
-        svg_b64 = base64.b64encode(EXA_LOGO_SVG.encode()).decode()
-        st.logo(f"data:image/svg+xml;base64,{svg_b64}")
+        st.logo(_load_logo_b64())
     except Exception:
         pass
 
