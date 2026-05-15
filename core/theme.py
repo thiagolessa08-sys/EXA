@@ -378,13 +378,13 @@ KALLAS_CSS = """
   [data-testid="stLogo"],
   [data-testid="stLogoLink"] {
     background: var(--green-deep) !important;
-    padding: 20px 20px 16px !important;
+    padding: 22px 20px 18px !important;
     display: flex !important;
     align-items: center !important;
   }
   [data-testid="stLogo"] img,
   [data-testid="stLogoLink"] img {
-    max-height: 52px !important;
+    max-height: 72px !important;
     width: auto !important;
     object-fit: contain !important;
   }
@@ -394,6 +394,12 @@ KALLAS_CSS = """
     background: var(--green-deep) !important;
     border-right: none !important;
     box-shadow: 4px 0 24px rgba(0,0,0,.12) !important;
+    width: 240px !important;
+    min-width: 240px !important;
+  }
+  [data-testid="stSidebar"] > div:first-child {
+    width: 240px !important;
+    min-width: 240px !important;
   }
   [data-testid="stSidebarContent"] {
     background: var(--green-deep) !important;
@@ -539,8 +545,14 @@ KALLAS_CSS = """
     background: var(--surface) !important;
     border: 1px solid var(--line) !important;
     border-radius: var(--radius) !important;
-    padding: 16px 8px 8px !important;
+    padding: 20px 16px 12px !important;
     box-shadow: var(--shadow-sm) !important;
+    overflow: hidden !important;
+  }
+  [data-testid="stPlotlyChart"] > div,
+  div[class*="stPlotlyChart"] > div {
+    border-radius: calc(var(--radius) - 2px) !important;
+    overflow: hidden !important;
   }
 
   /* Spinner */

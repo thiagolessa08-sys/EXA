@@ -9,9 +9,6 @@ from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
 from core.theme import inject_theme, page_header, kpi_card
 
-st.set_page_config(page_title="Onboarding", page_icon="📈", layout="wide")
-inject_theme()
-
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def fmt(n):
