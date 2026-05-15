@@ -345,8 +345,9 @@ KALLAS_CSS = """
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius-sm);
-    padding: 14px 20px;
-    margin-bottom: 20px;
+    padding: 12px 20px;
+    margin-top: -0.5rem;
+    margin-bottom: 0;
     box-shadow: var(--shadow-sm);
   }
 

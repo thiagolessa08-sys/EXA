@@ -22,9 +22,6 @@ def fmt_num(v):
     return f"{int(v or 0):,}"
 
 
-# ── Header ────────────────────────────────────────────────────────────────────
-page_header("Performance", "Volume de apostas, monetização e comportamento", "Performance")
-
 # ── Filtros ───────────────────────────────────────────────────────────────────
 with st.container():
     st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
@@ -60,6 +57,7 @@ with st.container():
         granular = st.selectbox("Granularidade", ["Mensal", "Semanal", "Diária"], label_visibility="visible")
 
     st.markdown("</div>", unsafe_allow_html=True)
+page_header("Performance", "Volume de apostas, monetização e comportamento", "Performance")
 
 ini_str = str(dt_ini)
 fim_str = str(dt_fim)

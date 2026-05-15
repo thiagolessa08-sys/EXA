@@ -22,9 +22,6 @@ def cell_class(val):
     return "cell-low", f"{val:.0f}%"
 
 
-# ── Header ────────────────────────────────────────────────────────────────────
-page_header("Retenção", "Cohorts, recorrência e sobrevivência de usuários", "Retenção")
-
 # ── Filtros ───────────────────────────────────────────────────────────────────
 with st.container():
     st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
@@ -67,6 +64,7 @@ with st.container():
         max_weeks = st.selectbox("Semanas", [4, 6, 8, 12], label_visibility="visible", index=1)
 
     st.markdown("</div>", unsafe_allow_html=True)
+page_header("Retenção", "Cohorts, recorrência e sobrevivência de usuários", "Retenção")
 
 ini_str = str(dt_ini)
 fim_str = str(dt_fim)
