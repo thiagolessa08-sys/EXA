@@ -7,31 +7,10 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
+from core.theme import inject_theme, page_header
 
 st.set_page_config(page_title="Performance", page_icon="💰", layout="wide")
-
-st.markdown("""
-<style>
-  .main { background-color: #f0f4f8; }
-  .kpi-card {
-    background: white; border: 1.5px solid #3b82f6;
-    border-radius: 10px; padding: 16px 20px; text-align: center;
-  }
-  .kpi-label { font-size: 11px; font-weight: 700; color: #6b7280; letter-spacing: 1px; text-transform: uppercase; }
-  .kpi-value { font-size: 28px; font-weight: 800; color: #111827; margin: 6px 0 4px; }
-  .kpi-up    { font-size: 12px; color: #16a34a; font-weight: 600; }
-  .kpi-down  { font-size: 12px; color: #ef4444; font-weight: 600; }
-  .section-title {
-    font-size: 13px; font-weight: 700; color: #1d4ed8;
-    border-left: 3px solid #1d4ed8; padding-left: 8px; margin-bottom: 12px;
-  }
-  .block-container { padding-top: 1.5rem; }
-  .filter-bar {
-    background: white; border-radius: 10px; padding: 12px 20px;
-    border: 1px solid #e5e7eb; margin-bottom: 16px;
-  }
-</style>
-""", unsafe_allow_html=True)
+inject_theme()
 
 
 def fmt_money(v):
@@ -45,12 +24,7 @@ def fmt_num(v):
 
 
 # ── Header ────────────────────────────────────────────────────────────────────
-col_t, col_ts = st.columns([4, 1])
-with col_t:
-    st.markdown("## Performance")
-    st.caption("Volume de apostas, monetização e comportamento")
-with col_ts:
-    st.markdown(f"<div style='text-align:right;padding-top:18px;font-size:12px;color:#6b7280'>● Atualizado {datetime.now().strftime('%d/%m/%Y — %H:%M')}</div>", unsafe_allow_html=True)
+page_header("Performance", "Volume de apostas, monetização e comportamento", "Performance")
 
 # ── Filtros ───────────────────────────────────────────────────────────────────
 with st.container():
@@ -317,25 +291,25 @@ with col_evol:
         fig = go.Figure()
         fig.add_trace(go.Bar(
             x=evol["label"], y=evol["stake"],
-            name="Stake", marker_color="rgba(59,130,246,0.3)",
+            name="Stake", marker_color="rgba(58,125,82,0.22)",
         ))
         fig.add_trace(go.Scatter(
             x=evol["label"], y=evol["ggr"],
             name="GGR", mode="lines+markers",
-            line=dict(color="#1d4ed8", width=2), marker=dict(size=7),
+            line=dict(color="#3a7d52", width=2), marker=dict(size=7),
         ))
         fig.add_trace(go.Scatter(
             x=evol["label"], y=pd.to_numeric(evol["usuarios"], errors="coerce"),
             name="Usuários", mode="lines+markers",
-            line=dict(color="#10b981", width=2, dash="dot"), marker=dict(size=6),
+            line=dict(color="#6aad85", width=2, dash="dot"), marker=dict(size=6),
             yaxis="y2",
         ))
         fig.update_layout(
             height=300, margin=dict(l=0, r=40, t=10, b=10),
-            plot_bgcolor="white", paper_bgcolor="white",
+            plot_bgcolor="#f7f6f2", paper_bgcolor="#f7f6f2",
             legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
             xaxis=dict(showgrid=False),
-            yaxis=dict(showgrid=True, gridcolor="#f0f0f0"),
+            yaxis=dict(showgrid=True, gridcolor="#e2e8e4"),
             yaxis2=dict(overlaying="y", side="right", showgrid=False, title="Usuários"),
             hovermode="x unified",
         )
@@ -353,7 +327,7 @@ with col_dist:
         dist = dist.sort_values("faixa")
 
         n = len(dist)
-        cores = [f"rgba(29,78,216,{1 - i*0.12})" for i in range(n)]
+        cores = [f"rgba(58,125,82,{1 - i*0.10})" for i in range(n)]
 
         fig_dist = go.Figure(go.Bar(
             x=dist["faixa"], y=dist["usuarios"],
@@ -363,9 +337,9 @@ with col_dist:
         ))
         fig_dist.update_layout(
             height=300, margin=dict(l=0, r=10, t=10, b=10),
-            plot_bgcolor="white", paper_bgcolor="white",
+            plot_bgcolor="#f7f6f2", paper_bgcolor="#f7f6f2",
             xaxis=dict(showgrid=False),
-            yaxis=dict(showgrid=True, gridcolor="#f0f0f0"),
+            yaxis=dict(showgrid=True, gridcolor="#e2e8e4"),
             showlegend=False,
         )
         st.plotly_chart(fig_dist, use_container_width=True)
@@ -410,7 +384,7 @@ with col_prov:
                 y=prov["game_provider"][::-1],
                 x=prov["stake"][::-1],
                 orientation="h",
-                marker_color="#3b82f6",
+                marker_color="#3a7d52",
                 text=prov["stake_fmt"][::-1],
                 textposition="inside",
                 insidetextanchor="start",
@@ -418,7 +392,7 @@ with col_prov:
             ))
             fig_prov.update_layout(
                 height=340, margin=dict(l=0, r=10, t=10, b=10),
-                plot_bgcolor="white", paper_bgcolor="white",
+                plot_bgcolor="#f7f6f2", paper_bgcolor="#f7f6f2",
                 xaxis=dict(showgrid=False, showticklabels=False, zeroline=False),
                 yaxis=dict(showgrid=False, tickfont=dict(size=12)),
                 showlegend=False,

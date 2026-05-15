@@ -7,42 +7,10 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
+from core.theme import inject_theme, page_header
 
 st.set_page_config(page_title="Onboarding", page_icon="📈", layout="wide")
-
-st.markdown("""
-<style>
-  .main { background-color: #f0f4f8; }
-  .kpi-card {
-    background: white; border: 1.5px solid #3b82f6;
-    border-radius: 10px; padding: 16px 20px; text-align: center;
-  }
-  .kpi-card-churn {
-    background: white; border: 1.5px solid #ef4444;
-    border-radius: 10px; padding: 16px 20px; text-align: center;
-  }
-  .kpi-label  { font-size: 11px; font-weight: 700; color: #6b7280; letter-spacing: 1px; text-transform: uppercase; }
-  .kpi-value  { font-size: 28px; font-weight: 800; color: #111827; margin: 6px 0 4px; }
-  .kpi-delta  { font-size: 12px; color: #16a34a; font-weight: 600; }
-  .kpi-churn  { font-size: 12px; color: #ef4444; font-weight: 600; }
-  .kpi-sub    { font-size: 11px; color: #6b7280; }
-  .section-title {
-    font-size: 13px; font-weight: 700; color: #1d4ed8;
-    letter-spacing: 0.5px; border-left: 3px solid #1d4ed8;
-    padding-left: 8px; margin-bottom: 12px;
-  }
-  .section-title-red {
-    font-size: 13px; font-weight: 700; color: #ef4444;
-    letter-spacing: 0.5px; border-left: 3px solid #ef4444;
-    padding-left: 8px; margin-bottom: 12px;
-  }
-  .block-container { padding-top: 1.5rem; }
-  .filter-bar {
-    background: white; border-radius: 10px; padding: 14px 20px;
-    border: 1px solid #e5e7eb; margin-bottom: 16px;
-  }
-</style>
-""", unsafe_allow_html=True)
+inject_theme()
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -54,8 +22,7 @@ def pct(n, d):
 
 
 # ── Filtros de Safra ──────────────────────────────────────────────────────────
-st.markdown("## Onboarding")
-st.caption("Aquisição, ativação e velocidade de jornada")
+page_header("Onboarding", "Aquisição, ativação e velocidade de jornada", "Onboarding")
 
 with st.container():
     st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
@@ -329,10 +296,10 @@ with col_funil:
         fts_f = int(f["fts"]       or 0)
 
         steps = [
-            ("Cadastros", cad_f, 100.0,                              "#1d4ed8"),
-            ("FTD",       ftd_f, ftd_f / max(cad_f, 1) * 100,       "#3b82f6"),
-            ("KYC",       kyc_f, kyc_f / max(cad_f, 1) * 100,       "#34d399"),
-            ("FTS",       fts_f, fts_f / max(cad_f, 1) * 100,       "#10b981"),
+            ("Cadastros", cad_f, 100.0,                              "#1e4030"),
+            ("FTD",       ftd_f, ftd_f / max(cad_f, 1) * 100,       "#3a7d52"),
+            ("KYC",       kyc_f, kyc_f / max(cad_f, 1) * 100,       "#6aad85"),
+            ("FTS",       fts_f, fts_f / max(cad_f, 1) * 100,       "#a7d4b8"),
         ]
         conv_labels = [
             "100%",
@@ -354,7 +321,7 @@ with col_funil:
 
         fig_funil.update_layout(
             height=240, margin=dict(l=0, r=10, t=10, b=10),
-            plot_bgcolor="white", paper_bgcolor="white",
+            plot_bgcolor="#f7f6f2", paper_bgcolor="#f7f6f2",
             xaxis=dict(range=[0, 115], showgrid=False, showticklabels=False, zeroline=False),
             yaxis=dict(showgrid=False, tickfont=dict(size=13)),
         )
@@ -373,19 +340,19 @@ with col_evol:
         fig_evol = go.Figure()
         fig_evol.add_trace(go.Bar(
             x=evol["label"], y=evol["cadastros"],
-            name="Cadastros", marker_color="rgba(59,130,246,0.25)",
+            name="Cadastros", marker_color="rgba(58,125,82,0.22)",
         ))
         fig_evol.add_trace(go.Scatter(
             x=evol["label"], y=evol["ftd"],
             name="FTDs", mode="lines+markers",
-            line=dict(color="#1d4ed8", width=2), marker=dict(size=7),
+            line=dict(color="#3a7d52", width=2), marker=dict(size=7),
         ))
         fig_evol.update_layout(
             height=240, margin=dict(l=0, r=10, t=10, b=10),
-            plot_bgcolor="white", paper_bgcolor="white",
+            plot_bgcolor="#f7f6f2", paper_bgcolor="#f7f6f2",
             legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
             xaxis=dict(showgrid=False),
-            yaxis=dict(showgrid=True, gridcolor="#f0f0f0"),
+            yaxis=dict(showgrid=True, gridcolor="#e2e8e4"),
         )
         st.plotly_chart(fig_evol, use_container_width=True)
     except Exception as e:
@@ -405,21 +372,21 @@ try:
     fig_churn.add_trace(go.Scatter(
         x=evol_ch["label"], y=evol_ch["churn_ftd_pct"].round(1),
         name="Churn FTD (%)", mode="lines+markers",
-        line=dict(color="#ef4444", width=2), marker=dict(size=7),
-        fill="tozeroy", fillcolor="rgba(239,68,68,0.08)",
+        line=dict(color="#d4544a", width=2), marker=dict(size=7),
+        fill="tozeroy", fillcolor="rgba(212,84,74,0.08)",
     ))
     fig_churn.add_trace(go.Scatter(
         x=evol_ch["label"], y=evol_ch["churn_fts_pct"].round(1),
         name="Churn FTS (%)", mode="lines+markers",
-        line=dict(color="#f97316", width=2, dash="dot"), marker=dict(size=7),
-        fill="tozeroy", fillcolor="rgba(249,115,22,0.05)",
+        line=dict(color="#d4982a", width=2, dash="dot"), marker=dict(size=7),
+        fill="tozeroy", fillcolor="rgba(212,152,42,0.05)",
     ))
     fig_churn.update_layout(
         height=280, margin=dict(l=0, r=10, t=10, b=10),
-        plot_bgcolor="white", paper_bgcolor="white",
+        plot_bgcolor="#f7f6f2", paper_bgcolor="#f7f6f2",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
         xaxis=dict(showgrid=False),
-        yaxis=dict(showgrid=True, gridcolor="#f0f0f0", ticksuffix="%"),
+        yaxis=dict(showgrid=True, gridcolor="#e2e8e4", ticksuffix="%"),
         hovermode="x unified",
     )
     st.plotly_chart(fig_churn, use_container_width=True)

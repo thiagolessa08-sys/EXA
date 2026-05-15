@@ -7,49 +7,10 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
+from core.theme import inject_theme, page_header
 
 st.set_page_config(page_title="Retenção", page_icon="🔄", layout="wide")
-
-st.markdown("""
-<style>
-  .main { background-color: #f0f4f8; }
-  .kpi-card {
-    background: white; border: 1.5px solid #3b82f6;
-    border-radius: 10px; padding: 16px 20px; text-align: center;
-  }
-  .kpi-label  { font-size: 11px; font-weight: 700; color: #6b7280; letter-spacing: 1px; text-transform: uppercase; }
-  .kpi-value  { font-size: 28px; font-weight: 800; color: #111827; margin: 6px 0 4px; }
-  .kpi-delta-up   { font-size: 12px; color: #16a34a; font-weight: 600; }
-  .kpi-delta-down { font-size: 12px; color: #ef4444; font-weight: 600; }
-  .kpi-sub    { font-size: 11px; color: #6b7280; }
-  .section-title {
-    font-size: 13px; font-weight: 700; color: #1d4ed8;
-    border-left: 3px solid #1d4ed8; padding-left: 8px; margin-bottom: 12px;
-  }
-  .block-container { padding-top: 1.5rem; }
-  .filter-bar {
-    background: white; border-radius: 10px; padding: 12px 20px;
-    border: 1px solid #e5e7eb; margin-bottom: 16px;
-  }
-  /* Cohort heatmap table */
-  .cohort-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .cohort-table th {
-    background: #f8fafc; color: #6b7280; font-size: 11px; font-weight: 700;
-    text-align: center; padding: 8px 4px; border-bottom: 2px solid #e5e7eb;
-    text-transform: uppercase;
-  }
-  .cohort-table th:first-child { text-align: left; padding-left: 12px; }
-  .cohort-table td { padding: 5px 4px; text-align: center; border-bottom: 1px solid #f1f5f9; }
-  .cohort-table td:first-child { text-align: left; padding-left: 12px; font-weight: 600; color: #374151; }
-  .cell-100  { background:#1d4ed8; color:white;  font-weight:700; border-radius:6px; padding:4px 8px; display:inline-block; width:90%; }
-  .cell-85   { background:#3b82f6; color:white;  font-weight:600; border-radius:6px; padding:4px 8px; display:inline-block; width:90%; }
-  .cell-45   { background:#93c5fd; color:#1e3a5f; border-radius:6px; padding:4px 8px; display:inline-block; width:90%; }
-  .cell-30   { background:#bfdbfe; color:#1e3a5f; border-radius:6px; padding:4px 8px; display:inline-block; width:90%; }
-  .cell-15   { background:#dbeafe; color:#374151; border-radius:6px; padding:4px 8px; display:inline-block; width:90%; }
-  .cell-low  { background:#f1f5f9; color:#9ca3af; border-radius:6px; padding:4px 8px; display:inline-block; width:90%; }
-  .cell-null { color:#d1d5db; }
-</style>
-""", unsafe_allow_html=True)
+inject_theme()
 
 
 def cell_class(val):
@@ -63,12 +24,7 @@ def cell_class(val):
 
 
 # ── Header ────────────────────────────────────────────────────────────────────
-col_t, col_ts = st.columns([4, 1])
-with col_t:
-    st.markdown("## Retenção")
-    st.caption("Cohorts, recorrência e sobrevivência de usuários")
-with col_ts:
-    st.markdown(f"<div style='text-align:right;padding-top:18px;font-size:12px;color:#6b7280'>● Atualizado {datetime.now().strftime('%d/%m/%Y — %H:%M')}</div>", unsafe_allow_html=True)
+page_header("Retenção", "Cohorts, recorrência e sobrevivência de usuários", "Retenção")
 
 # ── Filtros ───────────────────────────────────────────────────────────────────
 with st.container():
@@ -326,18 +282,18 @@ try:
             rows_html += row
 
         legend = """
-        <div style="text-align:center;margin-top:8px;font-size:11px;color:#6b7280;">
+        <div style="text-align:center;margin-top:8px;font-size:11px;color:#596460;">
           Retenção:
-          <span style="background:#1d4ed8;color:white;padding:2px 8px;border-radius:4px;margin:0 3px">100%</span>
-          <span style="background:#3b82f6;color:white;padding:2px 8px;border-radius:4px;margin:0 3px">≥85%</span>
-          <span style="background:#93c5fd;color:#1e3a5f;padding:2px 8px;border-radius:4px;margin:0 3px">≥45%</span>
-          <span style="background:#bfdbfe;color:#1e3a5f;padding:2px 8px;border-radius:4px;margin:0 3px">≥30%</span>
-          <span style="background:#dbeafe;color:#374151;padding:2px 8px;border-radius:4px;margin:0 3px">≥15%</span>
-          <span style="background:#f1f5f9;color:#9ca3af;padding:2px 8px;border-radius:4px;margin:0 3px">&lt;15%</span>
+          <span style="background:#1e4030;color:white;padding:2px 8px;border-radius:4px;margin:0 3px">100%</span>
+          <span style="background:#3a7d52;color:white;padding:2px 8px;border-radius:4px;margin:0 3px">≥85%</span>
+          <span style="background:#a7d4b8;color:#162b20;padding:2px 8px;border-radius:4px;margin:0 3px">≥45%</span>
+          <span style="background:#c8e8d4;color:#162b20;padding:2px 8px;border-radius:4px;margin:0 3px">≥30%</span>
+          <span style="background:#dff0e6;color:#596460;padding:2px 8px;border-radius:4px;margin:0 3px">≥15%</span>
+          <span style="background:#f0f0ec;color:#8a9490;padding:2px 8px;border-radius:4px;margin:0 3px">&lt;15%</span>
         </div>"""
 
         st.markdown(
-            f'<div style="background:white;border-radius:10px;padding:16px;border:1px solid #e5e7eb;overflow-x:auto">'
+            f'<div style="background:white;border-radius:22px;padding:20px;border:1px solid #e2e8e4;overflow-x:auto;box-shadow:0 1px 3px rgba(0,0,0,.07)">'
             f'<table class="cohort-table"><thead>{header}</thead><tbody>{rows_html}</tbody></table>'
             f'{legend}</div>',
             unsafe_allow_html=True
@@ -368,15 +324,15 @@ with col_curve:
                 y=avg_curve["retention_pct"].round(1),
                 mode="lines+markers",
                 name="Usuários %",
-                line=dict(color="#1d4ed8", width=3),
-                marker=dict(size=9, color="#1d4ed8"),
-                fill="tozeroy", fillcolor="rgba(29,78,216,0.07)",
+                line=dict(color="#3a7d52", width=3),
+                marker=dict(size=9, color="#3a7d52"),
+                fill="tozeroy", fillcolor="rgba(58,125,82,0.08)",
             ))
             fig_curve.update_layout(
                 height=300, margin=dict(l=0, r=10, t=10, b=10),
-                plot_bgcolor="white", paper_bgcolor="white",
+                plot_bgcolor="#f7f6f2", paper_bgcolor="#f7f6f2",
                 xaxis=dict(showgrid=False),
-                yaxis=dict(showgrid=True, gridcolor="#f0f0f0",
+                yaxis=dict(showgrid=True, gridcolor="#e2e8e4",
                            ticksuffix="%", range=[0, 110]),
                 legend=dict(orientation="h", yanchor="bottom", y=1.02),
                 hovermode="x unified",
