@@ -532,7 +532,10 @@ KALLAS_CSS = """
   .cell-null { color: var(--line-2); }
 
   /* ── Chart card wrappers ── */
-  [data-testid="stPlotlyChart"] {
+  [data-testid="stPlotlyChart"],
+  [data-testid="stArrowVegaLiteChart"],
+  div.stPlotlyChart,
+  div[class*="stPlotlyChart"] {
     background: var(--surface) !important;
     border: 1px solid var(--line) !important;
     border-radius: var(--radius) !important;

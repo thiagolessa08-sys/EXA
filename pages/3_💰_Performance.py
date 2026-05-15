@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
 from core.theme import inject_theme, page_header, kpi_card
 
-st.set_page_config(page_title="Performance", page_icon="ðŸ’°", layout="wide")
+st.set_page_config(page_title="Performance", page_icon="💰", layout="wide")
 inject_theme()
 
 
@@ -23,17 +23,17 @@ def fmt_num(v):
     return f"{int(v or 0):,}"
 
 
-# â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-page_header("Performance", "Volume de apostas, monetizaÃ§Ã£o e comportamento", "Performance")
+# ── Header ────────────────────────────────────────────────────────────────────
+page_header("Performance", "Volume de apostas, monetização e comportamento", "Performance")
 
-# â”€â”€ Filtros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Filtros ───────────────────────────────────────────────────────────────────
 with st.container():
     st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
     f1, f2, f3, f4, f5 = st.columns([2, 2, 2, 2, 2])
     today = date.today()
 
     with f1:
-        safra_tipo = st.selectbox("PerÃ­odo", ["Ano", "MÃªs", "Data aberta"], label_visibility="visible")
+        safra_tipo = st.selectbox("Período", ["Ano", "Mês", "Data aberta"], label_visibility="visible")
 
     with f2:
         if safra_tipo == "Ano":
@@ -41,43 +41,43 @@ with st.container():
             ano_sel = st.selectbox("Ano", anos, label_visibility="visible")
             dt_ini = date(ano_sel, 1, 1)
             dt_fim = date(ano_sel, 12, 31) if ano_sel < today.year else today
-        elif safra_tipo == "MÃªs":
+        elif safra_tipo == "Mês":
             meses = pd.date_range(end=today, periods=24, freq="MS").strftime("%Y-%m").tolist()[::-1]
-            mes_sel = st.selectbox("MÃªs", meses, label_visibility="visible",
+            mes_sel = st.selectbox("Mês", meses, label_visibility="visible",
                                    format_func=lambda x: datetime.strptime(x, "%Y-%m").strftime("%b/%y"))
             dt_ini = datetime.strptime(mes_sel, "%Y-%m").date()
             dt_fim = (dt_ini.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
         else:
             dt_ini = st.date_input("De", value=today - timedelta(days=30), label_visibility="visible")
-            dt_fim = st.date_input("AtÃ©", value=today, label_visibility="visible")
+            dt_fim = st.date_input("Até", value=today, label_visibility="visible")
 
     with f3:
-        canal_opt = st.selectbox("Canal", ["Total", "Afiliados", "OrgÃ¢nico", "Mobile"], label_visibility="visible")
+        canal_opt = st.selectbox("Canal", ["Total", "Afiliados", "Orgânico", "Mobile"], label_visibility="visible")
 
     with f4:
         produto_opt = st.selectbox("Produto", ["Total", "Casino", "Sports"], label_visibility="visible")
 
     with f5:
-        granular = st.selectbox("Granularidade", ["Mensal", "Semanal", "DiÃ¡ria"], label_visibility="visible")
+        granular = st.selectbox("Granularidade", ["Mensal", "Semanal", "Diária"], label_visibility="visible")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
 ini_str = str(dt_ini)
 fim_str = str(dt_fim)
-trunc   = {"Mensal": "MONTH", "Semanal": "WEEK", "DiÃ¡ria": "DAY"}[granular]
-fmt_lbl = {"Mensal": "%b/%y",  "Semanal": "%d/%m",  "DiÃ¡ria": "%d/%m"}[granular]
+trunc   = {"Mensal": "MONTH", "Semanal": "WEEK", "Diária": "DAY"}[granular]
+fmt_lbl = {"Mensal": "%b/%y",  "Semanal": "%d/%m",  "Diária": "%d/%m"}[granular]
 
 canal_join = "LEFT JOIN workspace.default.v_users_summary u ON cb.user_ext_id = u.user_ext_id"
 canal_where = ""
 if canal_opt == "Afiliados":
     canal_where = "AND u.core_affiliate_id IS NOT NULL AND u.core_affiliate_id > 0"
-elif canal_opt == "OrgÃ¢nico":
+elif canal_opt == "Orgânico":
     canal_where = "AND (u.core_affiliate_id IS NULL OR u.core_affiliate_id = 0)"
 elif canal_opt == "Mobile":
     canal_where = "AND u.platform = 'mobile'"
 
 
-# â”€â”€ Queries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Queries ───────────────────────────────────────────────────────────────────
 @st.cache_data(ttl=300, show_spinner=False)
 def load_kpis(ini, fim, produto, canal_w):
     casino_stake = "0" if produto == "Sports" else "COALESCE(cb.bet_amount, 0)"
@@ -240,7 +240,7 @@ def load_top_providers(ini, fim, canal_w):
     return execute_query(q)
 
 
-# â”€â”€ KPIs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── KPIs ──────────────────────────────────────────────────────────────────────
 with st.spinner("Carregando..."):
     try:
         kpi = load_kpis(ini_str, fim_str, produto_opt, canal_where).iloc[0]
@@ -255,10 +255,10 @@ with st.spinner("Carregando..."):
         kpis = [
             (c1, "STAKE TOTAL",     fmt_money(stake),    "volume apostado",  "trending-up", "up"),
             (c2, "GGR",             fmt_money(ggr),      "receita bruta",    "bar-chart",   "up"),
-            (c3, "NGR",             fmt_money(ngr),      "receita lÃ­quida",  "dollar",      "up" if ngr >= 0 else "down"),
+            (c3, "NGR",             fmt_money(ngr),      "receita líquida",  "dollar",      "up" if ngr >= 0 else "down"),
             (c4, "APOSTAS",         fmt_num(apostas),    "total de rodadas",  "hash",        "up"),
-            (c5, "USUÃRIOS APOST.", fmt_num(users),      "jogadores Ãºnicos",  "users",       "up"),
-            (c6, "STAKE / USUÃRIO", fmt_money(spu),      "ticket mÃ©dio",      "divide",      "up" if spu >= 0 else "down"),
+            (c5, "USUÁRIOS APOST.", fmt_num(users),      "jogadores únicos",  "users",       "up"),
+            (c6, "STAKE / USUÁRIO", fmt_money(spu),      "ticket médio",      "divide",      "up" if spu >= 0 else "down"),
         ]
         for col, label, value, sub, icon, sub_type in kpis:
             with col:
@@ -269,11 +269,11 @@ with st.spinner("Carregando..."):
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# â”€â”€ EvoluÃ§Ã£o + DistribuiÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Evolução + Distribuição ───────────────────────────────────────────────────
 col_evol, col_dist = st.columns([3, 2], gap="large")
 
 with col_evol:
-    st.markdown('<div class="section-title">EVOLUÃ‡ÃƒO â€” STAKE & GGR</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">EVOLUÇÃO — STAKE & GGR</div>', unsafe_allow_html=True)
     try:
         evol = load_evolucao(ini_str, fim_str, trunc, produto_opt, canal_where)
         evol["periodo"] = pd.to_datetime(evol["periodo"])
@@ -294,7 +294,7 @@ with col_evol:
         ))
         fig.add_trace(go.Scatter(
             x=evol["label"], y=pd.to_numeric(evol["usuarios"], errors="coerce"),
-            name="UsuÃ¡rios", mode="lines+markers",
+            name="Usuários", mode="lines+markers",
             line=dict(color="#60A5FA", width=2, dash="dot"), marker=dict(size=6),
             yaxis="y2",
         ))
@@ -304,15 +304,15 @@ with col_evol:
             legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
             xaxis=dict(showgrid=False),
             yaxis=dict(showgrid=True, gridcolor="#DBEAFE"),
-            yaxis2=dict(overlaying="y", side="right", showgrid=False, title="UsuÃ¡rios"),
+            yaxis2=dict(overlaying="y", side="right", showgrid=False, title="Usuários"),
             hovermode="x unified",
         )
         st.plotly_chart(fig, use_container_width=True)
     except Exception as e:
-        st.error(f"Erro na evoluÃ§Ã£o: {e}")
+        st.error(f"Erro na evolução: {e}")
 
 with col_dist:
-    st.markdown('<div class="section-title">DISTRIBUIÃ‡ÃƒO DE STAKE POR USUÃRIO</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">DISTRIBUIÇÃO DE STAKE POR USUÁRIO</div>', unsafe_allow_html=True)
     try:
         dist = load_distribuicao(ini_str, fim_str, canal_where)
         dist["usuarios"] = pd.to_numeric(dist["usuarios"], errors="coerce")
@@ -338,15 +338,15 @@ with col_dist:
         )
         st.plotly_chart(fig_dist, use_container_width=True)
     except Exception as e:
-        st.error(f"Erro na distribuiÃ§Ã£o: {e}")
+        st.error(f"Erro na distribuição: {e}")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# â”€â”€ Top Jogos + Top Providers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Top Jogos + Top Providers ─────────────────────────────────────────────────
 col_jogos, col_prov = st.columns([3, 2], gap="large")
 
 with col_jogos:
-    st.markdown('<div class="section-title">TOP 15 JOGOS â€” CASINO</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">TOP 15 JOGOS — CASINO</div>', unsafe_allow_html=True)
     try:
         jogos = load_top_jogos(ini_str, fim_str, canal_where)
         if not jogos.empty:
@@ -355,9 +355,9 @@ with col_jogos:
             jogos = jogos.rename(columns={
                 "game_name": "Jogo", "game_provider": "Provider",
                 "categoria": "Categoria", "apostas": "Apostas",
-                "usuarios": "UsuÃ¡rios", "stake": "Stake", "ggr": "GGR",
+                "usuarios": "Usuários", "stake": "Stake", "ggr": "GGR",
             })
-            st.dataframe(jogos[["Jogo","Provider","Categoria","Apostas","UsuÃ¡rios","Stake","GGR"]],
+            st.dataframe(jogos[["Jogo","Provider","Categoria","Apostas","Usuários","Stake","GGR"]],
                          use_container_width=True, hide_index=True)
     except Exception as e:
         st.error(f"Erro nos jogos: {e}")
