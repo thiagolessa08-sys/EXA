@@ -18,16 +18,12 @@ inject_theme()
 
 # ── Sidebar ──────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown(
-        '<h2 style="font-family:\'Instrument Serif\',serif;font-size:22px;font-weight:400;'
-        'color:#fff;margin:0 0 4px">Chat Analytics</h2>',
-        unsafe_allow_html=True,
-    )
-    st.caption("Pergunte sobre seus dados em português")
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+    st.caption("Analytics · Databricks · IA")
     st.markdown("---")
 
     st.subheader("Conexão")
-    if st.button("↺  Testar conexão"):
+    if st.button("Testar conexão", icon=":material/sensors:", use_container_width=True):
         with st.spinner("Testando..."):
             ok, msg = test_connection()
         if ok:
@@ -38,7 +34,7 @@ with st.sidebar:
     st.markdown("---")
 
     st.subheader("Catálogo")
-    if st.button("⟳  Recarregar catálogo"):
+    if st.button("Recarregar catálogo", icon=":material/refresh:", use_container_width=True):
         reload_catalog()
         st.success("Catálogo recarregado!")
 
@@ -50,11 +46,11 @@ with st.sidebar:
 
     st.markdown("---")
 
-    if st.button("✕  Limpar conversa"):
+    if st.button("Limpar conversa", icon=":material/delete:", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
 
-    st.caption("Edite os arquivos YAML para ajustar o comportamento do agente.")
+    st.caption("Edite os YAML para ajustar o comportamento do agente.")
 
 # ── Estado da sessão ──────────────────────────────────────────────────────────
 if "messages" not in st.session_state:

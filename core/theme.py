@@ -1,3 +1,20 @@
+# ── EXA Logo (white SVG, for dark sidebar) ─────────────────────────────────
+EXA_LOGO_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 88" fill="none">'
+    '<g stroke="white" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round">'
+    # "e": open arc on right side + horizontal crossbar
+    '<path d="M 58,63 A 27,27 0 1 0 58,27"/>'
+    '<line x1="11" y1="44" x2="59" y2="44"/>'
+    # "x": two smooth S-curves crossing at center (132,44)
+    '<path d="M 95,27 C 110,27 120,37 132,44 C 144,51 154,61 169,61"/>'
+    '<path d="M 169,27 C 154,27 144,37 132,44 C 120,51 110,61 95,61"/>'
+    # "a": open arc on right side + vertical right stem
+    '<path d="M 233,63 A 27,27 0 1 0 233,27"/>'
+    '<line x1="233" y1="27" x2="233" y2="65"/>'
+    '</g>'
+    '</svg>'
+)
+
 # ── Icon Library (Lucide-style, stroke="currentColor") ─────────────────────
 ICONS: dict[str, str] = {
     "users": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
@@ -347,7 +364,19 @@ KALLAS_CSS = """
     font-family: 'Plus Jakarta Sans', sans-serif !important;
   }
 
-  /* ── Green Sidebar ── */
+  /* ── Logo area ── */
+  [data-testid="stLogo"], [data-testid="stLogoLink"] {
+    background: var(--green-deep) !important;
+    border-radius: 0 !important;
+    padding: 14px 18px 10px !important;
+  }
+  [data-testid="stLogo"] img,
+  [data-testid="stLogoLink"] img {
+    max-height: 38px !important;
+    width: auto !important;
+  }
+
+  /* ── EXA Blue Sidebar ── */
   [data-testid="stSidebar"] {
     background: var(--green-deep) !important;
     border-right: none !important;
@@ -475,7 +504,14 @@ KALLAS_CSS = """
 
 def inject_theme():
     import streamlit as st
+    import base64
     st.markdown(KALLAS_CSS, unsafe_allow_html=True)
+    # EXA logo acima da navegação do sidebar (st.logo aparece em todas as páginas)
+    try:
+        svg_b64 = base64.b64encode(EXA_LOGO_SVG.encode()).decode()
+        st.logo(f"data:image/svg+xml;base64,{svg_b64}")
+    except Exception:
+        pass
 
 
 def page_header(title: str, subtitle: str, italic_word: str = ""):
