@@ -531,6 +531,15 @@ KALLAS_CSS = """
   .cell-low { background: var(--surface-2); color: var(--ink-3); border-radius: 8px; padding: 4px 10px; display: inline-block; width: 88%; }
   .cell-null { color: var(--line-2); }
 
+  /* ── Chart card wrappers ── */
+  [data-testid="stPlotlyChart"] {
+    background: var(--surface) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: var(--radius) !important;
+    padding: 16px 8px 8px !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+
   /* Spinner */
   .stSpinner > div { border-color: var(--green) transparent transparent !important; }
 

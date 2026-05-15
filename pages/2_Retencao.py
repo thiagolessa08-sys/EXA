@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -9,12 +9,12 @@ from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
 from core.theme import inject_theme, page_header, kpi_card
 
-st.set_page_config(page_title="Retenção", page_icon="🔄", layout="wide")
+st.set_page_config(page_title="RetenÃ§Ã£o", page_icon="ðŸ”„", layout="wide")
 inject_theme()
 
 
 def cell_class(val):
-    if val is None: return "cell-null", "—"
+    if val is None: return "cell-null", "â€”"
     if val >= 99:   return "cell-100", f"{val:.0f}%"
     if val >= 85:   return "cell-85",  f"{val:.0f}%"
     if val >= 45:   return "cell-45",  f"{val:.0f}%"
@@ -23,10 +23,10 @@ def cell_class(val):
     return "cell-low", f"{val:.0f}%"
 
 
-# ── Header ────────────────────────────────────────────────────────────────────
-page_header("Retenção", "Cohorts, recorrência e sobrevivência de usuários", "Retenção")
+# â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+page_header("RetenÃ§Ã£o", "Cohorts, recorrÃªncia e sobrevivÃªncia de usuÃ¡rios", "RetenÃ§Ã£o")
 
-# ── Filtros ───────────────────────────────────────────────────────────────────
+# â”€â”€ Filtros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 with st.container():
     st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
     f1, f1b, f2, f3, f4, f5, f6 = st.columns([2, 2, 2, 2, 2, 2, 2])
@@ -34,7 +34,7 @@ with st.container():
     today = date.today()
 
     with f1:
-        safra_tipo = st.selectbox("Granularidade", ["Ano", "Mês", "Data aberta"], label_visibility="visible")
+        safra_tipo = st.selectbox("Granularidade", ["Ano", "MÃªs", "Data aberta"], label_visibility="visible")
 
     with f1b:
         if safra_tipo == "Ano":
@@ -42,27 +42,27 @@ with st.container():
             ano_sel = st.selectbox("Ano", anos, label_visibility="visible")
             dt_ini = date(ano_sel, 1, 1)
             dt_fim = date(ano_sel, 12, 31) if ano_sel < today.year else today
-        elif safra_tipo == "Mês":
+        elif safra_tipo == "MÃªs":
             meses = pd.date_range(end=today, periods=18, freq="MS").strftime("%Y-%m").tolist()[::-1]
-            mes_sel = st.selectbox("Mês", meses, label_visibility="visible",
+            mes_sel = st.selectbox("MÃªs", meses, label_visibility="visible",
                                    format_func=lambda x: datetime.strptime(x, "%Y-%m").strftime("%b/%y"))
             dt_ini = datetime.strptime(mes_sel, "%Y-%m").date()
             dt_fim = (dt_ini.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
         else:
             dt_ini = st.date_input("De", value=today - timedelta(days=30), label_visibility="visible")
-            dt_fim = st.date_input("Até", value=today, label_visibility="visible")
+            dt_fim = st.date_input("AtÃ©", value=today, label_visibility="visible")
 
     with f2:
-        visao = st.selectbox("Visão", ["Semanal", "Quinzenal", "Mensal"], label_visibility="visible")
+        visao = st.selectbox("VisÃ£o", ["Semanal", "Quinzenal", "Mensal"], label_visibility="visible")
 
     with f3:
-        canal_opt = st.selectbox("Canal", ["Total", "Afiliados", "Orgânico", "Mobile"], label_visibility="visible")
+        canal_opt = st.selectbox("Canal", ["Total", "Afiliados", "OrgÃ¢nico", "Mobile"], label_visibility="visible")
 
     with f4:
         produto_opt = st.selectbox("Produto", ["Total", "Casino", "Sports"], label_visibility="visible")
 
     with f5:
-        base_ret = st.selectbox("Base", ["Cadastro", "1º Depósito"], label_visibility="visible")
+        base_ret = st.selectbox("Base", ["Cadastro", "1Âº DepÃ³sito"], label_visibility="visible")
 
     with f6:
         max_weeks = st.selectbox("Semanas", [4, 6, 8, 12], label_visibility="visible", index=1)
@@ -76,7 +76,7 @@ fim_str = str(dt_fim)
 canal_filter = ""
 if canal_opt == "Afiliados":
     canal_filter = "AND u.core_affiliate_id IS NOT NULL AND u.core_affiliate_id > 0"
-elif canal_opt == "Orgânico":
+elif canal_opt == "OrgÃ¢nico":
     canal_filter = "AND (u.core_affiliate_id IS NULL OR u.core_affiliate_id = 0)"
 elif canal_opt == "Mobile":
     canal_filter = "AND u.platform = 'mobile'"
@@ -94,17 +94,17 @@ else:
     SELECT user_ext_id, DATE_TRUNC('WEEK', dt_update) AS aw, SUM(sport_last_bet_amount) AS stake
     FROM workspace.default.v_sports_bets GROUP BY 1,2"""
 
-# granularidade do cohort — Ano sempre usa MONTH para ver os 12 meses
+# granularidade do cohort â€” Ano sempre usa MONTH para ver os 12 meses
 trunc_map = {"Semanal": "WEEK", "Quinzenal": "WEEK", "Mensal": "MONTH"}
 cohort_trunc = "MONTH" if safra_tipo == "Ano" else trunc_map[visao]
 
 if base_ret == "Cadastro":
     cohort_date = "u.core_registration_date"
 else:
-    cohort_date = "u.core_registration_date"  # fallback; idealmente seria primeira data de depósito
+    cohort_date = "u.core_registration_date"  # fallback; idealmente seria primeira data de depÃ³sito
 
 
-# ── Queries ───────────────────────────────────────────────────────────────────
+# â”€â”€ Queries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @st.cache_data(ttl=300, show_spinner=False)
 def load_cohort_matrix(ini: str, fim: str, trunc: str, act_sql: str, canal_f: str, n_weeks: int):
     q = f"""
@@ -193,7 +193,7 @@ def load_kpis_ret(ini: str, fim: str, act_sql: str, canal_f: str):
     return execute_query(q)
 
 
-# ── KPIs ──────────────────────────────────────────────────────────────────────
+# â”€â”€ KPIs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 with st.spinner("Carregando indicadores..."):
     try:
         kpi = load_kpis_ret(ini_str, fim_str, activity_sql, canal_filter).iloc[0]
@@ -213,12 +213,12 @@ with st.spinner("Carregando indicadores..."):
 
         c1,c2,c3,c4,c5,c6 = st.columns(6)
         cards = [
-            (c1, "RETENÇÃO W1",    f"{ret_w1:.1f}%", "semana 1",         "repeat",      "up" if ret_w1 > 0 else "down"),
-            (c2, "RETENÇÃO W4",    f"{ret_w4:.1f}%", "semana 4",         "repeat",      "up" if ret_w4 > 0 else "down"),
-            (c3, "RETENÇÃO W8",    f"{ret_w8:.1f}%", "semana 8",         "activity",    "up" if ret_w8 > 0 else "down"),
-            (c4, "USUÁRIOS ATIVOS",f"{n_w1:,}",       "recorrentes W1",  "users",       "up"),
-            (c5, "STAKE RETIDO",   fmt_money(stake),  "período",          "dollar",      "up"),
-            (c6, "RECEITA RETIDA", fmt_money(abs(ngr)),"NGR retenção",    "bar-chart",   "up"),
+            (c1, "RETENÃ‡ÃƒO W1",    f"{ret_w1:.1f}%", "semana 1",         "repeat",      "up" if ret_w1 > 0 else "down"),
+            (c2, "RETENÃ‡ÃƒO W4",    f"{ret_w4:.1f}%", "semana 4",         "repeat",      "up" if ret_w4 > 0 else "down"),
+            (c3, "RETENÃ‡ÃƒO W8",    f"{ret_w8:.1f}%", "semana 8",         "activity",    "up" if ret_w8 > 0 else "down"),
+            (c4, "USUÃRIOS ATIVOS",f"{n_w1:,}",       "recorrentes W1",  "users",       "up"),
+            (c5, "STAKE RETIDO",   fmt_money(stake),  "perÃ­odo",          "dollar",      "up"),
+            (c6, "RECEITA RETIDA", fmt_money(abs(ngr)),"NGR retenÃ§Ã£o",    "bar-chart",   "up"),
         ]
         for col, label, value, sub, icon, sub_type in cards:
             with col:
@@ -228,8 +228,8 @@ with st.spinner("Carregando indicadores..."):
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Cohort Matrix ─────────────────────────────────────────────────────────────
-st.markdown('<div class="section-title">COHORT DE RETENÇÃO POR USUÁRIOS (%)</div>', unsafe_allow_html=True)
+# â”€â”€ Cohort Matrix â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+st.markdown('<div class="section-title">COHORT DE RETENÃ‡ÃƒO POR USUÃRIOS (%)</div>', unsafe_allow_html=True)
 
 try:
     df_raw = load_cohort_matrix(ini_str, fim_str, cohort_trunc, activity_sql, canal_filter, max_weeks)
@@ -251,7 +251,7 @@ try:
         weeks = list(range(0, max_weeks + 1))
         week_labels = [f"W{w}" for w in weeks]
 
-        # Rótulo da linha
+        # RÃ³tulo da linha
         def cohort_label(dt):
             mes = dt.strftime("%b").capitalize()
             if safra_tipo == "Ano" or cohort_trunc == "MONTH":
@@ -269,7 +269,7 @@ try:
                 val = pivot.loc[cohort, w] if cohort in pivot.index and w in pivot.columns else None
                 cls, txt = cell_class(val)
                 if cls == "cell-null":
-                    row += f'<td><span class="cell-null">—</span></td>'
+                    row += f'<td><span class="cell-null">â€”</span></td>'
                 else:
                     row += f'<td><span class="{cls}">{txt}</span></td>'
             row += "</tr>"
@@ -277,12 +277,12 @@ try:
 
         legend = """
         <div style="text-align:center;margin-top:8px;font-size:11px;color:#334155;">
-          Retenção:
+          RetenÃ§Ã£o:
           <span style="background:#1D3186;color:white;padding:2px 8px;border-radius:4px;margin:0 3px">100%</span>
-          <span style="background:#2563EB;color:white;padding:2px 8px;border-radius:4px;margin:0 3px">≥85%</span>
-          <span style="background:#93C5FD;color:#1D3186;padding:2px 8px;border-radius:4px;margin:0 3px">≥45%</span>
-          <span style="background:#BFDBFE;color:#1D3186;padding:2px 8px;border-radius:4px;margin:0 3px">≥30%</span>
-          <span style="background:#DBEAFE;color:#334155;padding:2px 8px;border-radius:4px;margin:0 3px">≥15%</span>
+          <span style="background:#2563EB;color:white;padding:2px 8px;border-radius:4px;margin:0 3px">â‰¥85%</span>
+          <span style="background:#93C5FD;color:#1D3186;padding:2px 8px;border-radius:4px;margin:0 3px">â‰¥45%</span>
+          <span style="background:#BFDBFE;color:#1D3186;padding:2px 8px;border-radius:4px;margin:0 3px">â‰¥30%</span>
+          <span style="background:#DBEAFE;color:#334155;padding:2px 8px;border-radius:4px;margin:0 3px">â‰¥15%</span>
           <span style="background:#F0F4FF;color:#64748B;padding:2px 8px;border-radius:4px;margin:0 3px">&lt;15%</span>
         </div>"""
 
@@ -293,18 +293,18 @@ try:
             unsafe_allow_html=True
         )
     else:
-        st.info("Sem dados de cohort para o período selecionado.")
+        st.info("Sem dados de cohort para o perÃ­odo selecionado.")
 
 except Exception as e:
     st.error(f"Erro no cohort: {e}")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Curva de Retenção Média ───────────────────────────────────────────────────
+# â”€â”€ Curva de RetenÃ§Ã£o MÃ©dia â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 col_curve, col_detail = st.columns([1, 1], gap="large")
 
 with col_curve:
-    st.markdown('<div class="section-title">CURVA DE RETENÇÃO MÉDIA</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">CURVA DE RETENÃ‡ÃƒO MÃ‰DIA</div>', unsafe_allow_html=True)
     try:
         if not df_raw.empty:
             df_raw["retention_pct"] = pd.to_numeric(df_raw["retention_pct"], errors="coerce")
@@ -317,14 +317,14 @@ with col_curve:
                 x=[f"W{int(w)}" for w in avg_curve["week_num"]],
                 y=avg_curve["retention_pct"].round(1),
                 mode="lines+markers",
-                name="Usuários %",
+                name="UsuÃ¡rios %",
                 line=dict(color="#2563EB", width=3),
                 marker=dict(size=9, color="#2563EB"),
                 fill="tozeroy", fillcolor="rgba(37,99,235,0.08)",
             ))
             fig_curve.update_layout(
                 height=300, margin=dict(l=0, r=10, t=10, b=10),
-                plot_bgcolor="#EEF2FF", paper_bgcolor="#EEF2FF",
+                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
                 xaxis=dict(showgrid=False),
                 yaxis=dict(showgrid=True, gridcolor="#DBEAFE",
                            ticksuffix="%", range=[0, 110]),
@@ -353,9 +353,9 @@ with col_detail:
                 [cohort_label(c) for c in cohorts],
                 [int(sizes.get(c, 0)) for c in cohorts]
             ))
-            detail.insert(1, "Usuários W0", detail["Cohort"].map(size_map))
+            detail.insert(1, "UsuÃ¡rios W0", detail["Cohort"].map(size_map))
 
-            detail.columns = ["COHORT", "USUÁRIOS W0"] + [f"W{int(c)}" for c in detail.columns[2:]]
+            detail.columns = ["COHORT", "USUÃRIOS W0"] + [f"W{int(c)}" for c in detail.columns[2:]]
             detail = detail.drop(columns=["W0"], errors="ignore")
 
             st.dataframe(detail, use_container_width=True, hide_index=True)

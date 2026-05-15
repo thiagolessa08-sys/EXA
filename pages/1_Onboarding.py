@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -9,11 +9,11 @@ from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
 from core.theme import inject_theme, page_header, kpi_card
 
-st.set_page_config(page_title="Onboarding", page_icon="📈", layout="wide")
+st.set_page_config(page_title="Onboarding", page_icon="ðŸ“ˆ", layout="wide")
 inject_theme()
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def fmt(n):
     return f"{int(n):,}" if pd.notna(n) else "0"
 
@@ -21,8 +21,8 @@ def pct(n, d):
     return f"{(n / max(d, 1) * 100):.1f}%"
 
 
-# ── Filtros de Safra ──────────────────────────────────────────────────────────
-page_header("Onboarding", "Aquisição, ativação e velocidade de jornada", "Onboarding")
+# â”€â”€ Filtros de Safra â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+page_header("Onboarding", "AquisiÃ§Ã£o, ativaÃ§Ã£o e velocidade de jornada", "Onboarding")
 
 with st.container():
     st.markdown('<div class="filter-bar">', unsafe_allow_html=True)
@@ -31,14 +31,14 @@ with st.container():
     with f1:
         safra_tipo = st.selectbox(
             "Granularidade",
-            ["Ano", "Mês", "Semana", "Dia", "Data aberta"],
+            ["Ano", "MÃªs", "Semana", "Dia", "Data aberta"],
             label_visibility="collapsed",
         )
 
     with f2:
         base_safra = st.selectbox(
             "Base da safra",
-            ["Cadastro", "1º Depósito"],
+            ["Cadastro", "1Âº DepÃ³sito"],
             label_visibility="collapsed",
         )
 
@@ -50,9 +50,9 @@ with st.container():
             ano_sel = st.selectbox("Ano", anos, label_visibility="collapsed")
             dt_ini = date(ano_sel, 1, 1)
             dt_fim = date(ano_sel, 12, 31) if ano_sel < today.year else today
-        elif safra_tipo == "Mês":
+        elif safra_tipo == "MÃªs":
             meses = pd.date_range(end=today, periods=24, freq="MS").strftime("%Y-%m").tolist()[::-1]
-            mes_sel = st.selectbox("Mês", meses, label_visibility="collapsed")
+            mes_sel = st.selectbox("MÃªs", meses, label_visibility="collapsed")
             dt_ini = datetime.strptime(mes_sel, "%Y-%m").date()
             dt_fim = (dt_ini.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
         elif safra_tipo == "Semana":
@@ -66,10 +66,10 @@ with st.container():
         else:
             cols_date = st.columns(2)
             dt_ini = cols_date[0].date_input("De", value=today - timedelta(days=30), label_visibility="collapsed")
-            dt_fim = cols_date[1].date_input("Até", value=today, label_visibility="collapsed")
+            dt_fim = cols_date[1].date_input("AtÃ©", value=today, label_visibility="collapsed")
 
     with f4:
-        st.caption(f"📅 {dt_ini.strftime('%d/%m/%Y')} → {dt_fim.strftime('%d/%m/%Y')}")
+        st.caption(f"ðŸ“… {dt_ini.strftime('%d/%m/%Y')} â†’ {dt_fim.strftime('%d/%m/%Y')}")
         st.caption(f"Base: **{base_safra}**")
 
     st.markdown("</div>", unsafe_allow_html=True)
@@ -80,7 +80,7 @@ DATE_COL_DEP  = "dt_finalized"
 date_col = DATE_COL_USER if base_safra == "Cadastro" else DATE_COL_DEP
 
 
-# ── Queries ───────────────────────────────────────────────────────────────────
+# â”€â”€ Queries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @st.cache_data(ttl=300, show_spinner=False)
 def load_kpis(ini: str, fim: str, base: str):
     # cohort_table/col define quem entra na safra
@@ -141,7 +141,7 @@ def load_kpis(ini: str, fim: str, base: str):
 
 @st.cache_data(ttl=300, show_spinner=False)
 def load_evolucao(granular: str, ini: str, fim: str):
-    trunc = {"Ano": "MONTH", "Mês": "MONTH", "Semana": "WEEK", "Dia": "DAY", "Data aberta": "MONTH"}[granular]
+    trunc = {"Ano": "MONTH", "MÃªs": "MONTH", "Semana": "WEEK", "Dia": "DAY", "Data aberta": "MONTH"}[granular]
     q = f"""
     SELECT
       DATE_TRUNC('{trunc}', u.core_registration_date) AS periodo,
@@ -190,8 +190,8 @@ def load_canal(ini: str, fim: str, base: str):
     SELECT
       CASE
         WHEN u.core_affiliate_id IS NOT NULL AND u.core_affiliate_id > 0 THEN 'Afiliados'
-        WHEN u.platform = 'mobile' THEN 'Mobile Orgânico'
-        ELSE 'Orgânico'
+        WHEN u.platform = 'mobile' THEN 'Mobile OrgÃ¢nico'
+        ELSE 'OrgÃ¢nico'
       END AS canal,
       COUNT(DISTINCT u.user_ext_id) AS cadastros,
       COUNT(DISTINCT d.user_ext_id) AS ftd,
@@ -209,7 +209,7 @@ def load_canal(ini: str, fim: str, base: str):
 ini_str = str(dt_ini)
 fim_str = str(dt_fim)
 
-# ── KPI Cards ─────────────────────────────────────────────────────────────────
+# â”€â”€ KPI Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 with st.spinner("Carregando indicadores..."):
     try:
         kpi = load_kpis(ini_str, fim_str, base_safra).iloc[0]
@@ -226,16 +226,16 @@ with st.spinner("Carregando indicadores..."):
         churn_ftd_p  = churn_ftd_n / max(cadastros, 1) * 100
         churn_fts_p  = churn_fts_n / max(ftds, 1)     * 100
 
-        # Linha 1 — indicadores de ativação
-        st.markdown('<div class="section-title">INDICADORES DE ATIVAÇÃO</div>', unsafe_allow_html=True)
+        # Linha 1 â€” indicadores de ativaÃ§Ã£o
+        st.markdown('<div class="section-title">INDICADORES DE ATIVAÃ‡ÃƒO</div>', unsafe_allow_html=True)
         c1, c2, c3, c4, c5, c6 = st.columns(6)
         ativ = [
             (c1, "CADASTROS",       fmt(cadastros),     f"{conv_ftd:.1f}% conv. FTD",    "users",      "up"),
             (c2, "FTDS",            fmt(ftds),           f"{conv_ftd:.1f}% dos cadastros", "dollar",     "up"),
             (c3, "KYC APROVADOS",   fmt(kyc),             f"{conv_kyc:.0f}% dos FTDs",    "shield",     "up"),
             (c4, "FTS",             fmt(fts),             f"{conv_fts:.0f}% dos FTDs",    "zap",        "up"),
-            (c5, "CONV. CAD → FTD", f"{conv_ftd:.1f}%",  "conversão acumulada",          "percent",    "neutral"),
-            (c6, "CONV. FTD → FTS", f"{conv_fts:.1f}%",  "conversão acumulada",          "percent",    "neutral"),
+            (c5, "CONV. CAD â†’ FTD", f"{conv_ftd:.1f}%",  "conversÃ£o acumulada",          "percent",    "neutral"),
+            (c6, "CONV. FTD â†’ FTS", f"{conv_fts:.1f}%",  "conversÃ£o acumulada",          "percent",    "neutral"),
         ]
         for col, label, value, sub, icon, sub_type in ativ:
             with col:
@@ -243,12 +243,12 @@ with st.spinner("Carregando indicadores..."):
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Linha 2 — indicadores de churn
+        # Linha 2 â€” indicadores de churn
         st.markdown('<div class="section-title-red">INDICADORES DE CHURN</div>', unsafe_allow_html=True)
         ch1, ch2, ch3, ch4 = st.columns(4)
 
         with ch1:
-            st.markdown(kpi_card("CHURN FTD (qtd)", fmt(churn_ftd_n), "Cadastros sem 1º depósito", "trending-down", "churn", "churn"), unsafe_allow_html=True)
+            st.markdown(kpi_card("CHURN FTD (qtd)", fmt(churn_ftd_n), "Cadastros sem 1Âº depÃ³sito", "trending-down", "churn", "churn"), unsafe_allow_html=True)
         with ch2:
             st.markdown(kpi_card("CHURN FTD (%)", f"{churn_ftd_p:.1f}%", f"{churn_ftd_n:,} de {cadastros:,} cadastros", "percent", "churn", "churn"), unsafe_allow_html=True)
         with ch3:
@@ -263,11 +263,11 @@ with st.spinner("Carregando indicadores..."):
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Funil + Evolução ──────────────────────────────────────────────────────────
+# â”€â”€ Funil + EvoluÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 col_funil, col_evol = st.columns([1, 1], gap="large")
 
 with col_funil:
-    st.markdown('<div class="section-title">FUNIL DE ATIVAÇÃO</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">FUNIL DE ATIVAÃ‡ÃƒO</div>', unsafe_allow_html=True)
     try:
         f = load_funil(ini_str, fim_str, base_safra).iloc[0]
         cad_f = int(f["cadastros"] or 0)
@@ -301,7 +301,7 @@ with col_funil:
 
         fig_funil.update_layout(
             height=240, margin=dict(l=0, r=10, t=10, b=10),
-            plot_bgcolor="#EEF2FF", paper_bgcolor="#EEF2FF",
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
             xaxis=dict(range=[0, 115], showgrid=False, showticklabels=False, zeroline=False),
             yaxis=dict(showgrid=False, tickfont=dict(size=13)),
         )
@@ -310,11 +310,11 @@ with col_funil:
         st.error(f"Erro no funil: {e}")
 
 with col_evol:
-    st.markdown('<div class="section-title">EVOLUÇÃO — CADASTROS & FTDS</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">EVOLUÃ‡ÃƒO â€” CADASTROS & FTDS</div>', unsafe_allow_html=True)
     try:
         evol = load_evolucao(safra_tipo, ini_str, fim_str)
         evol["periodo"] = pd.to_datetime(evol["periodo"])
-        fmt_map = {"Ano": "%b/%y", "Dia": "%d/%m", "Semana": "%d/%m", "Mês": "%b/%y", "Data aberta": "%b/%y"}
+        fmt_map = {"Ano": "%b/%y", "Dia": "%d/%m", "Semana": "%d/%m", "MÃªs": "%b/%y", "Data aberta": "%b/%y"}
         evol["label"] = evol["periodo"].dt.strftime(fmt_map[safra_tipo])
 
         fig_evol = go.Figure()
@@ -329,21 +329,21 @@ with col_evol:
         ))
         fig_evol.update_layout(
             height=240, margin=dict(l=0, r=10, t=10, b=10),
-            plot_bgcolor="#EEF2FF", paper_bgcolor="#EEF2FF",
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
             legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
             xaxis=dict(showgrid=False),
             yaxis=dict(showgrid=True, gridcolor="#DBEAFE"),
         )
         st.plotly_chart(fig_evol, use_container_width=True)
     except Exception as e:
-        st.error(f"Erro na evolução: {e}")
+        st.error(f"Erro na evoluÃ§Ã£o: {e}")
 
-# ── Gráfico Churn ─────────────────────────────────────────────────────────────
-st.markdown('<div class="section-title-red">EVOLUÇÃO DO CHURN — FTD & FTS</div>', unsafe_allow_html=True)
+# â”€â”€ GrÃ¡fico Churn â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+st.markdown('<div class="section-title-red">EVOLUÃ‡ÃƒO DO CHURN â€” FTD & FTS</div>', unsafe_allow_html=True)
 try:
     evol_ch = load_evolucao(safra_tipo, ini_str, fim_str)
     evol_ch["periodo"] = pd.to_datetime(evol_ch["periodo"])
-    fmt_map = {"Ano": "%b/%y", "Dia": "%d/%m", "Semana": "%d/%m", "Mês": "%b/%y", "Data aberta": "%b/%y"}
+    fmt_map = {"Ano": "%b/%y", "Dia": "%d/%m", "Semana": "%d/%m", "MÃªs": "%b/%y", "Data aberta": "%b/%y"}
     evol_ch["label"] = evol_ch["periodo"].dt.strftime(fmt_map[safra_tipo])
     evol_ch["churn_ftd_pct"] = (1 - evol_ch["ftd"] / evol_ch["cadastros"].clip(lower=1)) * 100
     evol_ch["churn_fts_pct"] = (1 - evol_ch["fts"] / evol_ch["ftd"].clip(lower=1)) * 100
@@ -363,7 +363,7 @@ try:
     ))
     fig_churn.update_layout(
         height=280, margin=dict(l=0, r=10, t=10, b=10),
-        plot_bgcolor="#EEF2FF", paper_bgcolor="#EEF2FF",
+        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
         xaxis=dict(showgrid=False),
         yaxis=dict(showgrid=True, gridcolor="#DBEAFE", ticksuffix="%"),
@@ -371,11 +371,11 @@ try:
     )
     st.plotly_chart(fig_churn, use_container_width=True)
 except Exception as e:
-    st.error(f"Erro no gráfico de churn: {e}")
+    st.error(f"Erro no grÃ¡fico de churn: {e}")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Breakdown por Canal ───────────────────────────────────────────────────────
+# â”€â”€ Breakdown por Canal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 st.markdown('<div class="section-title">BREAKDOWN POR CANAL</div>', unsafe_allow_html=True)
 try:
     canal_df = load_canal(ini_str, fim_str, base_safra)
