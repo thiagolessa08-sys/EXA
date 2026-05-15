@@ -66,21 +66,21 @@ KALLAS_CSS = """
 
 <style>
   :root {
-    --bg:          #f7f6f2;
+    --bg:          #EEF2FF;
     --surface:     #ffffff;
-    --surface-2:   #f0f0ec;
-    --ink:         #1a2420;
-    --ink-2:       #596460;
-    --ink-3:       #8a9490;
-    --line:        #e2e8e4;
-    --line-2:      #d4ddd8;
-    --green:       #3a7d52;
-    --green-deep:  #1e4030;
-    --green-ink:   #162b20;
-    --green-soft:  #e8f5ee;
-    --green-mid:   #6aad85;
-    --amber:       #d4982a;
-    --rose:        #d4544a;
+    --surface-2:   #F0F4FF;
+    --ink:         #0F172A;
+    --ink-2:       #334155;
+    --ink-3:       #64748B;
+    --line:        #DBEAFE;
+    --line-2:      #BFDBFE;
+    --green:       #2563EB;
+    --green-deep:  #1D3186;
+    --green-ink:   #0F172A;
+    --green-soft:  #DBEAFE;
+    --green-mid:   #60A5FA;
+    --amber:       #F59E0B;
+    --rose:        #EF4444;
     --radius:      22px;
     --radius-sm:   14px;
     --shadow-sm:   0 1px 3px rgba(0,0,0,.07);
@@ -455,9 +455,9 @@ KALLAS_CSS = """
   .cohort-table td:first-child { text-align: left; padding-left: 16px; font-weight: 600; color: var(--ink); }
   .cell-100 { background: var(--green-deep); color: white;  font-weight: 700; border-radius: 8px; padding: 4px 10px; display: inline-block; width: 88%; }
   .cell-85  { background: var(--green);      color: white;  font-weight: 600; border-radius: 8px; padding: 4px 10px; display: inline-block; width: 88%; }
-  .cell-45  { background: #a7d4b8; color: var(--green-ink); border-radius: 8px; padding: 4px 10px; display: inline-block; width: 88%; }
-  .cell-30  { background: #c8e8d4; color: var(--green-ink); border-radius: 8px; padding: 4px 10px; display: inline-block; width: 88%; }
-  .cell-15  { background: #dff0e6; color: var(--ink-2);     border-radius: 8px; padding: 4px 10px; display: inline-block; width: 88%; }
+  .cell-45  { background: #93C5FD; color: #1D3186; border-radius: 8px; padding: 4px 10px; display: inline-block; width: 88%; }
+  .cell-30  { background: #BFDBFE; color: #1D3186; border-radius: 8px; padding: 4px 10px; display: inline-block; width: 88%; }
+  .cell-15  { background: #DBEAFE; color: var(--ink-2); border-radius: 8px; padding: 4px 10px; display: inline-block; width: 88%; }
   .cell-low { background: var(--surface-2); color: var(--ink-3); border-radius: 8px; padding: 4px 10px; display: inline-block; width: 88%; }
   .cell-null { color: var(--line-2); }
 

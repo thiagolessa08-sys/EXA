@@ -276,14 +276,14 @@ try:
             rows_html += row
 
         legend = """
-        <div style="text-align:center;margin-top:8px;font-size:11px;color:#596460;">
+        <div style="text-align:center;margin-top:8px;font-size:11px;color:#334155;">
           Retenção:
-          <span style="background:#1e4030;color:white;padding:2px 8px;border-radius:4px;margin:0 3px">100%</span>
-          <span style="background:#3a7d52;color:white;padding:2px 8px;border-radius:4px;margin:0 3px">≥85%</span>
-          <span style="background:#a7d4b8;color:#162b20;padding:2px 8px;border-radius:4px;margin:0 3px">≥45%</span>
-          <span style="background:#c8e8d4;color:#162b20;padding:2px 8px;border-radius:4px;margin:0 3px">≥30%</span>
-          <span style="background:#dff0e6;color:#596460;padding:2px 8px;border-radius:4px;margin:0 3px">≥15%</span>
-          <span style="background:#f0f0ec;color:#8a9490;padding:2px 8px;border-radius:4px;margin:0 3px">&lt;15%</span>
+          <span style="background:#1D3186;color:white;padding:2px 8px;border-radius:4px;margin:0 3px">100%</span>
+          <span style="background:#2563EB;color:white;padding:2px 8px;border-radius:4px;margin:0 3px">≥85%</span>
+          <span style="background:#93C5FD;color:#1D3186;padding:2px 8px;border-radius:4px;margin:0 3px">≥45%</span>
+          <span style="background:#BFDBFE;color:#1D3186;padding:2px 8px;border-radius:4px;margin:0 3px">≥30%</span>
+          <span style="background:#DBEAFE;color:#334155;padding:2px 8px;border-radius:4px;margin:0 3px">≥15%</span>
+          <span style="background:#F0F4FF;color:#64748B;padding:2px 8px;border-radius:4px;margin:0 3px">&lt;15%</span>
         </div>"""
 
         st.markdown(
@@ -318,15 +318,15 @@ with col_curve:
                 y=avg_curve["retention_pct"].round(1),
                 mode="lines+markers",
                 name="Usuários %",
-                line=dict(color="#3a7d52", width=3),
-                marker=dict(size=9, color="#3a7d52"),
-                fill="tozeroy", fillcolor="rgba(58,125,82,0.08)",
+                line=dict(color="#2563EB", width=3),
+                marker=dict(size=9, color="#2563EB"),
+                fill="tozeroy", fillcolor="rgba(37,99,235,0.08)",
             ))
             fig_curve.update_layout(
                 height=300, margin=dict(l=0, r=10, t=10, b=10),
-                plot_bgcolor="#f7f6f2", paper_bgcolor="#f7f6f2",
+                plot_bgcolor="#EEF2FF", paper_bgcolor="#EEF2FF",
                 xaxis=dict(showgrid=False),
-                yaxis=dict(showgrid=True, gridcolor="#e2e8e4",
+                yaxis=dict(showgrid=True, gridcolor="#DBEAFE",
                            ticksuffix="%", range=[0, 110]),
                 legend=dict(orientation="h", yanchor="bottom", y=1.02),
                 hovermode="x unified",

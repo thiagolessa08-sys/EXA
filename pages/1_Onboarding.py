@@ -276,10 +276,10 @@ with col_funil:
         fts_f = int(f["fts"]       or 0)
 
         steps = [
-            ("Cadastros", cad_f, 100.0,                              "#1e4030"),
-            ("FTD",       ftd_f, ftd_f / max(cad_f, 1) * 100,       "#3a7d52"),
-            ("KYC",       kyc_f, kyc_f / max(cad_f, 1) * 100,       "#6aad85"),
-            ("FTS",       fts_f, fts_f / max(cad_f, 1) * 100,       "#a7d4b8"),
+            ("Cadastros", cad_f, 100.0,                              "#1D3186"),
+            ("FTD",       ftd_f, ftd_f / max(cad_f, 1) * 100,       "#2563EB"),
+            ("KYC",       kyc_f, kyc_f / max(cad_f, 1) * 100,       "#60A5FA"),
+            ("FTS",       fts_f, fts_f / max(cad_f, 1) * 100,       "#93C5FD"),
         ]
         conv_labels = [
             "100%",
@@ -301,7 +301,7 @@ with col_funil:
 
         fig_funil.update_layout(
             height=240, margin=dict(l=0, r=10, t=10, b=10),
-            plot_bgcolor="#f7f6f2", paper_bgcolor="#f7f6f2",
+            plot_bgcolor="#EEF2FF", paper_bgcolor="#EEF2FF",
             xaxis=dict(range=[0, 115], showgrid=False, showticklabels=False, zeroline=False),
             yaxis=dict(showgrid=False, tickfont=dict(size=13)),
         )
@@ -320,19 +320,19 @@ with col_evol:
         fig_evol = go.Figure()
         fig_evol.add_trace(go.Bar(
             x=evol["label"], y=evol["cadastros"],
-            name="Cadastros", marker_color="rgba(58,125,82,0.22)",
+            name="Cadastros", marker_color="rgba(37,99,235,0.18)",
         ))
         fig_evol.add_trace(go.Scatter(
             x=evol["label"], y=evol["ftd"],
             name="FTDs", mode="lines+markers",
-            line=dict(color="#3a7d52", width=2), marker=dict(size=7),
+            line=dict(color="#2563EB", width=2), marker=dict(size=7),
         ))
         fig_evol.update_layout(
             height=240, margin=dict(l=0, r=10, t=10, b=10),
-            plot_bgcolor="#f7f6f2", paper_bgcolor="#f7f6f2",
+            plot_bgcolor="#EEF2FF", paper_bgcolor="#EEF2FF",
             legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
             xaxis=dict(showgrid=False),
-            yaxis=dict(showgrid=True, gridcolor="#e2e8e4"),
+            yaxis=dict(showgrid=True, gridcolor="#DBEAFE"),
         )
         st.plotly_chart(fig_evol, use_container_width=True)
     except Exception as e:
@@ -363,10 +363,10 @@ try:
     ))
     fig_churn.update_layout(
         height=280, margin=dict(l=0, r=10, t=10, b=10),
-        plot_bgcolor="#f7f6f2", paper_bgcolor="#f7f6f2",
+        plot_bgcolor="#EEF2FF", paper_bgcolor="#EEF2FF",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
         xaxis=dict(showgrid=False),
-        yaxis=dict(showgrid=True, gridcolor="#e2e8e4", ticksuffix="%"),
+        yaxis=dict(showgrid=True, gridcolor="#DBEAFE", ticksuffix="%"),
         hovermode="x unified",
     )
     st.plotly_chart(fig_churn, use_container_width=True)
