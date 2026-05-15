@@ -557,7 +557,7 @@ def inject_theme():
     st.markdown(KALLAS_CSS, unsafe_allow_html=True)
     # EXA logo acima da navegação do sidebar (st.logo aparece em todas as páginas)
     try:
-        st.logo(_load_logo_b64())
+        st.logo(_load_logo_b64(), size="large")
     except Exception:
         pass
 
