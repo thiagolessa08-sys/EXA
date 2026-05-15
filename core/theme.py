@@ -118,11 +118,22 @@ KALLAS_CSS = """
   }
 
   /* Remove Streamlit defaults */
-  #MainMenu, footer, header { visibility: hidden; }
-  .block-container {
-    padding: 0.5rem 1rem 1.5rem !important;
-    max-width: 1400px !important;
+  #MainMenu, footer, header { visibility: hidden !important; display: none !important; }
+  [data-testid="stHeader"],
+  [data-testid="stToolbar"],
+  [data-testid="stDecoration"],
+  [data-testid="stStatusWidget"] {
+    display: none !important;
+    height: 0 !important;
   }
+  .block-container {
+    padding: 0.25rem 0.75rem 1.5rem !important;
+    max-width: 1400px !important;
+    margin-top: 0 !important;
+  }
+  /* Remove espaço extra que Streamlit injeta antes do conteúdo */
+  .stMainBlockContainer { padding-top: 0.25rem !important; }
+  [data-testid="stAppViewContainer"] > section { padding-top: 0 !important; }
 
   /* ── Scrollbar ── */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -345,8 +356,8 @@ KALLAS_CSS = """
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius-sm);
-    padding: 12px 20px;
-    margin-top: -0.5rem;
+    padding: 8px 16px;
+    margin-top: -0.25rem;
     margin-bottom: 0;
     box-shadow: var(--shadow-sm);
   }
