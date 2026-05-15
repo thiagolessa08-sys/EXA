@@ -7,6 +7,9 @@ import pandas as pd
 from core.sql_agent import generate_sql
 from core.databricks_client import execute_query, test_connection
 from core.catalog_loader import reload_catalog, build_catalog_context, build_rules_context
+from core.theme import inject_theme
+
+inject_theme()
 
 
 def _try_chart(df: pd.DataFrame):
