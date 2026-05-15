@@ -120,7 +120,7 @@ KALLAS_CSS = """
   /* Remove Streamlit defaults */
   #MainMenu, footer, header { visibility: hidden; }
   .block-container {
-    padding: 1.8rem 2rem 2rem !important;
+    padding: 0.5rem 1rem 1.5rem !important;
     max-width: 1400px !important;
   }
 
