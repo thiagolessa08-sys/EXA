@@ -18,12 +18,16 @@ inject_theme()
 
 # ── Sidebar ──────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.title("📊 Chat Analytics")
+    st.markdown(
+        '<h2 style="font-family:\'Instrument Serif\',serif;font-size:22px;font-weight:400;'
+        'color:#fff;margin:0 0 4px">Chat Analytics</h2>',
+        unsafe_allow_html=True,
+    )
+    st.caption("Pergunte sobre seus dados em português")
     st.markdown("---")
 
-    # Status da conexão
-    st.subheader("Conexão Databricks")
-    if st.button("🔌 Testar conexão"):
+    st.subheader("Conexão")
+    if st.button("↺  Testar conexão"):
         with st.spinner("Testando..."):
             ok, msg = test_connection()
         if ok:
@@ -33,13 +37,12 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # Recarregar catálogo
-    st.subheader("Catálogo & Regras")
-    if st.button("🔄 Recarregar catálogo"):
+    st.subheader("Catálogo")
+    if st.button("⟳  Recarregar catálogo"):
         reload_catalog()
         st.success("Catálogo recarregado!")
 
-    with st.expander("Ver catálogo de dados"):
+    with st.expander("Ver catálogo"):
         st.markdown(build_catalog_context())
 
     with st.expander("Ver regras de negócio"):
@@ -47,12 +50,11 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # Limpar histórico
-    if st.button("🗑️ Limpar conversa"):
+    if st.button("✕  Limpar conversa"):
         st.session_state.messages = []
         st.rerun()
 
-    st.caption("Edite `catalog/data_catalog.yaml` e `catalog/business_rules.yaml` para personalizar o agente.")
+    st.caption("Edite os arquivos YAML para ajustar o comportamento do agente.")
 
 # ── Estado da sessão ──────────────────────────────────────────────────────────
 if "messages" not in st.session_state:

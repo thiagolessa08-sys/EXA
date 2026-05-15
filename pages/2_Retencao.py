@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
-from core.theme import inject_theme, page_header
+from core.theme import inject_theme, page_header, kpi_card
 
 st.set_page_config(page_title="Retenção", page_icon="🔄", layout="wide")
 inject_theme()
@@ -213,22 +213,16 @@ with st.spinner("Carregando indicadores..."):
 
         c1,c2,c3,c4,c5,c6 = st.columns(6)
         cards = [
-            (c1, "RETENÇÃO W1",    f"{ret_w1:.1f}%", "depósito W1",      ret_w1 > 0),
-            (c2, "RETENÇÃO W4",    f"{ret_w4:.1f}%", "depósito W4",      ret_w4 > 0),
-            (c3, "RETENÇÃO W8",    f"{ret_w8:.1f}%", "jan W1",           ret_w8 > 0),
-            (c4, "USUÁRIOS ATIVOS",f"{n_w1:,}",       "recorrentes W1",  True),
-            (c5, "STAKE RETIDO",   fmt_money(stake),  "vs. mês ant.",     True),
-            (c6, "RECEITA RETIDA", fmt_money(abs(ngr)),"NGR retenção",   True),
+            (c1, "RETENÇÃO W1",    f"{ret_w1:.1f}%", "semana 1",         "repeat",      "up" if ret_w1 > 0 else "down"),
+            (c2, "RETENÇÃO W4",    f"{ret_w4:.1f}%", "semana 4",         "repeat",      "up" if ret_w4 > 0 else "down"),
+            (c3, "RETENÇÃO W8",    f"{ret_w8:.1f}%", "semana 8",         "activity",    "up" if ret_w8 > 0 else "down"),
+            (c4, "USUÁRIOS ATIVOS",f"{n_w1:,}",       "recorrentes W1",  "users",       "up"),
+            (c5, "STAKE RETIDO",   fmt_money(stake),  "período",          "dollar",      "up"),
+            (c6, "RECEITA RETIDA", fmt_money(abs(ngr)),"NGR retenção",    "bar-chart",   "up"),
         ]
-        for col, label, value, sub, up in cards:
+        for col, label, value, sub, icon, sub_type in cards:
             with col:
-                delta_cls = "kpi-delta-up" if up else "kpi-delta-down"
-                arrow = "▲" if up else "▼"
-                st.markdown(f"""<div class="kpi-card">
-                  <div class="kpi-label">{label}</div>
-                  <div class="kpi-value">{value}</div>
-                  <div class="{delta_cls}">{arrow} {sub}</div>
-                </div>""", unsafe_allow_html=True)
+                st.markdown(kpi_card(label, value, sub, icon, sub_type=sub_type), unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Erro nos KPIs: {e}")
 

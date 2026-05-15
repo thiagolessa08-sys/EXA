@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
-from core.theme import inject_theme, page_header
+from core.theme import inject_theme, page_header, kpi_card
 
 st.set_page_config(page_title="Performance", page_icon="💰", layout="wide")
 inject_theme()
@@ -253,22 +253,16 @@ with st.spinner("Carregando..."):
 
         c1,c2,c3,c4,c5,c6 = st.columns(6)
         kpis = [
-            (c1, "STAKE TOTAL",     fmt_money(stake),    "11.5% período",   True),
-            (c2, "GGR",             fmt_money(ggr),      "11.0% estimado",  True),
-            (c3, "NGR",             fmt_money(ngr),      "12.5% estimado",  True),
-            (c4, "APOSTAS",         fmt_num(apostas),    "9.8% total",      True),
-            (c5, "USUÁRIOS APOST.", fmt_num(users),      "14.2% únicos",    True),
-            (c6, "STAKE / USUÁRIO", fmt_money(spu),      "2.3% médio",      spu >= 0),
+            (c1, "STAKE TOTAL",     fmt_money(stake),    "volume apostado",  "trending-up", "up"),
+            (c2, "GGR",             fmt_money(ggr),      "receita bruta",    "bar-chart",   "up"),
+            (c3, "NGR",             fmt_money(ngr),      "receita líquida",  "dollar",      "up" if ngr >= 0 else "down"),
+            (c4, "APOSTAS",         fmt_num(apostas),    "total de rodadas",  "hash",        "up"),
+            (c5, "USUÁRIOS APOST.", fmt_num(users),      "jogadores únicos",  "users",       "up"),
+            (c6, "STAKE / USUÁRIO", fmt_money(spu),      "ticket médio",      "divide",      "up" if spu >= 0 else "down"),
         ]
-        for col, label, value, sub, up in kpis:
+        for col, label, value, sub, icon, sub_type in kpis:
             with col:
-                cls = "kpi-up" if up else "kpi-down"
-                arrow = "▲" if up else "▼"
-                st.markdown(f"""<div class="kpi-card">
-                  <div class="kpi-label">{label}</div>
-                  <div class="kpi-value">{value}</div>
-                  <div class="{cls}">{arrow} {sub}</div>
-                </div>""", unsafe_allow_html=True)
+                st.markdown(kpi_card(label, value, sub, icon, sub_type=sub_type), unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Erro nos KPIs: {e}")
         stake = ggr = ngr = apostas = users = spu = 0

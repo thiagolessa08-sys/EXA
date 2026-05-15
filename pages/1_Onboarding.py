@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
-from core.theme import inject_theme, page_header
+from core.theme import inject_theme, page_header, kpi_card
 
 st.set_page_config(page_title="Onboarding", page_icon="📈", layout="wide")
 inject_theme()
@@ -230,20 +230,16 @@ with st.spinner("Carregando indicadores..."):
         st.markdown('<div class="section-title">INDICADORES DE ATIVAÇÃO</div>', unsafe_allow_html=True)
         c1, c2, c3, c4, c5, c6 = st.columns(6)
         ativ = [
-            (c1, "CADASTROS",     fmt(cadastros), f"{conv_ftd:.1f}% conv. FTD", False),
-            (c2, "FTDS",          fmt(ftds),       f"{conv_ftd:.1f}% dos cad.",  False),
-            (c3, "KYC APROVADOS", fmt(kyc),         f"{conv_kyc:.0f}% dos FTDs",  False),
-            (c4, "FTS",           fmt(fts),         f"{conv_fts:.0f}% dos FTDs",  False),
-            (c5, "CONV. CADASTRO→FTD", f"{conv_ftd:.1f}%", "conversão acumulada", False),
-            (c6, "CONV. FTD→FTS",      f"{conv_fts:.1f}%", "conversão acumulada", False),
+            (c1, "CADASTROS",       fmt(cadastros),     f"{conv_ftd:.1f}% conv. FTD",    "users",      "up"),
+            (c2, "FTDS",            fmt(ftds),           f"{conv_ftd:.1f}% dos cadastros", "dollar",     "up"),
+            (c3, "KYC APROVADOS",   fmt(kyc),             f"{conv_kyc:.0f}% dos FTDs",    "shield",     "up"),
+            (c4, "FTS",             fmt(fts),             f"{conv_fts:.0f}% dos FTDs",    "zap",        "up"),
+            (c5, "CONV. CAD → FTD", f"{conv_ftd:.1f}%",  "conversão acumulada",          "percent",    "neutral"),
+            (c6, "CONV. FTD → FTS", f"{conv_fts:.1f}%",  "conversão acumulada",          "percent",    "neutral"),
         ]
-        for col, label, value, delta, _ in ativ:
+        for col, label, value, sub, icon, sub_type in ativ:
             with col:
-                st.markdown(f"""<div class="kpi-card">
-                  <div class="kpi-label">{label}</div>
-                  <div class="kpi-value">{value}</div>
-                  <div class="kpi-delta">{delta}</div>
-                </div>""", unsafe_allow_html=True)
+                st.markdown(kpi_card(label, value, sub, icon, sub_type=sub_type), unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -252,29 +248,13 @@ with st.spinner("Carregando indicadores..."):
         ch1, ch2, ch3, ch4 = st.columns(4)
 
         with ch1:
-            st.markdown(f"""<div class="kpi-card-churn">
-              <div class="kpi-label">CHURN FTD (qtd)</div>
-              <div class="kpi-value">{fmt(churn_ftd_n)}</div>
-              <div class="kpi-churn">Cadastros sem 1º depósito</div>
-            </div>""", unsafe_allow_html=True)
+            st.markdown(kpi_card("CHURN FTD (qtd)", fmt(churn_ftd_n), "Cadastros sem 1º depósito", "trending-down", "churn", "churn"), unsafe_allow_html=True)
         with ch2:
-            st.markdown(f"""<div class="kpi-card-churn">
-              <div class="kpi-label">CHURN FTD (%)</div>
-              <div class="kpi-value">{churn_ftd_p:.1f}%</div>
-              <div class="kpi-churn">{churn_ftd_n:,} de {cadastros:,} cadastros</div>
-            </div>""", unsafe_allow_html=True)
+            st.markdown(kpi_card("CHURN FTD (%)", f"{churn_ftd_p:.1f}%", f"{churn_ftd_n:,} de {cadastros:,} cadastros", "percent", "churn", "churn"), unsafe_allow_html=True)
         with ch3:
-            st.markdown(f"""<div class="kpi-card-churn">
-              <div class="kpi-label">CHURN FTS (qtd)</div>
-              <div class="kpi-value">{fmt(churn_fts_n)}</div>
-              <div class="kpi-churn">FTDs sem aposta esportiva</div>
-            </div>""", unsafe_allow_html=True)
+            st.markdown(kpi_card("CHURN FTS (qtd)", fmt(churn_fts_n), "FTDs sem aposta esportiva", "trending-down", "churn", "churn"), unsafe_allow_html=True)
         with ch4:
-            st.markdown(f"""<div class="kpi-card-churn">
-              <div class="kpi-label">CHURN FTS (%)</div>
-              <div class="kpi-value">{churn_fts_p:.1f}%</div>
-              <div class="kpi-churn">{churn_fts_n:,} de {ftds:,} FTDs</div>
-            </div>""", unsafe_allow_html=True)
+            st.markdown(kpi_card("CHURN FTS (%)", f"{churn_fts_p:.1f}%", f"{churn_fts_n:,} de {ftds:,} FTDs", "percent", "churn", "churn"), unsafe_allow_html=True)
 
     except Exception as e:
         st.error(f"Erro ao carregar KPIs: {e}")
