@@ -411,15 +411,18 @@ KALLAS_CSS = """
   [data-testid="stLogo"],
   [data-testid="stLogoLink"] {
     background: linear-gradient(180deg, #1e3fa8 0%, #162f8a 100%) !important;
-    padding: 24px 22px 20px !important;
+    padding: 20px 16px 16px !important;
     display: flex !important;
     align-items: center !important;
+    width: 100% !important;
   }
   [data-testid="stLogo"] img,
   [data-testid="stLogoLink"] img {
-    max-height: 100px !important;
-    width: auto !important;
+    max-height: 999px !important;
+    width: 100% !important;
+    height: auto !important;
     object-fit: contain !important;
+    display: block !important;
   }
 
   /* ── EXA Blue Sidebar ── */
