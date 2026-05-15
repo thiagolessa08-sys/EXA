@@ -461,13 +461,34 @@ KALLAS_CSS = """
     opacity: 0 !important;
   }
 
-  /* ── EXA Blue Sidebar ── */
+  /* ── Esconder botão de colapsar sidebar ── */
+  [data-testid="stSidebarCollapseButton"],
+  [data-testid="collapsedControl"],
+  button[data-testid="baseButton-headerNoPadding"],
+  [data-testid="stSidebar"] button[kind="header"] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* ── EXA Blue Sidebar — sempre visível e fixo ── */
   [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #1e3fa8 0%, #0d1f6e 100%) !important;
     border-right: none !important;
     box-shadow: 4px 0 32px rgba(11,31,110,.22) !important;
     width: 240px !important;
     min-width: 240px !important;
+    display: block !important;
+    visibility: visible !important;
+    transform: none !important;
+    left: 0 !important;
+    position: relative !important;
+  }
+  /* Força sidebar a voltar quando colapsado */
+  [data-testid="stSidebar"][aria-expanded="false"] {
+    transform: none !important;
+    margin-left: 0 !important;
+    left: 0 !important;
+    display: block !important;
   }
   [data-testid="stSidebar"] > div:first-child {
     width: 240px !important;
