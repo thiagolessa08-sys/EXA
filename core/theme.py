@@ -122,7 +122,17 @@ KALLAS_CSS = """
   [data-testid="stHeader"],
   [data-testid="stToolbar"],
   [data-testid="stDecoration"],
-  [data-testid="stStatusWidget"] {
+  [data-testid="stStatusWidget"],
+  [data-testid="manage-app-button"],
+  div[class*="StatusWidget"] {
+    display: none !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+  /* Remove a faixa branca/cinza do topo */
+  .stApp > header,
+  .stApp [data-testid="stHeader"],
+  section[data-testid="stMain"] > div:first-child[style*="height"] {
     display: none !important;
     height: 0 !important;
   }
@@ -133,7 +143,19 @@ KALLAS_CSS = """
   }
   /* Remove espaço extra que Streamlit injeta antes do conteúdo */
   .stMainBlockContainer { padding-top: 0.25rem !important; }
-  [data-testid="stAppViewContainer"] > section { padding-top: 0 !important; }
+  section[data-testid="stMain"] { padding-top: 0 !important; }
+
+  /* ── Esconder labels de seção do sidebar nav ("app", "chat") ── */
+  [data-testid="stSidebarNavSectionHeader"],
+  [data-testid="stSidebarNavItems"] > div:has(> p),
+  .stSidebarNavSectionHeader,
+  [data-testid="stSidebar"] nav > div > div > p,
+  [data-testid="stSidebar"] nav p {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
 
   /* ── Scrollbar ── */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
