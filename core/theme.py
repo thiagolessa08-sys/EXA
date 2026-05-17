@@ -88,31 +88,41 @@ KALLAS_CSS = """
 
 <style>
   :root {
-    --bg:          #EEF2FF;
+    --bg:          #F0F4FF;
     --surface:     #ffffff;
-    --surface-2:   #F0F4FF;
-    --ink:         #0F172A;
-    --ink-2:       #334155;
-    --ink-3:       #64748B;
-    --line:        #DBEAFE;
-    --line-2:      #BFDBFE;
+    --surface-2:   #F6F9FF;
+    --ink:         #0B1629;
+    --ink-2:       #2D3F5E;
+    --ink-3:       #607090;
+    --line:        #E2EAFF;
+    --line-2:      #C7D7FF;
+    --blue:        #2563EB;
+    --blue-deep:   #1D3186;
+    --blue-soft:   #EBF1FF;
+    --blue-mid:    #60A5FA;
+    /* aliases para compatibilidade */
     --green:       #2563EB;
     --green-deep:  #1D3186;
-    --green-ink:   #0F172A;
-    --green-soft:  #DBEAFE;
+    --green-ink:   #0B1629;
+    --green-soft:  #EBF1FF;
     --green-mid:   #60A5FA;
     --amber:       #F59E0B;
     --rose:        #EF4444;
-    --radius:      22px;
-    --radius-sm:   14px;
-    --shadow-sm:   0 4px 14px rgba(11,46,107,.07);
-    --shadow-md:   0 10px 28px rgba(11,46,107,.09);
-    --shadow-lg:   0 20px 48px rgba(11,46,107,.14);
+    --emerald:     #10B981;
+    --radius:      20px;
+    --radius-sm:   12px;
+    --shadow-sm:   0 1px 3px rgba(11,23,64,.05), 0 6px 20px rgba(37,99,235,.08);
+    --shadow-md:   0 3px 10px rgba(11,23,64,.07), 0 18px 40px rgba(37,99,235,.11);
+    --shadow-lg:   0 8px 24px rgba(11,23,64,.09), 0 32px 64px rgba(37,99,235,.15);
+    --sidebar-w:   248px;
   }
 
   html, body, [class*="css"] {
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important;
-    background-color: var(--bg) !important;
+    background:
+      radial-gradient(ellipse 900px 600px at 0% 0%, rgba(37,99,235,.07) 0%, transparent 65%),
+      radial-gradient(ellipse 700px 500px at 100% 100%, rgba(29,49,134,.05) 0%, transparent 65%),
+      #F0F4FF !important;
     color: var(--ink) !important;
     -webkit-font-smoothing: antialiased;
   }
@@ -165,9 +175,11 @@ KALLAS_CSS = """
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    padding: 22px;
+    padding: 24px;
     box-shadow: var(--shadow-sm);
+    transition: box-shadow .2s, transform .2s;
   }
+  .kallas-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
 
   /* ── KPI Sparkline bars (HTML reference pattern) ── */
   .kpi-spark {
@@ -194,10 +206,11 @@ KALLAS_CSS = """
   .kpi-card {
     background: var(--surface);
     border: 1px solid var(--line);
+    border-left: 3px solid var(--blue) !important;
     border-radius: var(--radius);
     padding: 18px 20px;
     box-shadow: var(--shadow-sm);
-    transition: box-shadow .2s, transform .2s;
+    transition: box-shadow .25s, transform .25s;
     height: 100%;
     display: flex;
     align-items: center;
@@ -206,35 +219,40 @@ KALLAS_CSS = """
     position: relative;
     overflow: hidden;
   }
-  .kpi-card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
-  }
+  .kpi-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
+
   .kpi-card-feature {
-    background: linear-gradient(135deg, #1e3fa8 0%, #0d1f6e 100%);
+    background: linear-gradient(135deg, #1e3fa8 0%, #0b1a6b 100%);
     border: none;
     border-radius: var(--radius);
     padding: 18px 20px;
     box-shadow: var(--shadow-md);
     position: relative;
     overflow: hidden;
-    transition: box-shadow .2s, transform .2s;
+    transition: box-shadow .25s, transform .25s;
     display: flex;
     align-items: center;
     gap: 16px;
     text-align: left;
   }
-  .kpi-card-feature:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
+  .kpi-card-feature::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,.06);
+    border-radius: 50%;
   }
+  .kpi-card-feature:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
+
   .kpi-card-churn {
     background: var(--surface);
     border: 1px solid #fecaca;
+    border-left: 3px solid var(--rose) !important;
     border-radius: var(--radius);
     padding: 18px 20px;
     box-shadow: var(--shadow-sm);
-    transition: box-shadow .2s, transform .2s;
+    transition: box-shadow .25s, transform .25s;
     display: flex;
     align-items: center;
     gap: 16px;
@@ -242,10 +260,7 @@ KALLAS_CSS = """
     position: relative;
     overflow: hidden;
   }
-  .kpi-card-churn:hover {
-    box-shadow: 0 10px 28px rgba(212,84,74,.12);
-    transform: translateY(-2px);
-  }
+  .kpi-card-churn:hover { box-shadow: 0 10px 32px rgba(239,68,68,.14); transform: translateY(-3px); }
 
   /* ── KPI Text wrapper ── */
   .kpi-text { flex: 1; min-width: 0; }
@@ -255,119 +270,134 @@ KALLAS_CSS = """
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    background: var(--green-soft);
-    border-radius: 50%;
-    color: var(--green);
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    background: var(--blue-soft);
+    border-radius: 14px;
+    color: var(--blue);
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(37,99,235,.15);
   }
   .kpi-card-feature .kpi-icon {
-    background: rgba(255,255,255,.15);
-    color: rgba(255,255,255,.9);
+    background: rgba(255,255,255,.18);
+    color: rgba(255,255,255,.95);
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
   }
   .kpi-card-churn .kpi-icon {
     background: #fee2e2;
     color: var(--rose);
+    box-shadow: 0 2px 8px rgba(239,68,68,.15);
   }
 
-  /* ── KPI Typography (bold heavy sans-serif, HTML reference style) ── */
+  /* ── KPI Typography ── */
   .kpi-label {
-    font-size: 10px;
-    font-weight: 700;
+    font-size: 9.5px;
+    font-weight: 800;
     color: var(--ink-3);
-    letter-spacing: .12em;
+    letter-spacing: .13em;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
   }
   .kpi-label-light {
-    font-size: 10px;
-    font-weight: 700;
-    color: rgba(255,255,255,.55);
-    letter-spacing: .12em;
+    font-size: 9.5px;
+    font-weight: 800;
+    color: rgba(255,255,255,.6);
+    letter-spacing: .13em;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
   }
   .kpi-value {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 26px;
+    font-size: 28px;
     font-weight: 800;
-    letter-spacing: -.03em;
-    line-height: 1.1;
-    color: var(--green-deep);
+    letter-spacing: -.04em;
+    line-height: 1.05;
+    color: var(--blue-deep);
     margin: 0 0 4px;
   }
   .kpi-value-light {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 26px;
+    font-size: 28px;
     font-weight: 800;
-    letter-spacing: -.03em;
-    line-height: 1.1;
+    letter-spacing: -.04em;
+    line-height: 1.05;
     color: #ffffff;
     margin: 0 0 4px;
   }
-  .kpi-up    { font-size: 11px; color: #16a34a; font-weight: 700; }
-  .kpi-down  { font-size: 11px; color: #ef4444; font-weight: 700; }
+  .kpi-up    { font-size: 11px; color: #059669; font-weight: 700; }
+  .kpi-down  { font-size: 11px; color: #dc2626; font-weight: 700; }
   .kpi-churn { font-size: 11px; color: var(--rose); font-weight: 700; }
-  .kpi-sub   { font-size: 10.5px; color: var(--ink-3); margin-top: 1px; }
+  .kpi-sub   { font-size: 10.5px; color: var(--ink-3); margin-top: 2px; line-height: 1.4; }
 
   /* ── Section Titles ── */
   .section-title {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: var(--green-deep);
-    letter-spacing: .08em;
-    border-left: 3px solid var(--green);
-    padding-left: 10px;
-    margin-bottom: 16px;
+    font-size: 10.5px;
+    font-weight: 800;
+    color: var(--blue-deep);
+    letter-spacing: .11em;
+    border-left: 3px solid var(--blue);
+    padding: 6px 14px 6px 11px;
+    background: rgba(37,99,235,.06);
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 18px;
     text-transform: uppercase;
   }
   .section-title-red {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #b91c1c;
-    letter-spacing: .08em;
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #991b1b;
+    letter-spacing: .11em;
     border-left: 3px solid var(--rose);
-    padding-left: 10px;
-    margin-bottom: 16px;
+    padding: 6px 14px 6px 11px;
+    background: rgba(239,68,68,.06);
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 18px;
     text-transform: uppercase;
   }
 
   /* ── Page Header ── */
   .page-title {
     font-family: 'Instrument Serif', serif;
-    font-size: 42px;
+    font-size: 46px;
     font-weight: 400;
-    letter-spacing: -.02em;
+    letter-spacing: -.025em;
     color: var(--ink);
-    margin: 0 0 4px;
-    line-height: 1.1;
+    margin: 10px 0 6px;
+    line-height: 1.05;
   }
-  .page-title em { font-style: italic; color: var(--green); }
-  .page-sub { color: var(--ink-2); font-size: 14px; margin: 0; }
+  .page-title em { font-style: italic; color: var(--blue); }
+  .page-sub {
+    color: var(--ink-3);
+    font-size: 14px;
+    font-weight: 400;
+    margin: 0 0 4px;
+    line-height: 1.5;
+  }
   .page-ts  {
-    font-size: 11.5px;
+    font-size: 11px;
     color: var(--ink-3);
     text-align: right;
-    padding-top: 22px;
+    padding-top: 26px;
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 6px;
+    font-weight: 500;
   }
   .page-ts::before {
     content: '';
     display: inline-block;
     width: 7px; height: 7px;
-    background: var(--green);
+    background: var(--emerald);
     border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(16,185,129,.2);
   }
 
   /* ── Filter Bar (removido — não usado mais; mantido vazio por segurança) ── */
@@ -380,16 +410,22 @@ KALLAS_CSS = """
     font-family: 'Plus Jakarta Sans', sans-serif !important;
     font-size: 13px !important;
     background: var(--surface) !important;
+    box-shadow: 0 1px 4px rgba(37,99,235,.06) !important;
   }
   div[data-baseweb="select"] > div:focus-within {
-    border-color: var(--green) !important;
-    box-shadow: 0 0 0 2px rgba(58,125,82,.15) !important;
+    border-color: var(--blue) !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.12) !important;
   }
   .stDateInput input, .stTextInput input {
     border-radius: 10px !important;
     border-color: var(--line) !important;
     font-family: 'Plus Jakarta Sans', sans-serif !important;
     font-size: 13px !important;
+    box-shadow: 0 1px 4px rgba(37,99,235,.06) !important;
+  }
+  .stDateInput input:focus, .stTextInput input:focus {
+    border-color: var(--blue) !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.12) !important;
   }
   .stButton > button {
     border-radius: 12px !important;
@@ -473,29 +509,25 @@ KALLAS_CSS = """
     visibility: hidden !important;
   }
 
-  /* ── EXA Blue Sidebar — sempre visível e fixo ── */
+  /* ── EXA Sidebar — sempre visível e fixo ── */
   [data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #1e3fa8 0%, #0d1f6e 100%) !important;
+    background: linear-gradient(160deg, #1a3ba0 0%, #0c1a60 60%, #091550 100%) !important;
     border-right: none !important;
-    box-shadow: 4px 0 32px rgba(11,31,110,.22) !important;
-    width: 240px !important;
-    min-width: 240px !important;
+    box-shadow: 6px 0 36px rgba(9,21,80,.30) !important;
+    width: var(--sidebar-w) !important;
+    min-width: var(--sidebar-w) !important;
     display: block !important;
     visibility: visible !important;
     transform: none !important;
     left: 0 !important;
     position: relative !important;
   }
-  /* Força sidebar a voltar quando colapsado */
   [data-testid="stSidebar"][aria-expanded="false"] {
-    transform: none !important;
-    margin-left: 0 !important;
-    left: 0 !important;
-    display: block !important;
+    transform: none !important; margin-left: 0 !important; left: 0 !important; display: block !important;
   }
   [data-testid="stSidebar"] > div:first-child {
-    width: 240px !important;
-    min-width: 240px !important;
+    width: var(--sidebar-w) !important;
+    min-width: var(--sidebar-w) !important;
   }
   [data-testid="stSidebarContent"] {
     background: transparent !important;
@@ -523,29 +555,32 @@ KALLAS_CSS = """
 
   /* Sidebar nav links */
   [data-testid="stSidebarNavLink"] {
-    border-radius: 12px !important;
-    color: rgba(255,255,255,.7) !important;
+    border-radius: 10px !important;
+    color: rgba(255,255,255,.65) !important;
     font-weight: 500 !important;
     font-size: 13.5px !important;
     padding: 10px 14px !important;
-    transition: background .15s, color .15s !important;
+    transition: background .18s, color .18s, border-color .18s !important;
     display: flex !important;
     align-items: center !important;
     gap: 10px !important;
+    border-left: 3px solid transparent !important;
+    margin-bottom: 2px !important;
   }
   [data-testid="stSidebarNavLink"]:hover {
-    background: rgba(255,255,255,.1) !important;
-    color: #fff !important;
+    background: rgba(255,255,255,.09) !important;
+    color: rgba(255,255,255,.9) !important;
+    border-left-color: rgba(255,255,255,.3) !important;
   }
   [data-testid="stSidebarNavLink"][aria-current="page"] {
-    background: rgba(255,255,255,.16) !important;
+    background: rgba(255,255,255,.14) !important;
     color: #fff !important;
     font-weight: 700 !important;
+    border-left-color: #60A5FA !important;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08) !important;
   }
   [data-testid="stSidebarNavLink"] span,
-  [data-testid="stSidebarNavLink"] p {
-    color: inherit !important;
-  }
+  [data-testid="stSidebarNavLink"] p { color: inherit !important; }
   /* Ícone do nav link (emoji/imagem) — monocromático branco */
   [data-testid="stSidebarNavLinkIcon"] {
     display: flex !important;
@@ -690,10 +725,16 @@ KALLAS_CSS = """
   div[class*="stPlotlyChart"] {
     background: var(--surface) !important;
     border: 1px solid var(--line) !important;
+    border-top: 3px solid var(--blue) !important;
     border-radius: var(--radius) !important;
-    padding: 12px 4px 4px !important;
+    padding: 14px 4px 4px !important;
     box-shadow: var(--shadow-sm) !important;
     overflow: visible !important;
+    transition: box-shadow .25s !important;
+  }
+  [data-testid="stPlotlyChart"]:hover,
+  div[class*="stPlotlyChart"]:hover {
+    box-shadow: var(--shadow-md) !important;
   }
   [data-testid="stPlotlyChart"] > div,
   div[class*="stPlotlyChart"] > div {
