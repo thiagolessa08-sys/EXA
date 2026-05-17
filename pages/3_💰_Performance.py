@@ -24,6 +24,12 @@ def fmt_num(v):
 
 # ── Filtros ───────────────────────────────────────────────────────────────────
 with st.container():
+    st.markdown('''<div class="exa-topbar-row">
+      <span class="exa-topbar-pulse"></span>
+      <span class="exa-topbar-brand">EXA &middot; Analytics</span>
+      <span class="exa-topbar-sep"></span>
+      <span class="exa-topbar-live-badge"><span></span>Live</span>
+    </div>''', unsafe_allow_html=True)
     f1, f2, f3, f4, f5 = st.columns([2, 2, 2, 2, 2])
     today = date.today()
 

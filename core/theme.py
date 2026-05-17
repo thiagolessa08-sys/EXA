@@ -756,41 +756,14 @@ KALLAS_CSS = """
   /* Alerts */
   .stAlert { border-radius: var(--radius-sm) !important; }
 
-  /* ── Topbar ──────────────────────────────────────────────────────────────── */
-  .exa-topbar {
-    position: relative;
-    width: calc(100% + 2.5rem);
-    margin: -0.5rem -1.25rem 1.5rem;
-    height: 54px;
-    background: linear-gradient(105deg, #07123d 0%, #0d1f6e 20%, #1a3ba0 45%, #2563EB 65%, #1a3ba0 82%, #0d1f6e 100%);
+  /* ── Topbar Row (brand strip embutido no container de filtros) ───────────── */
+  .exa-topbar-row {
     display: flex;
     align-items: center;
-    padding: 0 28px;
     gap: 14px;
-    overflow: hidden;
-    box-shadow: 0 6px 28px rgba(7,18,61,.40), 0 1px 0 rgba(255,255,255,.07) inset;
-  }
-  /* dot-grid overlay */
-  .exa-topbar::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: radial-gradient(circle, rgba(255,255,255,.10) 1px, transparent 1px);
-    background-size: 22px 22px;
-    pointer-events: none;
-  }
-  /* bottom shimmer line */
-  .exa-topbar::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg,
-      transparent 0%,
-      rgba(96,165,250,.6) 20%,
-      rgba(147,197,253,.9) 50%,
-      rgba(96,165,250,.6) 80%,
-      transparent 100%);
+    padding: 10px 0 6px;
+    position: relative;
+    z-index: 1;
   }
   .exa-topbar-pulse {
     width: 8px; height: 8px;
@@ -798,7 +771,6 @@ KALLAS_CSS = """
     border-radius: 50%;
     box-shadow: 0 0 0 3px rgba(52,211,153,.25);
     flex-shrink: 0;
-    z-index: 1;
     animation: tb-pulse 2.4s ease-in-out infinite;
   }
   @keyframes tb-pulse {
@@ -812,30 +784,14 @@ KALLAS_CSS = """
     font-weight: 800;
     letter-spacing: .20em;
     text-transform: uppercase;
-    z-index: 1;
   }
   .exa-topbar-sep {
     width: 1px; height: 22px;
     background: rgba(255,255,255,.18);
     flex-shrink: 0;
-    z-index: 1;
   }
-  .exa-topbar-hint {
-    color: rgba(255,255,255,.45);
-    font-size: 10.5px;
-    font-weight: 600;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    z-index: 1;
-  }
-  .exa-topbar-right {
+  .exa-topbar-live-badge {
     margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    z-index: 1;
-  }
-  .exa-topbar-live {
     display: flex;
     align-items: center;
     gap: 5px;
@@ -849,33 +805,94 @@ KALLAS_CSS = """
     padding: 4px 10px;
     border-radius: 20px;
   }
-  .exa-topbar-live::before {
-    content: '';
+  .exa-topbar-live-badge span {
     display: inline-block;
     width: 6px; height: 6px;
     background: #34d399;
     border-radius: 50%;
   }
+
+  /* ── Container dos filtros vira a faixa azul via :has(.exa-topbar-row) ───── */
+  [data-testid="stVerticalBlock"]:has(> div > [data-testid="stMarkdownContainer"] .exa-topbar-row) {
+    position: relative;
+    width: calc(100% + 2.5rem) !important;
+    margin-left: -1.25rem !important;
+    margin-right: -1.25rem !important;
+    margin-top: -0.5rem !important;
+    margin-bottom: 1.5rem !important;
+    padding: 0 28px 12px !important;
+    background: linear-gradient(105deg, #07123d 0%, #0d1f6e 20%, #1a3ba0 45%, #2563EB 65%, #1a3ba0 82%, #0d1f6e 100%) !important;
+    box-shadow: 0 6px 28px rgba(7,18,61,.40), 0 1px 0 rgba(255,255,255,.07) inset !important;
+    border-radius: 0 !important;
+    overflow: hidden;
+    z-index: 10;
+  }
+  /* dot-grid overlay */
+  [data-testid="stVerticalBlock"]:has(> div > [data-testid="stMarkdownContainer"] .exa-topbar-row)::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,.10) 1px, transparent 1px);
+    background-size: 22px 22px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  /* bottom shimmer line */
+  [data-testid="stVerticalBlock"]:has(> div > [data-testid="stMarkdownContainer"] .exa-topbar-row)::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(96,165,250,.6) 20%,
+      rgba(147,197,253,.9) 50%,
+      rgba(96,165,250,.6) 80%,
+      transparent 100%);
+    z-index: 1;
+  }
+  /* Dropdowns no modo escuro */
+  [data-testid="stVerticalBlock"]:has(> div > [data-testid="stMarkdownContainer"] .exa-topbar-row) div[data-baseweb="select"] > div {
+    background: rgba(255,255,255,.10) !important;
+    border-color: rgba(255,255,255,.25) !important;
+    color: rgba(255,255,255,.92) !important;
+    box-shadow: none !important;
+  }
+  [data-testid="stVerticalBlock"]:has(> div > [data-testid="stMarkdownContainer"] .exa-topbar-row) div[data-baseweb="select"] > div:focus-within {
+    border-color: rgba(255,255,255,.55) !important;
+    box-shadow: 0 0 0 2px rgba(255,255,255,.15) !important;
+  }
+  [data-testid="stVerticalBlock"]:has(> div > [data-testid="stMarkdownContainer"] .exa-topbar-row) div[data-baseweb="select"] svg {
+    fill: rgba(255,255,255,.70) !important;
+  }
+  /* Date input no modo escuro */
+  [data-testid="stVerticalBlock"]:has(> div > [data-testid="stMarkdownContainer"] .exa-topbar-row) .stDateInput input {
+    background: rgba(255,255,255,.10) !important;
+    border-color: rgba(255,255,255,.25) !important;
+    color: rgba(255,255,255,.92) !important;
+    box-shadow: none !important;
+  }
+  /* Labels dos widgets (usados nas outras páginas) */
+  [data-testid="stVerticalBlock"]:has(> div > [data-testid="stMarkdownContainer"] .exa-topbar-row) label,
+  [data-testid="stVerticalBlock"]:has(> div > [data-testid="stMarkdownContainer"] .exa-topbar-row) .stWidgetLabel p {
+    color: rgba(255,255,255,.60) !important;
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: .09em !important;
+    text-transform: uppercase !important;
+  }
+  /* Caption / texto genérico */
+  [data-testid="stVerticalBlock"]:has(> div > [data-testid="stMarkdownContainer"] .exa-topbar-row) [data-testid="stCaptionContainer"] p,
+  [data-testid="stVerticalBlock"]:has(> div > [data-testid="stMarkdownContainer"] .exa-topbar-row) p {
+    color: rgba(255,255,255,.80) !important;
+  }
 </style>
 """
 
 
-_TOPBAR_HTML = """
-<div class="exa-topbar">
-  <span class="exa-topbar-pulse"></span>
-  <span class="exa-topbar-brand">EXA &middot; Analytics</span>
-  <span class="exa-topbar-sep"></span>
-  <span class="exa-topbar-hint">Filtros</span>
-  <div class="exa-topbar-right">
-    <span class="exa-topbar-live">Live</span>
-  </div>
-</div>
-"""
-
 def inject_theme():
     import streamlit as st
     st.markdown(KALLAS_CSS, unsafe_allow_html=True)
-    st.markdown(_TOPBAR_HTML, unsafe_allow_html=True)
     try:
         st.logo(_load_logo_b64(), size="large")
     except Exception:
