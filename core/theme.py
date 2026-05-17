@@ -755,14 +755,127 @@ KALLAS_CSS = """
 
   /* Alerts */
   .stAlert { border-radius: var(--radius-sm) !important; }
+
+  /* ── Topbar ──────────────────────────────────────────────────────────────── */
+  .exa-topbar {
+    position: relative;
+    width: calc(100% + 2.5rem);
+    margin: -0.5rem -1.25rem 1.5rem;
+    height: 54px;
+    background: linear-gradient(105deg, #07123d 0%, #0d1f6e 20%, #1a3ba0 45%, #2563EB 65%, #1a3ba0 82%, #0d1f6e 100%);
+    display: flex;
+    align-items: center;
+    padding: 0 28px;
+    gap: 14px;
+    overflow: hidden;
+    box-shadow: 0 6px 28px rgba(7,18,61,.40), 0 1px 0 rgba(255,255,255,.07) inset;
+  }
+  /* dot-grid overlay */
+  .exa-topbar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,.10) 1px, transparent 1px);
+    background-size: 22px 22px;
+    pointer-events: none;
+  }
+  /* bottom shimmer line */
+  .exa-topbar::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(96,165,250,.6) 20%,
+      rgba(147,197,253,.9) 50%,
+      rgba(96,165,250,.6) 80%,
+      transparent 100%);
+  }
+  .exa-topbar-pulse {
+    width: 8px; height: 8px;
+    background: #34d399;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(52,211,153,.25);
+    flex-shrink: 0;
+    z-index: 1;
+    animation: tb-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes tb-pulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(52,211,153,.25); opacity: 1; }
+    50%       { box-shadow: 0 0 0 7px rgba(52,211,153,.08); opacity: .85; }
+  }
+  .exa-topbar-brand {
+    color: rgba(255,255,255,.92);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .20em;
+    text-transform: uppercase;
+    z-index: 1;
+  }
+  .exa-topbar-sep {
+    width: 1px; height: 22px;
+    background: rgba(255,255,255,.18);
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .exa-topbar-hint {
+    color: rgba(255,255,255,.45);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    z-index: 1;
+  }
+  .exa-topbar-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1;
+  }
+  .exa-topbar-live {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(52,211,153,.12);
+    border: 1px solid rgba(52,211,153,.30);
+    color: #6ee7b7;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+  .exa-topbar-live::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: #34d399;
+    border-radius: 50%;
+  }
 </style>
 """
 
 
+_TOPBAR_HTML = """
+<div class="exa-topbar">
+  <span class="exa-topbar-pulse"></span>
+  <span class="exa-topbar-brand">EXA &middot; Analytics</span>
+  <span class="exa-topbar-sep"></span>
+  <span class="exa-topbar-hint">Filtros</span>
+  <div class="exa-topbar-right">
+    <span class="exa-topbar-live">Live</span>
+  </div>
+</div>
+"""
+
 def inject_theme():
     import streamlit as st
     st.markdown(KALLAS_CSS, unsafe_allow_html=True)
-
+    st.markdown(_TOPBAR_HTML, unsafe_allow_html=True)
     try:
         st.logo(_load_logo_b64(), size="large")
     except Exception:
