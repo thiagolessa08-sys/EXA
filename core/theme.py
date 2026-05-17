@@ -154,14 +154,20 @@ KALLAS_CSS = """
 
   /* ── Esconder labels de seção do sidebar nav ("app", "chat") ── */
   [data-testid="stSidebarNavSectionHeader"],
-  [data-testid="stSidebarNavItems"] > div:has(> p),
   .stSidebarNavSectionHeader,
+  /* div que contém <p> mas não contém links (= section header) */
+  [data-testid="stSidebar"] nav div:has(> p):not(:has(a)),
   [data-testid="stSidebar"] nav > div > div > p,
+  [data-testid="stSidebar"] nav > * > div > p,
   [data-testid="stSidebar"] nav p {
     display: none !important;
     height: 0 !important;
+    min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
   }
 
   /* ── Scrollbar ── */
