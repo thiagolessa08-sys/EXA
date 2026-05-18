@@ -7,7 +7,7 @@ import pandas as pd
 from core.sql_agent import generate_sql
 from core.databricks_client import execute_query, test_connection
 from core.catalog_loader import reload_catalog, build_catalog_context, build_rules_context
-from core.theme import inject_theme, page_header, topbar_strip
+from core.theme import inject_theme, page_header
 
 inject_theme()
 
@@ -63,10 +63,6 @@ with st.sidebar:
 # ── Estado da sessão ──────────────────────────────────────────────────────────
 if "messages" not in st.session_state:
     st.session_state.messages = []
-
-# ── Topbar azul ───────────────────────────────────────────────────────────────
-with st.container():
-    topbar_strip()
 
 # ── Cabeçalho ─────────────────────────────────────────────────────────────────
 page_header(

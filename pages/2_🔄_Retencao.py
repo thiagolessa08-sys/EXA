@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
-from core.theme import inject_theme, page_header, kpi_card, render_table, topbar_strip
+from core.theme import inject_theme, page_header, kpi_card, render_table
 
 inject_theme()
 
@@ -22,46 +22,35 @@ def cell_class(val):
     return "cell-low", f"{val:.0f}%"
 
 
-# ── Filtros ───────────────────────────────────────────────────────────────────
-with st.container():
-    topbar_strip()
-    f1, f1b, f2, f3, f4, f5, f6 = st.columns([2, 2, 2, 2, 2, 2, 2])
+# ── Filtros (sidebar) ─────────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("---")
+    st.markdown("**Filtros**")
 
     today = date.today()
 
-    with f1:
-        safra_tipo = st.selectbox("Granularidade", ["Ano", "Mês", "Data aberta"], label_visibility="visible")
+    safra_tipo = st.selectbox("Granularidade", ["Ano", "Mês", "Data aberta"])
 
-    with f1b:
-        if safra_tipo == "Ano":
-            anos = list(range(today.year, today.year - 5, -1))
-            ano_sel = st.selectbox("Ano", anos, label_visibility="visible")
-            dt_ini = date(ano_sel, 1, 1)
-            dt_fim = date(ano_sel, 12, 31) if ano_sel < today.year else today
-        elif safra_tipo == "Mês":
-            meses = pd.date_range(end=today, periods=18, freq="MS").strftime("%Y-%m").tolist()[::-1]
-            mes_sel = st.selectbox("Mês", meses, label_visibility="visible",
-                                   format_func=lambda x: datetime.strptime(x, "%Y-%m").strftime("%b/%y"))
-            dt_ini = datetime.strptime(mes_sel, "%Y-%m").date()
-            dt_fim = (dt_ini.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
-        else:
-            dt_ini = st.date_input("De", value=today - timedelta(days=30), label_visibility="visible")
-            dt_fim = st.date_input("Até", value=today, label_visibility="visible")
+    if safra_tipo == "Ano":
+        anos = list(range(today.year, today.year - 5, -1))
+        ano_sel = st.selectbox("Ano", anos)
+        dt_ini = date(ano_sel, 1, 1)
+        dt_fim = date(ano_sel, 12, 31) if ano_sel < today.year else today
+    elif safra_tipo == "Mês":
+        meses = pd.date_range(end=today, periods=18, freq="MS").strftime("%Y-%m").tolist()[::-1]
+        mes_sel = st.selectbox("Mês", meses,
+                               format_func=lambda x: datetime.strptime(x, "%Y-%m").strftime("%b/%y"))
+        dt_ini = datetime.strptime(mes_sel, "%Y-%m").date()
+        dt_fim = (dt_ini.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+    else:
+        dt_ini = st.date_input("De", value=today - timedelta(days=30))
+        dt_fim = st.date_input("Até", value=today)
 
-    with f2:
-        visao = st.selectbox("Visão", ["Semanal", "Quinzenal", "Mensal"], label_visibility="visible")
-
-    with f3:
-        canal_opt = st.selectbox("Canal", ["Total", "Afiliados", "Orgânico", "Mobile"], label_visibility="visible")
-
-    with f4:
-        produto_opt = st.selectbox("Produto", ["Total", "Casino", "Sports"], label_visibility="visible")
-
-    with f5:
-        base_ret = st.selectbox("Base", ["Cadastro", "1º Depósito"], label_visibility="visible")
-
-    with f6:
-        max_weeks = st.selectbox("Semanas", [4, 6, 8, 12], label_visibility="visible", index=1)
+    visao = st.selectbox("Visão", ["Semanal", "Quinzenal", "Mensal"])
+    canal_opt = st.selectbox("Canal", ["Total", "Afiliados", "Orgânico", "Mobile"])
+    produto_opt = st.selectbox("Produto", ["Total", "Casino", "Sports"])
+    base_ret = st.selectbox("Base", ["Cadastro", "1º Depósito"])
+    max_weeks = st.selectbox("Semanas", [4, 6, 8, 12], index=1)
 
 page_header(
     "Retenção",
