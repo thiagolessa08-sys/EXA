@@ -588,7 +588,8 @@ KALLAS_CSS = """
   [data-testid="stSidebarNavLink"] span,
   [data-testid="stSidebarNavLink"] p { color: inherit !important; }
   /* Ícone do nav link (emoji/imagem) — monocromático branco */
-  [data-testid="stSidebarNavLinkIcon"] {
+  [data-testid="stSidebarNavLinkIcon"],
+  [data-testid="stSidebarNavLinkIcon"] * {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -599,17 +600,29 @@ KALLAS_CSS = """
     border-radius: 8px !important;
     font-size: 15px !important;
     flex-shrink: 0 !important;
-    filter: grayscale(1) brightness(5) !important;
+    filter: grayscale(1) saturate(0) brightness(10) !important;
+    -webkit-filter: grayscale(1) saturate(0) brightness(10) !important;
   }
-  [data-testid="stSidebarNavLink"][aria-current="page"] [data-testid="stSidebarNavLinkIcon"] {
+  [data-testid="stSidebarNavLink"][aria-current="page"] [data-testid="stSidebarNavLinkIcon"],
+  [data-testid="stSidebarNavLink"][aria-current="page"] [data-testid="stSidebarNavLinkIcon"] * {
     background: rgba(255,255,255,.22) !important;
-    filter: grayscale(1) brightness(6) !important;
+    filter: grayscale(1) saturate(0) brightness(12) !important;
+    -webkit-filter: grayscale(1) saturate(0) brightness(12) !important;
   }
   [data-testid="stSidebarNavLink"] img {
     width: 18px !important;
     height: 18px !important;
     object-fit: contain !important;
-    filter: grayscale(1) brightness(5) !important;
+    filter: grayscale(1) saturate(0) brightness(10) !important;
+    -webkit-filter: grayscale(1) saturate(0) brightness(10) !important;
+  }
+  /* Força emoji a renderizar como texto (sem cor do sistema) */
+  [data-testid="stSidebarNavLinkIcon"] span,
+  [data-testid="stSidebarNavLinkIcon"] p {
+    font-style: normal !important;
+    color: rgba(255,255,255,.75) !important;
+    filter: grayscale(1) saturate(0) brightness(10) !important;
+    -webkit-filter: grayscale(1) saturate(0) brightness(10) !important;
   }
 
   /* Sidebar buttons */
