@@ -480,38 +480,54 @@ KALLAS_CSS = """
   }
 
   /* ── Page Header (template-style: eyebrow + serif italic + lede) ── */
-  .page-eyebrow {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--ink-400);
-    margin: 0 0 12px;
-    font-weight: 500;
-  }
+  /* Específico: vence Streamlit defaults para h1 em stMarkdownContainer */
+  div[data-testid="stMarkdownContainer"] h1.page-title,
+  div[data-testid="stMarkdown"] h1.page-title,
+  h1.page-title,
   .page-title {
     font-family: var(--font-serif) !important;
-    font-style: italic;
-    font-size: 56px;
-    font-weight: 400;
-    letter-spacing: -.02em;
+    font-style: italic !important;
+    font-size: 56px !important;
+    font-weight: 400 !important;
+    letter-spacing: -.02em !important;
     color: var(--ink-900) !important;
-    margin: 0 0 12px;
-    line-height: 1;
+    margin: 0 0 12px !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    text-transform: none !important;
   }
+  h1.page-title em,
   .page-title em {
-    font-style: italic;
+    font-family: var(--font-serif) !important;
+    font-style: italic !important;
     color: var(--ink-900) !important;
+    font-weight: 400 !important;
   }
+  div[data-testid="stMarkdownContainer"] .page-eyebrow,
+  .page-eyebrow {
+    font-family: var(--font-mono) !important;
+    font-size: 11px !important;
+    letter-spacing: .14em !important;
+    text-transform: uppercase !important;
+    color: var(--ink-400) !important;
+    margin: 0 0 12px !important;
+    padding: 0 !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+  }
+  div[data-testid="stMarkdownContainer"] .page-sub,
+  div[data-testid="stMarkdownContainer"] .page-lede,
   .page-sub, .page-lede {
-    color: var(--ink-500, #4a5160);
-    font-size: 15px;
-    font-weight: 400;
-    margin: 0 0 4px;
-    line-height: 1.5;
-    max-width: 56ch;
-    letter-spacing: -.005em;
-    font-family: var(--font-sans);
+    color: #4a5160 !important;
+    font-size: 15px !important;
+    font-weight: 400 !important;
+    margin: 0 0 4px !important;
+    padding: 0 !important;
+    line-height: 1.5 !important;
+    max-width: 56ch !important;
+    letter-spacing: -.005em !important;
+    font-family: var(--font-sans) !important;
+    font-style: normal !important;
   }
   .page-ts  {
     font-size: 11px;
