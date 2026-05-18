@@ -30,11 +30,13 @@ def _read_template() -> str:
     return p.read_text(encoding="utf-8")
 
 
-# CSS injetado no iframe para esconder o sidebar do React (Streamlit cuida da navegação)
+# CSS injetado no iframe para esconder sidebar + topbar do React (Streamlit cuida disso)
 _EMBED_OVERRIDES = """
 <style id="exa-streamlit-embed">
   .app { grid-template-columns: 1fr !important; }
   .sidebar { display: none !important; }
+  .topbar { display: none !important; }
+  .page { padding-top: 12px !important; }
   body { background: transparent !important; }
 </style>
 </head>"""
