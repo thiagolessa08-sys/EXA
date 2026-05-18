@@ -604,16 +604,35 @@ KALLAS_CSS = """
      Portanto [data-testid="stLogo"] img nao existe — precisamos
      selecionar o <img> diretamente. ── */
 
+  /* Container do logo (header da sidebar) */
+  [data-testid="stSidebarHeader"] {
+    width: 100% !important;
+    min-height: 130px !important;
+    height: auto !important;
+    padding: 28px 16px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+  [data-testid="stSidebarHeader"] > * {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
   /* O <a> que envolve o logo */
   [data-testid="stLogoLink"] {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     width: 100% !important;
-    min-height: 110px !important;
+    max-width: 100% !important;
+    min-height: 80px !important;
     height: auto !important;
     max-height: none !important;
-    padding: 36px 16px 16px !important;
+    padding: 0 !important;
+    margin: 0 !important;
     box-sizing: border-box !important;
     overflow: visible !important;
     background: transparent !important;
@@ -621,17 +640,22 @@ KALLAS_CSS = """
     border: none !important;
   }
 
-  /* O <img> com data-testid="stLogo" (seletor direto) */
+  /* O <img> com data-testid="stLogo" — sobrescrita agressiva.
+     Streamlit aplica height: 1.5rem inline; precisamos vencer com !important + tudo. */
   img[data-testid="stLogo"],
-  [data-testid="stLogoLink"] img {
+  [data-testid="stLogo"],
+  [data-testid="stLogoLink"] img,
+  [data-testid="stSidebarHeader"] img {
     display: block !important;
-    width: 200px !important;
-    min-width: 160px !important;
-    max-width: 220px !important;
-    height: auto !important;
-    max-height: none !important;
-    min-height: 56px !important;
+    width: auto !important;
+    max-width: 200px !important;
+    min-width: 180px !important;
+    height: 80px !important;
+    max-height: 100px !important;
+    min-height: 64px !important;
     object-fit: contain !important;
+    margin: 0 auto !important;
+    transform: none !important;
   }
 
   /* ── Esconder botão de colapsar sidebar ── */
