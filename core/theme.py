@@ -610,10 +610,10 @@ KALLAS_CSS = """
     align-items: center !important;
     justify-content: center !important;
     width: 100% !important;
-    min-height: 72px !important;
+    min-height: 110px !important;
     height: auto !important;
     max-height: none !important;
-    padding: 32px 20px 10px !important;
+    padding: 36px 16px 16px !important;
     box-sizing: border-box !important;
     overflow: visible !important;
     background: transparent !important;
@@ -625,11 +625,12 @@ KALLAS_CSS = """
   img[data-testid="stLogo"],
   [data-testid="stLogoLink"] img {
     display: block !important;
-    width: 145px !important;
-    min-width: 100px !important;
+    width: 200px !important;
+    min-width: 160px !important;
+    max-width: 220px !important;
     height: auto !important;
     max-height: none !important;
-    min-height: 36px !important;
+    min-height: 56px !important;
     object-fit: contain !important;
   }
 
