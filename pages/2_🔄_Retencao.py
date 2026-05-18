@@ -7,9 +7,10 @@ import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
 from datetime import datetime, timedelta, date
-from pathlib import Path
+
 from core.databricks_client import execute_query
 from core.theme import inject_theme
+from core.template_loader import load_template
 
 
 inject_theme()
@@ -27,12 +28,6 @@ def fmt_money(v) -> str:
 
 def fmt_pct(n, d=1) -> str:
     return f"{float(n or 0):.{d}f}".replace(".", ",")
-
-
-@st.cache_resource
-def _read_template() -> str:
-    p = Path(__file__).parent.parent / "static" / "dashboard_retencao.html"
-    return p.read_text(encoding="utf-8")
 
 
 _EMBED_OVERRIDES = """
@@ -314,7 +309,7 @@ def build_payload() -> dict:
 with st.spinner("Carregando dashboard..."):
     payload = build_payload()
 
-template = _read_template()
+template = load_template("dashboard_retencao.html")
 html = template.replace("__EXA_DATA_JSON__", json.dumps(payload, ensure_ascii=False))
 html = html.replace("</head>", _EMBED_OVERRIDES)
 components.html(html, height=1480, scrolling=True)
