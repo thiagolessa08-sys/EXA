@@ -313,7 +313,7 @@ try:
     template = load_template("dashboard_retencao.html")
     html = template.replace("__EXA_DATA_JSON__", json.dumps(payload, ensure_ascii=False), 1)
     html = html.replace("</head>", _EMBED_OVERRIDES)
-    components.html(html, height=800, scrolling=False)
+    components.html(html, height=800, scrolling=True)
 except Exception as exc:
     st.error(f"Erro ao montar dashboard: {exc}")
     st.json(payload)
