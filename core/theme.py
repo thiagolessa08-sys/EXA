@@ -30,6 +30,62 @@ ICONS: dict[str, str] = {
 }
 
 
+def _spark_svg(points: list, color: str = "#2540ea", width: int = 96, height: int = 22) -> str:
+    """Mini SVG sparkline alinhado ao template."""
+    if not points or len(points) < 2:
+        return ""
+    pts = [float(p) for p in points]
+    pmin, pmax = min(pts), max(pts)
+    rng = pmax - pmin if pmax != pmin else 1.0
+    step = width / (len(pts) - 1)
+    coords = []
+    for i, p in enumerate(pts):
+        x = i * step
+        y = height - ((p - pmin) / rng) * (height - 2) - 1
+        coords.append(f"{x:.1f},{y:.1f}")
+    polyline = " ".join(coords)
+    return (
+        f'<svg class="spark" width="{width}" height="{height}" viewBox="0 0 {width} {height}" '
+        f'xmlns="http://www.w3.org/2000/svg" fill="none" stroke="{color}" '
+        f'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'
+        f'<polyline points="{polyline}" /></svg>'
+    )
+
+
+def kpi_group(cards: list, churn: bool = False) -> str:
+    """
+    Renderiza vários KPI cards num único grid (estilo template Onboarding).
+    Cada card: {label, value, unit?, sub?, delta?:{dir,v}, spark?:list, churn?:bool}
+    """
+    cols_cls = f"cols-{len(cards)}" if len(cards) in (4, 6) else "cols-6"
+    items = []
+    for c in cards:
+        is_churn = churn or c.get("churn", False)
+        cls = "exa-kpi churn" if is_churn else "exa-kpi"
+        unit_html = f'<span class="unit">{c.get("unit","")}</span>' if c.get("unit") else ""
+        delta = c.get("delta") or {}
+        dir_ = (delta.get("dir") or "flat").lower()
+        dv = delta.get("v") or ""
+        delta_html = ""
+        if dv:
+            arrow = {"up": "↑", "down": "↓", "flat": "→"}.get(dir_, "→")
+            delta_html = f'<span class="delta {dir_}">{arrow} {dv}</span>'
+        spark = c.get("spark") or []
+        spark_color = "#d62a39" if is_churn else "#2540ea"
+        spark_html = _spark_svg(spark, color=spark_color) if spark else ""
+        sub_html = f'<div class="sub">{c.get("sub","")}</div>' if c.get("sub") else ""
+        items.append(
+            f'<div class="{cls}">'
+            f'<div class="label"><span>{c["label"]}</span>'
+            f'<span class="help" title="{c.get("help","")}">ⓘ</span></div>'
+            f'<div class="value">{c["value"]}{unit_html}</div>'
+            f'<div class="foot">{spark_html}{delta_html}</div>'
+            f'{sub_html}'
+            f'</div>'
+        )
+    return f'<div class="exa-kpi-grid {cols_cls}">{"".join(items)}</div>'
+
+
 def kpi_card(
     label: str,
     value: str,
@@ -829,6 +885,169 @@ KALLAS_CSS = """
   /* Alerts */
   .stAlert { border-radius: var(--radius-sm) !important; }
 
+  /* ── KPI Grid (template Onboarding) ──────────────────────────────────────── */
+  .exa-kpi-grid {
+    display: grid;
+    gap: 1px;
+    background: var(--hair);
+    border: 1px solid var(--hair);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 22px;
+  }
+  .exa-kpi-grid.cols-6 { grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); }
+  .exa-kpi-grid.cols-4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .exa-kpi {
+    background: var(--card);
+    padding: 16px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 132px;
+    position: relative;
+    min-width: 0;
+  }
+  .exa-kpi.churn::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--bad-600);
+    opacity: .9;
+  }
+  .exa-kpi .label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-400);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .exa-kpi .label > span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .exa-kpi .label .help {
+    color: var(--ink-200);
+    cursor: help;
+    font-size: 10px;
+  }
+  .exa-kpi .value {
+    font-family: var(--font-sans);
+    font-feature-settings: "tnum" 1, "ss01" 1;
+    font-size: clamp(22px, 1.9vw, 28px);
+    font-weight: 500;
+    letter-spacing: -.025em;
+    color: var(--ink-900);
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .exa-kpi .value .unit {
+    font-size: .6em;
+    color: var(--ink-400);
+    font-weight: 400;
+    margin-left: 2px;
+  }
+  .exa-kpi .foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    gap: 8px;
+    min-height: 22px;
+  }
+  .exa-kpi .delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .exa-kpi .delta.up   { color: #146c43; background: #e6f4eb; }
+  .exa-kpi .delta.down { color: #b3261e; background: #fde7e7; }
+  .exa-kpi .delta.flat { color: var(--ink-400); background: var(--ink-100); }
+  .exa-kpi .sub {
+    font-size: 11.5px;
+    color: var(--ink-400);
+    letter-spacing: -.005em;
+  }
+  .exa-kpi .sub b { color: var(--ink-700); font-weight: 500; }
+  .exa-kpi .spark { display: block; opacity: .85; }
+
+  /* ── Section header (rule + tag) — estilo template ───────────────────────── */
+  .exa-section-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0 14px;
+  }
+  .exa-section-head .tag {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .exa-section-head .tag.churn { color: var(--bad-600); }
+  .exa-section-head .rule {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--line-2), transparent);
+  }
+  .exa-section-head .rule.churn {
+    background: linear-gradient(to right, rgba(214,42,57,.35), transparent);
+  }
+
+  /* ── Card genérico (envolve charts/tables) — estilo template ─────────────── */
+  .exa-card {
+    background: var(--card);
+    border: 1px solid var(--hair);
+    border-radius: 14px;
+    padding: 22px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 22px;
+  }
+  .exa-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .exa-card-head h3 {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 22px;
+    color: var(--ink-900);
+    letter-spacing: -.01em;
+  }
+  .exa-card-head .sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--ink-400);
+    margin-top: 2px;
+  }
+
+  /* ── Override dos chart containers Plotly ────────────────────────────────── */
+  [data-testid="stPlotlyChart"],
+  div.stPlotlyChart,
+  div[class*="stPlotlyChart"] {
+    background: var(--card) !important;
+    border: 1px solid var(--hair) !important;
+    border-top: 1px solid var(--hair) !important;
+    border-radius: 14px !important;
+    padding: 16px 14px 6px !important;
+    box-shadow: none !important;
+  }
+
   /* ── Topbar Row (brand strip embutido no container de filtros) ───────────── */
   .exa-topbar-row {
     display: flex;
@@ -1020,6 +1239,18 @@ def page_header(title: str, subtitle: str, italic_word: str = "", eyebrow: str =
             unsafe_allow_html=True,
         )
     st.markdown("<br>", unsafe_allow_html=True)
+
+
+def section_head(tag: str, churn: bool = False):
+    """Renderiza tag + rule horizontal (estilo template)."""
+    import streamlit as st
+    cls = "tag churn" if churn else "tag"
+    rule_cls = "rule churn" if churn else "rule"
+    st.markdown(
+        f'<div class="exa-section-head"><span class="{cls}">{tag}</span>'
+        f'<span class="{rule_cls}"></span></div>',
+        unsafe_allow_html=True,
+    )
 
 
 def topbar_strip():

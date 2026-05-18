@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
-from core.theme import inject_theme, page_header, kpi_card, render_table
+from core.theme import inject_theme, page_header, kpi_group, section_head, render_table
 
 inject_theme()
 
@@ -246,18 +246,15 @@ with st.spinner("Carregando..."):
         users   = int(kpi["n_users"]       or 0)
         spu     = float(kpi["stake_por_usuario"] or 0)
 
-        c1,c2,c3,c4,c5,c6 = st.columns(6)
-        kpis = [
-            (c1, "STAKE TOTAL",     fmt_money(stake),    "volume apostado",  "trending-up", "up"),
-            (c2, "GGR",             fmt_money(ggr),      "receita bruta",    "bar-chart",   "up"),
-            (c3, "NGR",             fmt_money(ngr),      "receita líquida",  "dollar",      "up" if ngr >= 0 else "down"),
-            (c4, "APOSTAS",         fmt_num(apostas),    "total de rodadas",  "hash",        "up"),
-            (c5, "USUÁRIOS APOST.", fmt_num(users),      "jogadores únicos",  "users",       "up"),
-            (c6, "STAKE / USUÁRIO", fmt_money(spu),      "ticket médio",      "divide",      "up" if spu >= 0 else "down"),
+        cards = [
+            {"label": "Stake Total",     "value": fmt_money(stake),   "sub": "volume apostado"},
+            {"label": "GGR",             "value": fmt_money(ggr),     "sub": "receita bruta"},
+            {"label": "NGR",             "value": fmt_money(ngr),     "sub": "receita líquida", "delta": {"dir": "up" if ngr >= 0 else "down", "v": ""}},
+            {"label": "Apostas",         "value": fmt_num(apostas),   "sub": "total de rodadas"},
+            {"label": "Usuários Apost.", "value": fmt_num(users),     "sub": "jogadores únicos"},
+            {"label": "Stake / Usuário", "value": fmt_money(spu),     "sub": "ticket médio"},
         ]
-        for col, label, value, sub, icon, sub_type in kpis:
-            with col:
-                st.markdown(kpi_card(label, value, sub, icon, sub_type=sub_type), unsafe_allow_html=True)
+        st.markdown(kpi_group(cards), unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Erro nos KPIs: {e}")
         stake = ggr = ngr = apostas = users = spu = 0
@@ -268,7 +265,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 col_evol, col_dist = st.columns([3, 2], gap="large")
 
 with col_evol:
-    st.markdown('<div class="section-title">EVOLUÇÃO — STAKE & GGR</div>', unsafe_allow_html=True)
+    section_head("Evolução — Stake & GGR")
     try:
         evol = load_evolucao(ini_str, fim_str, trunc, produto_opt, canal_where)
         evol["periodo"] = pd.to_datetime(evol["periodo"])
@@ -307,7 +304,7 @@ with col_evol:
         st.error(f"Erro na evolução: {e}")
 
 with col_dist:
-    st.markdown('<div class="section-title">DISTRIBUIÇÃO DE STAKE POR USUÁRIO</div>', unsafe_allow_html=True)
+    section_head("Distribuição de stake por usuário")
     try:
         dist = load_distribuicao(ini_str, fim_str, canal_where)
         dist["usuarios"] = pd.to_numeric(dist["usuarios"], errors="coerce")
@@ -341,7 +338,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 col_jogos, col_prov = st.columns([3, 2], gap="large")
 
 with col_jogos:
-    st.markdown('<div class="section-title">TOP 15 JOGOS — CASINO</div>', unsafe_allow_html=True)
+    section_head("Top 15 jogos — Casino")
     try:
         jogos = load_top_jogos(ini_str, fim_str, canal_where)
         if not jogos.empty:
@@ -357,7 +354,7 @@ with col_jogos:
         st.error(f"Erro nos jogos: {e}")
 
 with col_prov:
-    st.markdown('<div class="section-title">TOP PROVIDERS</div>', unsafe_allow_html=True)
+    section_head("Top providers")
     try:
         prov = load_top_providers(ini_str, fim_str, canal_where)
         if not prov.empty:

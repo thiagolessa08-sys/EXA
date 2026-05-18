@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
-from core.theme import inject_theme, page_header, kpi_card, render_table
+from core.theme import inject_theme, page_header, kpi_group, section_head, render_table
 
 inject_theme()
 
@@ -201,25 +201,22 @@ with st.spinner("Carregando indicadores..."):
             if v >= 1_000:     return f"R${v/1_000:.0f}K"
             return f"R${v:.0f}"
 
-        c1,c2,c3,c4,c5,c6 = st.columns(6)
         cards = [
-            (c1, "RETENÇÃO W1",    f"{ret_w1:.1f}%", "semana 1",         "repeat",      "up" if ret_w1 > 0 else "down"),
-            (c2, "RETENÇÃO W4",    f"{ret_w4:.1f}%", "semana 4",         "repeat",      "up" if ret_w4 > 0 else "down"),
-            (c3, "RETENÇÃO W8",    f"{ret_w8:.1f}%", "semana 8",         "activity",    "up" if ret_w8 > 0 else "down"),
-            (c4, "USUÁRIOS ATIVOS",f"{n_w1:,}",       "recorrentes W1",  "users",       "up"),
-            (c5, "STAKE RETIDO",   fmt_money(stake),  "período",          "dollar",      "up"),
-            (c6, "RECEITA RETIDA", fmt_money(abs(ngr)),"NGR retenção",    "bar-chart",   "up"),
+            {"label": "Retenção W1",     "value": f"{ret_w1:.1f}", "unit": "%", "sub": "semana 1",      "delta": {"dir": "up" if ret_w1 > 0 else "down", "v": ""}},
+            {"label": "Retenção W4",     "value": f"{ret_w4:.1f}", "unit": "%", "sub": "semana 4",      "delta": {"dir": "up" if ret_w4 > 0 else "down", "v": ""}},
+            {"label": "Retenção W8",     "value": f"{ret_w8:.1f}", "unit": "%", "sub": "semana 8",      "delta": {"dir": "up" if ret_w8 > 0 else "down", "v": ""}},
+            {"label": "Usuários Ativos", "value": f"{n_w1:,}".replace(",", "."), "sub": "recorrentes W1"},
+            {"label": "Stake Retido",    "value": fmt_money(stake),  "sub": "no período"},
+            {"label": "Receita Retida",  "value": fmt_money(abs(ngr)),"sub": "NGR retenção"},
         ]
-        for col, label, value, sub, icon, sub_type in cards:
-            with col:
-                st.markdown(kpi_card(label, value, sub, icon, sub_type=sub_type), unsafe_allow_html=True)
+        st.markdown(kpi_group(cards), unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Erro nos KPIs: {e}")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ── Cohort Matrix ─────────────────────────────────────────────────────────────
-st.markdown('<div class="section-title">COHORT DE RETENÇÃO POR USUÁRIOS (%)</div>', unsafe_allow_html=True)
+section_head("Cohort de retenção por usuários (%)")
 
 try:
     df_raw = load_cohort_matrix(ini_str, fim_str, cohort_trunc, activity_sql, canal_filter, max_weeks)
@@ -294,7 +291,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 col_curve, col_detail = st.columns([1, 1], gap="large")
 
 with col_curve:
-    st.markdown('<div class="section-title">CURVA DE RETENÇÃO MÉDIA</div>', unsafe_allow_html=True)
+    section_head("Curva de retenção média")
     try:
         if not df_raw.empty:
             df_raw["retention_pct"] = pd.to_numeric(df_raw["retention_pct"], errors="coerce")
@@ -326,7 +323,7 @@ with col_curve:
         st.error(f"Erro na curva: {e}")
 
 with col_detail:
-    st.markdown('<div class="section-title">TABELA DE COHORTS</div>', unsafe_allow_html=True)
+    section_head("Tabela de cohorts")
     try:
         if not df_raw.empty:
             tbl = df_raw[df_raw["week_num"] <= 6].copy()
