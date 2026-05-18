@@ -85,21 +85,41 @@ KALLAS_CSS = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/style.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-mono/style.css" rel="stylesheet">
 
 <style>
   :root {
-    --bg:          #F0F4FF;
+    /* Paleta alinhada ao template (paper / ink neutros) */
+    --bg:          #fbfaf7;
+    --paper:       #fbfaf7;
+    --paper-2:     #f5f3ee;
     --surface:     #ffffff;
-    --surface-2:   #F6F9FF;
-    --ink:         #0B1629;
-    --ink-2:       #2D3F5E;
-    --ink-3:       #607090;
-    --line:        #E2EAFF;
-    --line-2:      #C7D7FF;
-    --blue:        #2563EB;
-    --blue-deep:   #1D3186;
-    --blue-soft:   #EBF1FF;
+    --surface-2:   #f5f3ee;
+    --card:        #ffffff;
+    --ink:         #0a0d14;
+    --ink-900:     #0a0d14;
+    --ink-800:     #14171f;
+    --ink-700:     #1f242e;
+    --ink-2:       #2c3340;
+    --ink-3:       #4a5160;
+    --ink-400:     #6b7280;
+    --ink-300:     #8a93a3;
+    --ink-200:     #b9bfc9;
+    --ink-100:     #dde1e8;
+    --hair:        #eef0f4;
+    --line:        #eef0f4;
+    --line-2:      #dde1e8;
+    --blue:        #2540ea;
+    --blue-deep:   #1d36c9;
+    --blue-soft:   #eef1ff;
     --blue-mid:    #60A5FA;
+    --good-500:    #1f9d57;
+    --bad-600:     #d62a39;
+    /* Fontes alinhadas ao template */
+    --font-sans:   "Geist", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    --font-mono:   "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-serif:  "Instrument Serif", "Times New Roman", serif;
     /* aliases para compatibilidade */
     --green:       #2563EB;
     --green-deep:  #1D3186;
@@ -118,13 +138,13 @@ KALLAS_CSS = """
   }
 
   html, body, [class*="css"] {
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important;
-    background:
-      radial-gradient(ellipse 900px 600px at 0% 0%, rgba(37,99,235,.07) 0%, transparent 65%),
-      radial-gradient(ellipse 700px 500px at 100% 100%, rgba(29,49,134,.05) 0%, transparent 65%),
-      #F0F4FF !important;
-    color: var(--ink) !important;
+    font-family: var(--font-sans) !important;
+    background: var(--paper) !important;
+    color: var(--ink-900) !important;
     -webkit-font-smoothing: antialiased;
+  }
+  .stApp {
+    background: var(--paper) !important;
   }
 
   /* ── Remove Streamlit chrome (header, toolbar, decoration) ── */
@@ -370,33 +390,37 @@ KALLAS_CSS = """
 
   /* ── Page Header (template-style: eyebrow + serif italic + lede) ── */
   .page-eyebrow {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: .14em;
     text-transform: uppercase;
-    color: var(--ink-3);
+    color: var(--ink-400);
     margin: 0 0 12px;
     font-weight: 500;
   }
   .page-title {
-    font-family: 'Instrument Serif', serif;
+    font-family: var(--font-serif) !important;
     font-style: italic;
-    font-size: 54px;
+    font-size: 56px;
     font-weight: 400;
     letter-spacing: -.02em;
-    color: var(--ink);
+    color: var(--ink-900) !important;
     margin: 0 0 12px;
     line-height: 1;
   }
-  .page-title em { font-style: italic; color: var(--blue); }
+  .page-title em {
+    font-style: italic;
+    color: var(--ink-900) !important;
+  }
   .page-sub, .page-lede {
-    color: var(--ink-3);
+    color: var(--ink-500, #4a5160);
     font-size: 15px;
     font-weight: 400;
     margin: 0 0 4px;
     line-height: 1.5;
     max-width: 56ch;
     letter-spacing: -.005em;
+    font-family: var(--font-sans);
   }
   .page-ts  {
     font-size: 11px;
