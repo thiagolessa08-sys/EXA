@@ -368,23 +368,35 @@ KALLAS_CSS = """
     text-transform: uppercase;
   }
 
-  /* ── Page Header ── */
+  /* ── Page Header (template-style: eyebrow + serif italic + lede) ── */
+  .page-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 12px;
+    font-weight: 500;
+  }
   .page-title {
     font-family: 'Instrument Serif', serif;
-    font-size: 46px;
+    font-style: italic;
+    font-size: 54px;
     font-weight: 400;
-    letter-spacing: -.025em;
+    letter-spacing: -.02em;
     color: var(--ink);
-    margin: 10px 0 6px;
-    line-height: 1.05;
+    margin: 0 0 12px;
+    line-height: 1;
   }
   .page-title em { font-style: italic; color: var(--blue); }
-  .page-sub {
+  .page-sub, .page-lede {
     color: var(--ink-3);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 400;
     margin: 0 0 4px;
     line-height: 1.5;
+    max-width: 56ch;
+    letter-spacing: -.005em;
   }
   .page-ts  {
     font-size: 11px;
@@ -944,17 +956,33 @@ def render_table(df) -> str:
     )
 
 
-def page_header(title: str, subtitle: str, italic_word: str = ""):
+def page_header(title: str, subtitle: str, italic_word: str = "", eyebrow: str = ""):
     import streamlit as st
     from datetime import datetime
     col_t, col_ts = st.columns([5, 1])
     with col_t:
+        if eyebrow:
+            st.markdown(f'<div class="page-eyebrow">{eyebrow}</div>', unsafe_allow_html=True)
         display = title.replace(italic_word, f"<em>{italic_word}</em>") if italic_word else title
         st.markdown(f'<h1 class="page-title">{display}</h1>', unsafe_allow_html=True)
-        st.markdown(f'<p class="page-sub">{subtitle}</p>', unsafe_allow_html=True)
+        st.markdown(f'<p class="page-lede">{subtitle}</p>', unsafe_allow_html=True)
     with col_ts:
         st.markdown(
             f'<div class="page-ts">Atualizado {datetime.now().strftime("%d/%m/%Y — %H:%M")}</div>',
             unsafe_allow_html=True,
         )
     st.markdown("<br>", unsafe_allow_html=True)
+
+
+def topbar_strip():
+    """Renderiza a faixa azul EXA · Analytics · Live no topo do container de filtros."""
+    import streamlit as st
+    st.markdown(
+        '<div class="exa-topbar-row">'
+        '<span class="exa-topbar-pulse"></span>'
+        '<span class="exa-topbar-brand">EXA &middot; Analytics</span>'
+        '<span class="exa-topbar-sep"></span>'
+        '<span class="exa-topbar-live-badge"><span></span>Live</span>'
+        '</div>',
+        unsafe_allow_html=True,
+    )

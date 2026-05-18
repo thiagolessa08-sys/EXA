@@ -7,7 +7,7 @@ import pandas as pd
 from core.sql_agent import generate_sql
 from core.databricks_client import execute_query, test_connection
 from core.catalog_loader import reload_catalog, build_catalog_context, build_rules_context
-from core.theme import inject_theme
+from core.theme import inject_theme, page_header, topbar_strip
 
 inject_theme()
 
@@ -64,10 +64,17 @@ with st.sidebar:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# ── Topbar azul ───────────────────────────────────────────────────────────────
+with st.container():
+    topbar_strip()
+
 # ── Cabeçalho ─────────────────────────────────────────────────────────────────
-st.markdown('<h1 class="page-title">Chat <em>Analytics</em></h1>', unsafe_allow_html=True)
-st.markdown('<p class="page-sub">Faça perguntas em português sobre os dados. O agente gera e executa o SQL automaticamente.</p>', unsafe_allow_html=True)
-st.markdown("<br>", unsafe_allow_html=True)
+page_header(
+    "Chat Analytics",
+    "Faça perguntas em português sobre os dados. O agente gera e executa o SQL automaticamente.",
+    "Analytics",
+    eyebrow="Painel · Conversacional",
+)
 
 # ── Histórico do chat ─────────────────────────────────────────────────────────
 for msg in st.session_state.messages:

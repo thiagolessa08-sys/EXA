@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
-from core.theme import inject_theme, page_header, kpi_card, render_table
+from core.theme import inject_theme, page_header, kpi_card, render_table, topbar_strip
 
 inject_theme()
 
@@ -24,12 +24,7 @@ def fmt_num(v):
 
 # ── Filtros ───────────────────────────────────────────────────────────────────
 with st.container():
-    st.markdown('''<div class="exa-topbar-row">
-      <span class="exa-topbar-pulse"></span>
-      <span class="exa-topbar-brand">EXA &middot; Analytics</span>
-      <span class="exa-topbar-sep"></span>
-      <span class="exa-topbar-live-badge"><span></span>Live</span>
-    </div>''', unsafe_allow_html=True)
+    topbar_strip()
     f1, f2, f3, f4, f5 = st.columns([2, 2, 2, 2, 2])
     today = date.today()
 
@@ -61,7 +56,12 @@ with st.container():
     with f5:
         granular = st.selectbox("Granularidade", ["Mensal", "Semanal", "Diária"], label_visibility="visible")
 
-page_header("Performance", "Volume de apostas, monetização e comportamento", "Performance")
+page_header(
+    "Performance",
+    "Volume de apostas, monetização e comportamento — stake, GGR/NGR e top jogos no período.",
+    "Performance",
+    eyebrow="Painel · Monetização",
+)
 
 ini_str = str(dt_ini)
 fim_str = str(dt_fim)

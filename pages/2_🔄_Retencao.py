@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
 from core.databricks_client import execute_query
-from core.theme import inject_theme, page_header, kpi_card, render_table
+from core.theme import inject_theme, page_header, kpi_card, render_table, topbar_strip
 
 inject_theme()
 
@@ -24,12 +24,7 @@ def cell_class(val):
 
 # ── Filtros ───────────────────────────────────────────────────────────────────
 with st.container():
-    st.markdown('''<div class="exa-topbar-row">
-      <span class="exa-topbar-pulse"></span>
-      <span class="exa-topbar-brand">EXA &middot; Analytics</span>
-      <span class="exa-topbar-sep"></span>
-      <span class="exa-topbar-live-badge"><span></span>Live</span>
-    </div>''', unsafe_allow_html=True)
+    topbar_strip()
     f1, f1b, f2, f3, f4, f5, f6 = st.columns([2, 2, 2, 2, 2, 2, 2])
 
     today = date.today()
@@ -68,7 +63,12 @@ with st.container():
     with f6:
         max_weeks = st.selectbox("Semanas", [4, 6, 8, 12], label_visibility="visible", index=1)
 
-page_header("Retenção", "Cohorts, recorrência e sobrevivência de usuários", "Retenção")
+page_header(
+    "Retenção",
+    "Cohorts, recorrência e sobrevivência de usuários — coortes semanais a partir do registro.",
+    "Retenção",
+    eyebrow="Painel · Engajamento",
+)
 
 ini_str = str(dt_ini)
 fim_str = str(dt_fim)
