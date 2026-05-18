@@ -1,0 +1,1494 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<title>exa — Performance</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;450;500;600;700&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+:root {
+  /* Ink */
+  --ink-900: #0a0d14;
+  --ink-800: #14171f;
+  --ink-700: #1f242e;
+  --ink-600: #2c3340;
+  --ink-500: #4a5160;
+  --ink-400: #6b7280;
+  --ink-300: #8a93a3;
+  --ink-200: #b9bfc9;
+  --ink-100: #dde1e8;
+  --ink-50:  #eef0f4;
+
+  /* Surface */
+  --paper:   #fbfaf7;
+  --paper-2: #f5f3ee;
+  --card:    #ffffff;
+  --hair:    #e7e4dc;
+  --hair-2:  #efece5;
+
+  /* Accents — restrained */
+  --exa-700: #1a2dc9;
+  --exa-600: #2540ea;
+  --exa-500: #3a5bff;
+  --exa-100: #e6ebff;
+  --exa-50:  #f2f4ff;
+
+  --good-700: #15683a;
+  --good-500: #1f9d57;
+  --good-50:  #ecf6ef;
+
+  --warn-700: #8a4b00;
+  --warn-500: #c66a00;
+
+  --bad-700:  #9a1f2a;
+  --bad-600:  #b8232f;
+  --bad-500:  #d62a39;
+  --bad-50:   #fbecee;
+
+  /* Type */
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-serif: "Instrument Serif", "Times New Roman", serif;
+
+  /* Layout */
+  --sidebar-w: 232px;
+  --content-pad: 32px;
+  --radius-sm: 6px;
+  --radius:    10px;
+  --radius-lg: 14px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  color: var(--ink-900);
+  background: var(--paper);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button { font-family: inherit; cursor: pointer; }
+input, select { font-family: inherit; }
+
+/* ---------- LAYOUT ---------- */
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  min-height: 100vh;
+}
+
+/* ---------- SIDEBAR ---------- */
+.sidebar {
+  background: var(--ink-900);
+  color: var(--ink-200);
+  padding: 22px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.sb-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 8px 0;
+}
+.sb-brand .wordmark {
+  font-family: var(--font-serif);
+  font-size: 38px;
+  font-style: italic;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.sb-brand .meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-400);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.sb-section-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-400);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0 10px 6px;
+}
+.sb-nav { display: flex; flex-direction: column; gap: 1px; }
+.sb-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: var(--ink-200);
+  font-size: 13px;
+  font-weight: 450;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+  border: 1px solid transparent;
+}
+.sb-item:hover { background: rgba(255,255,255,0.04); color: #fff; }
+.sb-item.active {
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  border-color: rgba(255,255,255,0.08);
+}
+.sb-item .ico { color: var(--ink-300); }
+.sb-item.active .ico { color: var(--exa-500); }
+.sb-item .chev { margin-left: auto; opacity: 0.4; }
+
+.sb-footer {
+  margin-top: auto;
+  padding: 12px 8px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-300);
+  font-size: 12px;
+}
+.sb-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2540ea, #6b7280);
+  display: grid; place-items: center;
+  color: #fff; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- MAIN ---------- */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Top filter bar */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px var(--content-pad);
+  border-bottom: 1px solid var(--hair);
+  background: var(--paper);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: saturate(140%) blur(8px);
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+.tb-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; row-gap: 8px; }
+.tb-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+.filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 12px;
+  background: var(--card);
+  border: 1px solid var(--hair);
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: var(--ink-700);
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.filter:hover { border-color: var(--ink-200); }
+.filter .lbl {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+.filter .val { font-weight: 500; color: var(--ink-800); }
+.filter .chev { color: var(--ink-400); }
+
+.daterange {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--card);
+  border: 1px solid var(--hair);
+  border-radius: 7px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-700);
+}
+.daterange .arrow { color: var(--ink-300); }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px 5px 8px;
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 11.5px;
+  color: var(--ink-500);
+  font-family: var(--font-mono);
+}
+.dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--good-500);
+  box-shadow: 0 0 0 3px rgba(31,157,87,0.15);
+}
+
+/* Page header */
+.page {
+  padding: 28px var(--content-pad) 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 8px;
+}
+.page-head .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+  margin-bottom: 10px;
+}
+.page-head h1 {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 56px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink-900);
+  margin: 0 0 10px;
+}
+.page-head .lede {
+  font-size: 15px;
+  color: var(--ink-500);
+  max-width: 56ch;
+  letter-spacing: -0.005em;
+}
+.page-head .head-aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.head-base {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+.head-base b { color: var(--ink-800); font-weight: 500; }
+
+/* Section header */
+.section { display: flex; flex-direction: column; gap: 14px; }
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-head .tag {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+.section-head .tag.churn { color: var(--bad-600); }
+.section-head .rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, var(--ink-100), transparent);
+}
+.section-head .rule.churn {
+  background: linear-gradient(to right, rgba(214,42,57,0.35), transparent);
+}
+
+/* KPI grid */
+.kpi-grid {
+  display: grid;
+  gap: 1px;
+  background: var(--hair);
+  border: 1px solid var(--hair);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.kpi-grid.cols-6 { grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); }
+.kpi-grid.cols-4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+
+.kpi {
+  background: var(--card);
+  padding: 16px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 132px;
+  position: relative;
+  min-width: 0;
+}
+.kpi.churn::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--bad-500);
+  opacity: 0.9;
+}
+.kpi .label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpi .label > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpi .label .help {
+  color: var(--ink-200);
+  cursor: help;
+  display: inline-flex;
+}
+.kpi .value {
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" 1, "ss01" 1;
+  font-size: clamp(22px, 1.9vw, 28px);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  color: var(--ink-900);
+  line-height: 1;
+  white-space: nowrap;
+}
+.kpi .value .unit {
+  font-size: 0.6em;
+  color: var(--ink-400);
+  font-weight: 400;
+  margin-left: 2px;
+}
+.kpi .foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  gap: 8px;
+}
+.kpi .delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.delta.up { color: var(--good-700); background: var(--good-50); }
+.delta.down { color: var(--bad-700); background: var(--bad-50); }
+.delta.flat { color: var(--ink-500); background: var(--ink-50); }
+.kpi .sub {
+  font-size: 11.5px;
+  color: var(--ink-400);
+  letter-spacing: -0.005em;
+}
+.kpi .sub b { color: var(--ink-700); font-weight: 500; }
+
+.spark { display: block; }
+
+/* Lower row: funnel + chart */
+.two-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 16px;
+}
+@media (max-width: 1100px) {
+  .two-col { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--hair);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.card-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink-900);
+}
+.card-head .sub {
+  font-size: 12px;
+  color: var(--ink-400);
+  margin-top: 2px;
+  letter-spacing: -0.005em;
+}
+.card-head .tabs {
+  display: inline-flex;
+  background: var(--paper-2);
+  border-radius: 6px;
+  padding: 2px;
+  border: 1px solid var(--hair);
+}
+.card-head .tabs button {
+  border: none;
+  background: transparent;
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  color: var(--ink-500);
+  font-weight: 500;
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+.card-head .tabs button.on {
+  background: #fff;
+  color: var(--ink-900);
+  box-shadow: 0 1px 1px rgba(10,13,20,0.05), 0 0 0 1px var(--hair);
+}
+
+/* Funnel */
+.funnel { display: flex; flex-direction: column; gap: 4px; padding-top: 4px; }
+.funnel-row {
+  display: grid;
+  grid-template-columns: 96px 1fr 92px;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 0;
+}
+.funnel-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.funnel-stage .name {
+  font-size: 12px;
+  color: var(--ink-700);
+  font-weight: 500;
+}
+.funnel-stage .num {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: 11px;
+  color: var(--ink-400);
+}
+.bar-track {
+  height: 36px;
+  background: var(--paper-2);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: var(--ink-900);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.bar-fill.blue { background: var(--exa-600); }
+.bar-fill.blue-2 { background: var(--exa-500); }
+.bar-fill.blue-3 { background: #8aa3ff; }
+.bar-fill.blue-4 { background: #c6d2ff; color: var(--ink-700); }
+.funnel-conv {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: 11.5px;
+  color: var(--ink-500);
+  text-align: right;
+}
+.funnel-conv b { color: var(--ink-900); font-weight: 500; }
+.funnel-conv.dim { color: var(--ink-300); }
+
+.funnel-arrow {
+  grid-column: 2 / 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 0 10px;
+  height: 22px;
+  position: relative;
+}
+.funnel-arrow .line {
+  flex: 1;
+  height: 1px;
+  background: repeating-linear-gradient(to right, var(--ink-200) 0 4px, transparent 4px 8px);
+}
+.funnel-arrow .chip {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-500);
+  background: var(--paper);
+  padding: 1px 7px;
+  border: 1px solid var(--hair);
+  border-radius: 4px;
+}
+.funnel-arrow .chip.good { color: var(--good-700); background: var(--good-50); border-color: rgba(31,157,87,0.2); }
+.funnel-arrow .chip.bad  { color: var(--bad-700); background: var(--bad-50); border-color: rgba(214,42,57,0.2); }
+
+/* Chart card */
+.chart-wrap {
+  position: relative;
+  width: 100%;
+  height: 280px;
+}
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11.5px;
+  color: var(--ink-500);
+  font-family: var(--font-mono);
+}
+.legend .key { display: inline-flex; align-items: center; gap: 6px; }
+.legend .sw { width: 10px; height: 10px; border-radius: 2px; }
+.legend .sw.bars { background: var(--exa-100); border: 1px solid var(--exa-500); }
+.legend .sw.line { background: var(--exa-600); height: 2px; border-radius: 1px; }
+
+/* Notes row */
+.notes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+}
+.note {
+  border: 1px solid var(--hair);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.note .lbl {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+.note .v {
+  font-size: 13px;
+  color: var(--ink-800);
+  letter-spacing: -0.005em;
+}
+.note .v b { font-weight: 600; }
+
+/* utility */
+.row { display: flex; align-items: center; gap: 8px; }
+.gap-2 { gap: 6px; } .gap-4 { gap: 12px; }
+.muted { color: var(--ink-400); }
+
+
+/* ============================================================
+   RETENÇÃO PAGE
+   ============================================================ */
+
+/* Simple KPI card (no sparkline) used in retention */
+.kpi-simple {
+  background: var(--card);
+  border: 1px solid var(--hair);
+  border-radius: var(--radius);
+  padding: 18px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 122px;
+  position: relative;
+  transition: border-color .15s ease;
+}
+.kpi-simple:hover { border-color: var(--ink-200); }
+.kpi-simple .label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+.kpi-simple .label .help { color: var(--ink-300); display: inline-flex; }
+.kpi-simple .value {
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" 1, "ss01" 1;
+  font-size: clamp(28px, 2.3vw, 36px);
+  font-weight: 500;
+  letter-spacing: -0.028em;
+  color: var(--ink-900);
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+.kpi-simple .value .unit {
+  font-size: 0.5em;
+  color: var(--ink-400);
+  font-weight: 400;
+  margin-left: 2px;
+}
+.kpi-simple .sub {
+  font-size: 11.5px;
+  color: var(--ink-400);
+  margin-top: auto;
+}
+
+/* Cohort heatmap */
+.cohort-card {
+  background: var(--card);
+  border: 1px solid var(--hair);
+  border-radius: var(--radius);
+  padding: 0;
+  overflow: hidden;
+}
+.cohort-head-bar {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--hair);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.cohort-head-bar h3 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+.cohort-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+.cohort-table thead th {
+  background: var(--exa-700);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 14px 12px;
+  text-align: center;
+}
+.cohort-table thead th:first-child { text-align: left; padding-left: 22px; }
+.cohort-table tbody td {
+  padding: 8px 8px;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--hair-2);
+}
+.cohort-table tbody tr:last-child td { border-bottom: none; }
+.cohort-table tbody td.cohort-label {
+  text-align: left;
+  padding-left: 22px;
+  color: var(--ink-700);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+/* Pill cells — color scale by retention bucket */
+.cohort-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--ink-500);
+}
+.cohort-cell.b-100 { background: var(--exa-700); color: #fff; }
+.cohort-cell.b-85  { background: var(--exa-600); color: #fff; }
+.cohort-cell.b-45  { background: var(--exa-500); color: #fff; }
+.cohort-cell.b-30  { background: #8aa3ff; color: var(--ink-900); }
+.cohort-cell.b-15  { background: #c6d2ff; color: var(--ink-800); }
+.cohort-cell.b-lt15 { background: var(--paper-2); color: var(--ink-500); }
+.cohort-cell.b-nan { background: var(--paper-2); color: var(--ink-300); }
+
+.cohort-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 18px 18px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-500);
+}
+.cohort-legend .lbl { color: var(--ink-400); letter-spacing: 0.06em; }
+.cohort-legend .chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-feature-settings: "tnum" 1;
+  font-size: 10.5px;
+}
+.cohort-legend .chip.b-100 { background: var(--exa-700); color: #fff; }
+.cohort-legend .chip.b-85  { background: var(--exa-600); color: #fff; }
+.cohort-legend .chip.b-45  { background: var(--exa-500); color: #fff; }
+.cohort-legend .chip.b-30  { background: #8aa3ff; color: var(--ink-900); }
+.cohort-legend .chip.b-15  { background: #c6d2ff; color: var(--ink-800); }
+.cohort-legend .chip.b-lt15 { background: var(--paper-2); color: var(--ink-500); border: 1px solid var(--hair); }
+
+/* Curve chart card */
+.curve-chart {
+  width: 100%;
+  height: 280px;
+}
+
+/* Cohort users table (bottom right) */
+.users-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.users-table thead th {
+  background: var(--ink-50);
+  color: var(--ink-500);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 12px 10px;
+  text-align: right;
+  border-bottom: 1px solid var(--hair);
+}
+.users-table thead th:first-child { text-align: left; padding-left: 18px; }
+.users-table thead th:last-child { padding-right: 18px; }
+.users-table tbody td {
+  padding: 10px 10px;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: 12px;
+  text-align: right;
+  color: var(--ink-700);
+  border-bottom: 1px solid var(--hair-2);
+}
+.users-table tbody td:first-child {
+  text-align: left;
+  padding-left: 18px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-800);
+  letter-spacing: -0.005em;
+}
+.users-table tbody td:last-child { padding-right: 18px; }
+.users-table tbody tr:last-child td { border-bottom: none; }
+.users-table tbody td.muted { color: var(--ink-300); }
+
+/* Two-col split for retention bottom */
+.two-col.split {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+}
+@media (max-width: 1100px) {
+  .two-col.split { grid-template-columns: 1fr; }
+}
+
+/* Adjust kpi-grid for retention (6 simple cards) */
+.kpi-grid.simple-6 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+/* Section head for retention (just an uppercase tag, no rule needed for full-width tables) */
+.section-tag {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+  margin-bottom: 12px;
+  display: block;
+}
+
+
+/* ============================================================
+   PERFORMANCE PAGE
+   ============================================================ */
+
+/* Distribuição (vertical bar chart) */
+.dist-chart, .perf-combo { width: 100%; height: 320px; }
+
+/* Top providers (horizontal bar chart) */
+.top-prov { width: 100%; }
+.top-prov-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 70px;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--hair-2);
+}
+.top-prov-row:last-child { border-bottom: none; }
+.top-prov-row .name {
+  font-size: 12.5px;
+  color: var(--ink-700);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+.top-prov-row .track {
+  height: 22px;
+  background: var(--paper-2);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+.top-prov-row .fill {
+  height: 100%;
+  background: var(--exa-600);
+  border-radius: 4px;
+}
+.top-prov-row .value {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: 11.5px;
+  color: var(--ink-700);
+  text-align: right;
+  font-weight: 500;
+}
+
+/* Top games table */
+.games-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.games-table thead th {
+  background: var(--ink-50);
+  color: var(--ink-500);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 12px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--hair);
+}
+.games-table thead th:nth-child(1),
+.games-table thead th:nth-child(2),
+.games-table thead th:nth-child(3) { text-align: left; }
+.games-table thead th:first-child { padding-left: 18px; }
+.games-table thead th:last-child { padding-right: 18px; }
+.games-table tbody td {
+  padding: 11px 12px;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-size: 12px;
+  color: var(--ink-700);
+  text-align: right;
+  border-bottom: 1px solid var(--hair-2);
+  white-space: nowrap;
+}
+.games-table tbody td:nth-child(1),
+.games-table tbody td:nth-child(2),
+.games-table tbody td:nth-child(3) {
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  letter-spacing: -0.005em;
+}
+.games-table tbody td:nth-child(1) {
+  padding-left: 18px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+.games-table tbody td:last-child { padding-right: 18px; }
+.games-table tbody tr:last-child td { border-bottom: none; }
+.games-table tbody tr:hover td { background: var(--paper); }
+.games-table .pill-cat {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--ink-500);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+}
+
+/* Two-col, equal-ish */
+.two-col.equal {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+}
+@media (max-width: 1100px) {
+  .two-col.equal { grid-template-columns: 1fr; }
+}
+
+html, body { background: var(--paper); }
+.app { min-height: auto; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script id="exa-data" type="application/json">__EXA_DATA_JSON__</script>
+<script type="text/babel" data-presets="react">
+// =========================
+// exa Performance — performance.jsx
+// =========================
+
+const Ico = ({ children, size = 16, ...rest }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+    {...rest}>{children}</svg>
+);
+const IcoFunnel = (p) => <Ico {...p}><path d="M3 5h18l-7 8v6l-4 1v-7z" /></Ico>;
+const IcoRetention = (p) => <Ico {...p}><path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 4v5h-5" /></Ico>;
+const IcoPerf = (p) => <Ico {...p}><path d="M3 17 9 11l4 4 8-8" /><path d="M14 7h7v7" /></Ico>;
+const IcoChat = (p) => <Ico {...p}><path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z" /></Ico>;
+const IcoChevDown = (p) => <Ico size={14} {...p}><path d="m6 9 6 6 6-6" /></Ico>;
+const IcoChevRight = (p) => <Ico size={14} {...p}><path d="m9 6 6 6-6 6" /></Ico>;
+const IcoCal = (p) => <Ico {...p}><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></Ico>;
+const IcoArrowUp = (p) => <Ico size={12} {...p}><path d="m6 14 6-6 6 6" /></Ico>;
+const IcoArrowDown = (p) => <Ico size={12} {...p}><path d="m6 10 6 6 6-6" /></Ico>;
+const IcoHelp = (p) => <Ico size={12} {...p}><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.3-1 .8-1 1.7" /><circle cx="12" cy="17" r="0.6" fill="currentColor" /></Ico>;
+const IcoSearch = (p) => <Ico {...p}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></Ico>;
+const IcoDownload = (p) => <Ico {...p}><path d="M12 4v12m0 0 4-4m-4 4-4-4M4 20h16" /></Ico>;
+const IcoSettings = (p) => <Ico {...p}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></Ico>;
+
+// ---- Sparkline ----------------------------------------------------------
+function Sparkline({ data, color = "#2540ea", width = 96, height = 28, fillOpacity = 0.12 }) {
+  if (!data || data.length < 2) return null;
+  const min = Math.min(...data), max = Math.max(...data);
+  const range = max - min || 1;
+  const pad = 2;
+  const stepX = (width - pad * 2) / (data.length - 1);
+  const pts = data.map((v, i) => [pad + i * stepX, pad + (height - pad * 2) * (1 - (v - min) / range)]);
+  const d = pts.map(([x, y], i) => (i === 0 ? `M${x},${y}` : `L${x},${y}`)).join(" ");
+  const area = d + ` L${pts[pts.length - 1][0]},${height - pad} L${pts[0][0]},${height - pad} Z`;
+  const last = pts[pts.length - 1];
+  return (
+    <svg className="spark" width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+      <path d={area} fill={color} opacity={fillOpacity} />
+      <path d={d} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={last[0]} cy={last[1]} r="2.2" fill={color} />
+    </svg>
+  );
+}
+
+// ---- Defaults -----------------------------------------------------------
+const DEFAULTS = {
+  filters: {
+    granularidade: "Mês", base: "Apostas", periodo: "2026",
+    data_inicio: "01/01/2026", data_fim: "18/05/2026",
+    atualizado: "18/05/2026 · 17:18",
+  },
+  header: {
+    eyebrow: "Painel · Monetização",
+    title: "Performance",
+    lede: "Volume de apostas, monetização e comportamento — stake, GGR/NGR e top jogos no período.",
+    base_analise: "Apostas",
+    comparativo: "Período anterior",
+  },
+  user: { name: "Rafael B.", role: "Analytics", initials: "RB" },
+  nav: [
+    { key: "onboarding",  label: "Onboarding",  icon: "funnel",    href: "index.html" },
+    { key: "retencao",    label: "Retenção",    icon: "retention", href: "retencao.html" },
+    { key: "performance", label: "Performance", icon: "perf",      active: true, href: "performance.html" },
+    { key: "chat",        label: "Chat",        icon: "chat",      href: "#" },
+  ],
+  kpis: [
+    { key: "stake",  label: "Stake total",      value: "R$101,0M",   sub: "volume apostado",
+      delta: { dir: "up", v: "+14,2%" },
+      spark: [62, 68, 71, 79, 82, 85, 88, 92, 95, 98, 100, 101], color: "#2540ea" },
+    { key: "ggr",    label: "GGR",              value: "R$101,0M",   sub: "receita bruta",
+      delta: { dir: "up", v: "+9,8%" },
+      spark: [70, 73, 76, 80, 83, 85, 88, 91, 94, 97, 99, 101], color: "#2540ea" },
+    { key: "ngr",    label: "NGR",              value: "R$101,0M",   sub: "receita líquida",
+      delta: { dir: "up", v: "+8,3%" },
+      spark: [72, 75, 78, 81, 84, 86, 89, 92, 95, 97, 99, 101], color: "#2540ea" },
+    { key: "rod",    label: "Apostas",          value: "17.788.680", sub: "total de rodadas",
+      delta: { dir: "up", v: "+11,1%" },
+      spark: [12, 13, 14, 15, 15.5, 16, 16.5, 17, 17.2, 17.4, 17.6, 17.8], color: "#2540ea" },
+    { key: "users",  label: "Usuários apost.",  value: "16.619",     sub: "jogadores únicos",
+      delta: { dir: "up", v: "+6,4%" },
+      spark: [11.2, 11.8, 12.4, 13.0, 13.6, 14.1, 14.6, 15.1, 15.6, 16.0, 16.3, 16.6], color: "#2540ea" },
+    { key: "stk_u",  label: "Stake / usuário",  value: "R$6K",       sub: "ticket médio",
+      delta: { dir: "flat", v: "+0,3%" },
+      spark: [5.4, 5.5, 5.6, 5.6, 5.7, 5.8, 5.9, 5.9, 6.0, 6.0, 6.0, 6.0], color: "#6b7280" },
+  ],
+  combo: {
+    title: "Evolução — Stake & GGR",
+    subtitle: "Mensal · últimos 5 meses",
+    months: ["Jan/26", "Fev/26", "Mar/26", "Abr/26", "Mai/26"],
+    stake:  [6.0, 14.8, 9.2, 43.0, 28.0],   // milhões R$
+    ggr:    [5.6, 14.0, 9.0, 42.5, 27.8],   // milhões R$
+    users:  [3100, 7700, 5100, 4900, 2950], // unidades
+  },
+  dist: {
+    title: "Distribuição de stake por usuário",
+    subtitle: "Por faixa de gasto",
+    buckets: [
+      { label: "R$0–50",    value: 8243 },
+      { label: "R$50–200",  value: 3998 },
+      { label: "R$200–500", value: 1788 },
+      { label: "R$500–1k",  value: 961 },
+      { label: "R$1k–2k",   value: 632 },
+      { label: "R$2k–5k",   value: 507 },
+      { label: "R$5k+",     value: 490 },
+    ],
+  },
+  topGames: {
+    title: "Top 15 jogos — Casino",
+    subtitle: "Por volume apostado no período",
+    rows: [
+      { jogo: "Fortune Rabbit",   provider: "Pgsoft",          cat: "Slots", apostas: 2060703, users: 6148, stake: "R$3,4M", ggr: "R$3,4M" },
+      { jogo: "Fortune Tiger",    provider: "Pgsoft",          cat: "Slots", apostas: 1420186, users: 6282, stake: "R$1,7M", ggr: "R$1,7M" },
+      { jogo: "Fortune Dragon",   provider: "Pgsoft",          cat: "Slots", apostas:  927376, users: 3691, stake: "R$1,4M", ggr: "R$1,4M" },
+      { jogo: "Fortune Ox",       provider: "Pgsoft",          cat: "Slots", apostas:  812044, users: 3120, stake: "R$1,1M", ggr: "R$1,1M" },
+      { jogo: "Sweet Bonanza",    provider: "Pragmatic Slots", cat: "Slots", apostas:  611298, users: 2840, stake: "R$948K", ggr: "R$948K" },
+      { jogo: "Aviator",          provider: "Spribe",          cat: "Crash", apostas:  588410, users: 4120, stake: "R$812K", ggr: "R$812K" },
+      { jogo: "Gates of Olympus", provider: "Pragmatic Slots", cat: "Slots", apostas:  502117, users: 2110, stake: "R$702K", ggr: "R$702K" },
+      { jogo: "Mines",            provider: "Spribe",          cat: "Crash", apostas:  461002, users: 3380, stake: "R$598K", ggr: "R$598K" },
+      { jogo: "JetX",             provider: "Smartsoft",       cat: "Crash", apostas:  398421, users: 2018, stake: "R$521K", ggr: "R$521K" },
+      { jogo: "Bigger Bass",      provider: "Pragmatic Slots", cat: "Slots", apostas:  365112, users: 1740, stake: "R$489K", ggr: "R$489K" },
+      { jogo: "Spaceman",         provider: "Pragmatic Slots", cat: "Crash", apostas:  342017, users: 1920, stake: "R$461K", ggr: "R$461K" },
+      { jogo: "Wild West Gold",   provider: "Pragmatic Slots", cat: "Slots", apostas:  311502, users: 1310, stake: "R$418K", ggr: "R$418K" },
+      { jogo: "Big Bass Bonanza", provider: "Pragmatic Slots", cat: "Slots", apostas:  289344, users: 1212, stake: "R$402K", ggr: "R$402K" },
+      { jogo: "Sugar Rush",       provider: "Pragmatic Slots", cat: "Slots", apostas:  263918, users: 1098, stake: "R$378K", ggr: "R$378K" },
+      { jogo: "Hot Hot Fruit",    provider: "TaDa",            cat: "Slots", apostas:  238411, users:  942, stake: "R$351K", ggr: "R$351K" },
+    ],
+  },
+  topProviders: {
+    title: "Top Providers",
+    subtitle: "Por GGR no período",
+    rows: [
+      { name: "Pgsoft",          value: 9.0, label: "R$9,0M" },
+      { name: "Pragmatic Slots", value: 2.9, label: "R$2,9M" },
+      { name: "TaDa",            value: 1.9, label: "R$1,9M" },
+      { name: "Spribe",          value: 1.1, label: "R$1,1M" },
+      { name: "Aviator Studio",  value: 0.812, label: "R$812K" },
+    ],
+  },
+};
+
+function loadData() {
+  try {
+    const el = document.getElementById("exa-data");
+    if (el && el.textContent.trim() && el.textContent.trim() !== "__EXA_DATA_JSON__") {
+      const parsed = JSON.parse(el.textContent);
+      return {
+        ...DEFAULTS, ...parsed,
+        filters: { ...DEFAULTS.filters, ...(parsed.filters || {}) },
+        header:  { ...DEFAULTS.header,  ...(parsed.header  || {}) },
+        user:    { ...DEFAULTS.user,    ...(parsed.user    || {}) },
+        combo:   { ...DEFAULTS.combo,   ...(parsed.combo   || {}) },
+        dist:    { ...DEFAULTS.dist,    ...(parsed.dist    || {}) },
+        topGames:    { ...DEFAULTS.topGames,    ...(parsed.topGames    || {}) },
+        topProviders:{ ...DEFAULTS.topProviders, ...(parsed.topProviders || {}) },
+      };
+    }
+  } catch (e) { console.warn("Falha ao parsear #exa-data; usando defaults.", e); }
+  return DEFAULTS;
+}
+const D = loadData();
+const ICON_MAP = { funnel: IcoFunnel, retention: IcoRetention, perf: IcoPerf, chat: IcoChat };
+
+// ---- Charts -------------------------------------------------------------
+function PerfCombo({ months, stake, ggr, users, height = 320 }) {
+  const W = 760, H = height;
+  const padL = 48, padR = 48, padT = 44, padB = 32;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+  const n = months.length;
+  const maxBar = Math.max(...stake, ...ggr);
+  const niceMax = Math.ceil(maxBar / 10) * 10 || 1;
+  const ticks = [0, 10, 20, 30, 40].filter(t => t <= niceMax + 5);
+  const slot = innerW / n;
+  const barW = Math.min(56, slot * 0.55);
+  const xC = (i) => padL + slot * (i + 0.5);
+  const yBar = (v) => padT + innerH - (v / niceMax) * innerH;
+  const maxU = Math.max(...users);
+  const niceU = Math.ceil(maxU / 1000) * 1000 || 1;
+  const yU = (v) => padT + innerH - (v / niceU) * innerH;
+  const ggrPts = ggr.map((v, i) => [xC(i), yBar(v)]);
+  const ggrD = ggrPts.map(([x, y], i) => (i === 0 ? `M${x},${y}` : `L${x},${y}`)).join(" ");
+  const userPts = users.map((v, i) => [xC(i), yU(v)]);
+  const userD = userPts.map(([x, y], i) => (i === 0 ? `M${x},${y}` : `L${x},${y}`)).join(" ");
+  const uTicks = [3000, 4000, 5000, 6000, 7000, 8000];
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="perfBarGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#3a5bff" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="#3a5bff" stopOpacity="0.05" />
+        </linearGradient>
+      </defs>
+      {ticks.map((t) => {
+        const y = yBar(t);
+        return (
+          <g key={t}>
+            <line x1={padL} x2={W - padR} y1={y} y2={y} stroke="#efece5" strokeWidth="1" />
+            <text x={padL - 8} y={y + 3.5} textAnchor="end"
+              fontFamily="'Geist Mono', monospace" fontSize="10" fill="#8a93a3">{t}M</text>
+          </g>
+        );
+      })}
+      {uTicks.map((t) => (
+        <text key={t} x={W - padR + 8} y={yU(t) + 3.5} textAnchor="start"
+          fontFamily="'Geist Mono', monospace" fontSize="10" fill="#8a93a3">{t.toLocaleString("pt-BR")}</text>
+      ))}
+      {/* Legend */}
+      <g transform={`translate(${padL}, 18)`}>
+        <rect x="0" y="-9" width="12" height="12" rx="2" fill="#e6ebff" stroke="#3a5bff" strokeWidth="1" />
+        <text x="18" y="1" fontFamily="'Geist Mono', monospace" fontSize="10.5" fill="#4a5160">Stake</text>
+        <line x1="68" y1="-3" x2="86" y2="-3" stroke="#2540ea" strokeWidth="1.75" />
+        <circle cx="77" cy="-3" r="2.5" fill="#2540ea" />
+        <text x="92" y="1" fontFamily="'Geist Mono', monospace" fontSize="10.5" fill="#4a5160">GGR</text>
+        <line x1="138" y1="-3" x2="156" y2="-3" stroke="#3a5bff" strokeWidth="1.5" strokeDasharray="2 3" />
+        <text x="162" y="1" fontFamily="'Geist Mono', monospace" fontSize="10.5" fill="#4a5160">Usuários</text>
+      </g>
+      {/* Bars: stake */}
+      {stake.map((v, i) => {
+        const x = xC(i) - barW / 2;
+        const y = yBar(v);
+        const h = padT + innerH - y;
+        return (
+          <rect key={i} x={x} y={y} width={barW} height={h} rx="3"
+            fill="url(#perfBarGrad)" stroke="#3a5bff" strokeOpacity="0.4" strokeWidth="1" />
+        );
+      })}
+      {/* GGR line */}
+      <path d={ggrD} fill="none" stroke="#2540ea" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      {ggrPts.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="3.2" fill="#fff" stroke="#2540ea" strokeWidth="1.5" />)}
+      {/* Users dashed line */}
+      <path d={userD} fill="none" stroke="#3a5bff" strokeWidth="1.5" strokeDasharray="3 4" strokeLinecap="round" />
+      {userPts.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="2.6" fill="#3a5bff" />)}
+      {/* X labels */}
+      {months.map((m, i) => (
+        <text key={i} x={xC(i)} y={H - 10} textAnchor="middle"
+          fontFamily="'Geist Mono', monospace" fontSize="10.5" fill="#6b7280" letterSpacing="0.04em">{m}</text>
+      ))}
+      <text x={W - padR + 8} y={padT - 8} textAnchor="start"
+        fontFamily="'Geist Mono', monospace" fontSize="9.5" fill="#8a93a3" letterSpacing="0.08em">USUÁRIOS</text>
+    </svg>
+  );
+}
+
+function DistChart({ buckets, height = 320 }) {
+  const W = 760, H = height;
+  const padL = 48, padR = 24, padT = 24, padB = 36;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+  const n = buckets.length;
+  const max = Math.max(...buckets.map(b => b.value));
+  const niceMax = Math.ceil(max / 2000) * 2000;
+  const ticks = [];
+  for (let v = 0; v <= niceMax; v += 2000) ticks.push(v);
+  const slot = innerW / n;
+  const barW = Math.min(60, slot * 0.6);
+  const xC = (i) => padL + slot * (i + 0.5);
+  const yV = (v) => padT + innerH - (v / niceMax) * innerH;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none">
+      {ticks.map((t) => {
+        const y = yV(t);
+        return (
+          <g key={t}>
+            <line x1={padL} x2={W - padR} y1={y} y2={y} stroke="#efece5" strokeWidth="1" />
+            <text x={padL - 8} y={y + 3.5} textAnchor="end"
+              fontFamily="'Geist Mono', monospace" fontSize="10" fill="#8a93a3">{t.toLocaleString("pt-BR")}</text>
+          </g>
+        );
+      })}
+      {buckets.map((b, i) => {
+        const x = xC(i) - barW / 2;
+        const y = yV(b.value);
+        const h = padT + innerH - y;
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={barW} height={h} rx="3" fill="#2540ea" />
+            <text x={xC(i)} y={y - 6} textAnchor="middle"
+              fontFamily="'Geist Mono', monospace" fontSize="11" fill="#1f242e" fontWeight="500">
+              {b.value.toLocaleString("pt-BR")}
+            </text>
+            <text x={xC(i)} y={H - 12} textAnchor="middle"
+              fontFamily="'Geist Mono', monospace" fontSize="10.5" fill="#6b7280">{b.label}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ---- Components ---------------------------------------------------------
+function Topbar() {
+  const f = D.filters;
+  return (
+    <div className="topbar">
+      <div className="tb-left">
+        <div className="filter"><span className="lbl">Granularidade</span><span className="val">{f.granularidade}</span><IcoChevDown className="chev" /></div>
+        <div className="filter"><span className="lbl">Base</span><span className="val">{f.base}</span><IcoChevDown className="chev" /></div>
+        <div className="filter"><span className="lbl">Período</span><span className="val">{f.periodo}</span><IcoChevDown className="chev" /></div>
+        <div className="daterange">
+          <IcoCal size={13} style={{ color: "var(--ink-400)" }} />
+          <span>{f.data_inicio}</span><span className="arrow">→</span><span>{f.data_fim}</span>
+        </div>
+      </div>
+      <div className="tb-right">
+        <button className="filter" style={{ background: "transparent", border: "none", padding: "6px 8px" }}>
+          <IcoSearch size={14} style={{ color: "var(--ink-500)" }} />
+          <span style={{ color: "var(--ink-500)", fontSize: 12 }}>Buscar</span>
+        </button>
+        <div className="status-pill"><span className="dot"></span><span>Atualizado {f.atualizado}</span></div>
+        <button className="filter" title="Exportar"><IcoDownload size={14} style={{ color: "var(--ink-500)" }} /></button>
+      </div>
+    </div>
+  );
+}
+
+function Sidebar() {
+  return (
+    <aside className="sidebar">
+      <div className="sb-brand"><span className="wordmark">exa</span><span className="meta">app</span></div>
+      <div>
+        <div className="sb-section-label">Painéis</div>
+        <nav className="sb-nav">
+          {D.nav.map((it) => {
+            const I = ICON_MAP[it.icon] || IcoFunnel;
+            return (
+              <a key={it.key} href={it.href || "#"}
+                 className={`sb-item ${it.active ? "active" : ""}`}
+                 style={{ textDecoration: "none" }}>
+                <I className="ico" size={15} /><span>{it.label}</span>
+                {it.active && <IcoChevRight className="chev" />}
+              </a>
+            );
+          })}
+        </nav>
+      </div>
+      <div>
+        <div className="sb-section-label">Geral</div>
+        <nav className="sb-nav">
+          <div className="sb-item"><IcoSettings className="ico" size={15} /><span>Configurações</span></div>
+        </nav>
+      </div>
+      <div className="sb-footer">
+        <div className="sb-avatar">{D.user.initials}</div>
+        <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
+          <span style={{ color: "#fff", fontSize: 12, fontWeight: 500 }}>{D.user.name}</span>
+          <span style={{ fontSize: 10.5, fontFamily: "var(--font-mono)", color: "var(--ink-400)" }}>{D.user.role}</span>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function PageHeader() {
+  const h = D.header;
+  return (
+    <div className="page-head">
+      <div>
+        <div className="eyebrow">{h.eyebrow}</div>
+        <h1>{h.title}</h1>
+        <p className="lede">{h.lede}</p>
+      </div>
+      <div className="head-aside">
+        <div className="head-base">Base de análise · <b>{h.base_analise}</b></div>
+        <div className="head-base">Comparativo · <b>{h.comparativo}</b></div>
+      </div>
+    </div>
+  );
+}
+
+function Delta({ d }) {
+  if (!d) return null;
+  const cls = `delta ${d.dir}`;
+  const Arrow = d.dir === "up" ? IcoArrowUp : d.dir === "down" ? IcoArrowDown : null;
+  return <span className={cls}>{Arrow && <Arrow />}{d.v}</span>;
+}
+
+function KpiCard({ k }) {
+  return (
+    <div className="kpi">
+      <div className="label">
+        <span>{k.label}</span>
+        <span className="help" title="Definição da métrica"><IcoHelp /></span>
+      </div>
+      <div className="value">{k.value}{k.unit && <span className="unit">{k.unit}</span>}</div>
+      <div className="foot">
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <Delta d={k.delta} />
+          <span className="sub">{k.sub}</span>
+        </div>
+        <Sparkline data={k.spark} color={k.color || "#2540ea"} />
+      </div>
+    </div>
+  );
+}
+
+function ComboCard() {
+  const c = D.combo;
+  return (
+    <div className="card">
+      <div className="card-head">
+        <div><h3>{c.title}</h3><div className="sub">{c.subtitle}</div></div>
+        <div className="tabs"><button>D</button><button>S</button><button className="on">M</button><button>T</button></div>
+      </div>
+      <div className="perf-combo"><PerfCombo months={c.months} stake={c.stake} ggr={c.ggr} users={c.users} /></div>
+    </div>
+  );
+}
+
+function DistCard() {
+  const d = D.dist;
+  return (
+    <div className="card">
+      <div className="card-head">
+        <div><h3>{d.title}</h3><div className="sub">{d.subtitle}</div></div>
+        <div className="tabs"><button className="on">Usuários</button><button>Stake</button></div>
+      </div>
+      <div className="dist-chart"><DistChart buckets={d.buckets} /></div>
+    </div>
+  );
+}
+
+function TopGamesCard() {
+  const t = D.topGames;
+  const fmt = (n) => n.toLocaleString("pt-BR");
+  return (
+    <div className="card" style={{ padding: 0 }}>
+      <div className="card-head" style={{ padding: "16px 18px", marginBottom: 0, borderBottom: "1px solid var(--hair)" }}>
+        <div><h3>{t.title}</h3><div className="sub">{t.subtitle}</div></div>
+        <div className="tabs"><button className="on">Casino</button><button>Sports</button><button>Live</button></div>
+      </div>
+      <div style={{ maxHeight: 540, overflowY: "auto" }}>
+        <table className="games-table">
+          <thead>
+            <tr>
+              <th>Jogo</th><th>Provider</th><th>Categoria</th>
+              <th>Apostas</th><th>Usuários</th><th>Stake</th><th>GGR</th>
+            </tr>
+          </thead>
+          <tbody>
+            {t.rows.map((r, i) => (
+              <tr key={i}>
+                <td>{r.jogo}</td>
+                <td>{r.provider}</td>
+                <td><span className="pill-cat">{r.cat}</span></td>
+                <td>{fmt(r.apostas)}</td>
+                <td>{fmt(r.users)}</td>
+                <td>{r.stake}</td>
+                <td>{r.ggr}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function TopProvidersCard() {
+  const t = D.topProviders;
+  const max = Math.max(...t.rows.map(r => r.value));
+  return (
+    <div className="card">
+      <div className="card-head">
+        <div><h3>{t.title}</h3><div className="sub">{t.subtitle}</div></div>
+        <div className="tabs"><button className="on">GGR</button><button>Stake</button></div>
+      </div>
+      <div className="top-prov">
+        {t.rows.map((r) => (
+          <div key={r.name} className="top-prov-row">
+            <span className="name">{r.name}</span>
+            <span className="track"><span className="fill" style={{ width: `${(r.value / max) * 100}%` }}></span></span>
+            <span className="value">{r.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <div className="app">
+      <Sidebar />
+      <main className="main" data-screen-label="03 Performance">
+        <Topbar />
+        <div className="page">
+          <PageHeader />
+          <section className="section">
+            <div className="section-head"><span className="tag">Indicadores de Monetização</span><span className="rule"></span></div>
+            <div className="kpi-grid cols-6">
+              {D.kpis.map((k) => <KpiCard key={k.key} k={k} />)}
+            </div>
+          </section>
+          <section className="two-col">
+            <ComboCard />
+            <DistCard />
+          </section>
+          <section className="two-col equal">
+            <TopGamesCard />
+            <TopProvidersCard />
+          </section>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+</script>
+</body>
+</html>

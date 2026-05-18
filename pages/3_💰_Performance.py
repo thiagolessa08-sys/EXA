@@ -2,24 +2,51 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import json
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
-import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
+from pathlib import Path
 from core.databricks_client import execute_query
-from core.theme import inject_theme, page_header, kpi_group, section_head, render_table
+from core.theme import inject_theme
+
 
 inject_theme()
 
 
-def fmt_money(v):
+# ── Helpers ───────────────────────────────────────────────────────────────────
+def fmt_int(n) -> str:
+    return f"{int(n or 0):,}".replace(",", ".")
+
+def fmt_money(v) -> str:
     v = float(v or 0)
-    if abs(v) >= 1_000_000: return f"R${v/1_000_000:.1f}M"
+    if abs(v) >= 1_000_000: return f"R${v/1_000_000:.1f}M".replace(".", ",")
     if abs(v) >= 1_000:     return f"R${v/1_000:.0f}K"
     return f"R${v:.0f}"
 
-def fmt_num(v):
-    return f"{int(v or 0):,}"
+def fmt_money_short(v) -> str:
+    v = float(v or 0)
+    if abs(v) >= 1_000_000: return f"R${v/1_000_000:.1f}M".replace(".", ",")
+    if abs(v) >= 1_000:     return f"R${v/1_000:.0f}K"
+    return f"R${v:.0f}"
+
+
+@st.cache_resource
+def _read_template() -> str:
+    p = Path(__file__).parent.parent / "static" / "dashboard_performance.html"
+    return p.read_text(encoding="utf-8")
+
+
+_EMBED_OVERRIDES = """
+<style id="exa-streamlit-embed">
+  .app { grid-template-columns: 1fr !important; }
+  .sidebar { display: none !important; }
+  .topbar { display: none !important; }
+  .page { padding-top: 12px !important; }
+  body { background: transparent !important; }
+</style>
+</head>"""
 
 
 # ── Filtros (sidebar) ─────────────────────────────────────────────────────────
@@ -50,19 +77,13 @@ with st.sidebar:
     produto_opt = st.selectbox("Produto", ["Total", "Casino", "Sports"])
     granular = st.selectbox("Granularidade", ["Mensal", "Semanal", "Diária"])
 
-page_header(
-    "Performance",
-    "Volume de apostas, monetização e comportamento — stake, GGR/NGR e top jogos no período.",
-    "Performance",
-    eyebrow="Painel · Monetização",
-)
 
 ini_str = str(dt_ini)
 fim_str = str(dt_fim)
 trunc   = {"Mensal": "MONTH", "Semanal": "WEEK", "Diária": "DAY"}[granular]
 fmt_lbl = {"Mensal": "%b/%y",  "Semanal": "%d/%m",  "Diária": "%d/%m"}[granular]
 
-canal_join = "LEFT JOIN workspace.default.v_users_summary u ON cb.user_ext_id = u.user_ext_id"
+canal_join  = "LEFT JOIN workspace.default.v_users_summary u ON cb.user_ext_id = u.user_ext_id"
 canal_where = ""
 if canal_opt == "Afiliados":
     canal_where = "AND u.core_affiliate_id IS NOT NULL AND u.core_affiliate_id > 0"
@@ -79,18 +100,13 @@ def load_kpis(ini, fim, produto, canal_w):
     casino_wins  = "0" if produto == "Sports" else "COALESCE(cw.win_amount, 0)"
     casino_bonus = "0" if produto == "Sports" else "COALESCE(cb.bet_amount_bonus, 0)"
     sport_stake  = "0" if produto == "Casino" else "COALESCE(sb.sport_last_bet_amount, 0)"
-
     q = f"""
     WITH base AS (
-      SELECT
-        cb.user_ext_id,
-        {casino_stake} AS c_stake,
-        {casino_wins}  AS c_win,
-        {casino_bonus} AS c_bonus,
-        {sport_stake}  AS s_stake
+      SELECT cb.user_ext_id,
+        {casino_stake} AS c_stake, {casino_wins} AS c_win,
+        {casino_bonus} AS c_bonus, {sport_stake} AS s_stake
       FROM workspace.default.v_casino_bets cb
-      LEFT JOIN workspace.default.v_casino_wins cw
-        ON cb.bet_id = cw.bet_id
+      LEFT JOIN workspace.default.v_casino_wins cw ON cb.bet_id = cw.bet_id
       LEFT JOIN workspace.default.v_sports_bets sb
         ON cb.user_ext_id = sb.user_ext_id
         AND DATE_TRUNC('DAY', cb.dt) = DATE_TRUNC('DAY', sb.dt_update)
@@ -103,12 +119,11 @@ def load_kpis(ini, fim, produto, canal_w):
         SUM(c_stake + s_stake)               AS stake_total,
         SUM(c_stake + s_stake - c_win)       AS ggr,
         SUM(c_stake + s_stake - c_win - c_bonus) AS ngr,
-        COUNT(*)                             AS n_apostas,
-        COUNT(DISTINCT user_ext_id)          AS n_users
+        COUNT(*) AS n_apostas,
+        COUNT(DISTINCT user_ext_id) AS n_users
       FROM base
     )
-    SELECT *, ROUND(stake_total / NULLIF(n_users, 0), 2) AS stake_por_usuario
-    FROM totals
+    SELECT *, ROUND(stake_total / NULLIF(n_users, 0), 2) AS stake_por_usuario FROM totals
     """
     return execute_query(q)
 
@@ -116,48 +131,46 @@ def load_kpis(ini, fim, produto, canal_w):
 @st.cache_data(ttl=300, show_spinner=False)
 def load_evolucao(ini, fim, trunc, produto, canal_w):
     if produto == "Sports":
-        stake_expr = "SUM(sb.sport_last_bet_amount)"
-        from_table = "workspace.default.v_sports_bets sb"
-        date_col   = "sb.dt_update"
-        join_user  = "LEFT JOIN workspace.default.v_users_summary u ON sb.user_ext_id = u.user_ext_id"
-        win_expr   = "0"
+        q = f"""
+        SELECT DATE_TRUNC('{trunc}', sb.dt_update) AS periodo,
+               SUM(sb.sport_last_bet_amount)       AS stake,
+               0                                    AS wins,
+               COUNT(DISTINCT sb.user_ext_id)      AS usuarios
+        FROM workspace.default.v_sports_bets sb
+        LEFT JOIN workspace.default.v_users_summary u ON sb.user_ext_id = u.user_ext_id
+        WHERE sb.dt_update BETWEEN '{ini}' AND '{fim} 23:59:59'
+        {canal_w}
+        GROUP BY 1 ORDER BY 1
+        """
     elif produto == "Casino":
-        stake_expr = "SUM(cb.bet_amount)"
-        from_table = "workspace.default.v_casino_bets cb"
-        date_col   = "cb.dt"
-        join_user  = "LEFT JOIN workspace.default.v_users_summary u ON cb.user_ext_id = u.user_ext_id"
-        win_expr   = "SUM(COALESCE(cw.win_amount,0))"
+        q = f"""
+        SELECT DATE_TRUNC('{trunc}', cb.dt) AS periodo,
+               SUM(cb.bet_amount)            AS stake,
+               SUM(COALESCE(cw.win_amount,0)) AS wins,
+               COUNT(DISTINCT cb.user_ext_id) AS usuarios
+        FROM workspace.default.v_casino_bets cb
+        LEFT JOIN workspace.default.v_casino_wins cw ON cb.bet_id = cw.bet_id
+        LEFT JOIN workspace.default.v_users_summary u ON cb.user_ext_id = u.user_ext_id
+        WHERE cb.dt BETWEEN '{ini}' AND '{fim} 23:59:59'
+        {canal_w}
+        GROUP BY 1 ORDER BY 1
+        """
     else:
-        stake_expr = "SUM(cb.bet_amount) + SUM(COALESCE(sb.sport_last_bet_amount,0))"
-        from_table = "workspace.default.v_casino_bets cb LEFT JOIN workspace.default.v_sports_bets sb ON cb.user_ext_id = sb.user_ext_id AND DATE_TRUNC('DAY', cb.dt) = DATE_TRUNC('DAY', sb.dt_update)"
-        date_col   = "cb.dt"
-        join_user  = "LEFT JOIN workspace.default.v_users_summary u ON cb.user_ext_id = u.user_ext_id"
-        win_expr   = "SUM(COALESCE(cw.win_amount,0))"
-
-    q = f"""
-    SELECT
-      DATE_TRUNC('{trunc}', {date_col})       AS periodo,
-      {stake_expr}                             AS stake,
-      {win_expr}                               AS wins,
-      COUNT(DISTINCT cb.user_ext_id)           AS usuarios
-    FROM {from_table}
-    {'LEFT JOIN workspace.default.v_casino_wins cw ON cb.bet_id = cw.bet_id' if produto != 'Sports' else ''}
-    {join_user}
-    WHERE {date_col} BETWEEN '{ini}' AND '{fim} 23:59:59'
-    {canal_w}
-    GROUP BY 1 ORDER BY 1
-    """ if produto != "Sports" else f"""
-    SELECT
-      DATE_TRUNC('{trunc}', sb.dt_update)      AS periodo,
-      SUM(sb.sport_last_bet_amount)             AS stake,
-      0                                         AS wins,
-      COUNT(DISTINCT sb.user_ext_id)            AS usuarios
-    FROM workspace.default.v_sports_bets sb
-    {join_user}
-    WHERE sb.dt_update BETWEEN '{ini}' AND '{fim} 23:59:59'
-    {canal_w}
-    GROUP BY 1 ORDER BY 1
-    """
+        q = f"""
+        SELECT DATE_TRUNC('{trunc}', cb.dt) AS periodo,
+               SUM(cb.bet_amount) + SUM(COALESCE(sb.sport_last_bet_amount,0)) AS stake,
+               SUM(COALESCE(cw.win_amount,0))   AS wins,
+               COUNT(DISTINCT cb.user_ext_id)   AS usuarios
+        FROM workspace.default.v_casino_bets cb
+        LEFT JOIN workspace.default.v_sports_bets sb
+          ON cb.user_ext_id = sb.user_ext_id
+          AND DATE_TRUNC('DAY', cb.dt) = DATE_TRUNC('DAY', sb.dt_update)
+        LEFT JOIN workspace.default.v_casino_wins cw ON cb.bet_id = cw.bet_id
+        LEFT JOIN workspace.default.v_users_summary u ON cb.user_ext_id = u.user_ext_id
+        WHERE cb.dt BETWEEN '{ini}' AND '{fim} 23:59:59'
+        {canal_w}
+        GROUP BY 1 ORDER BY 1
+        """
     return execute_query(q)
 
 
@@ -184,8 +197,7 @@ def load_distribuicao(ini, fim, canal_w):
       END AS faixa,
       COUNT(*) AS usuarios
     FROM user_stake
-    GROUP BY 1
-    ORDER BY MIN(total_stake)
+    GROUP BY 1 ORDER BY MIN(total_stake)
     """
     return execute_query(q)
 
@@ -193,23 +205,17 @@ def load_distribuicao(ini, fim, canal_w):
 @st.cache_data(ttl=300, show_spinner=False)
 def load_top_jogos(ini, fim, canal_w):
     q = f"""
-    SELECT
-      cb.game_name,
-      cb.game_provider,
-      cb.game_cateogry                     AS categoria,
-      COUNT(*)                              AS apostas,
-      COUNT(DISTINCT cb.user_ext_id)        AS usuarios,
-      ROUND(SUM(cb.bet_amount), 2)          AS stake,
-      ROUND(SUM(COALESCE(cw.win_amount,0)),2) AS wins,
-      ROUND(SUM(cb.bet_amount) - SUM(COALESCE(cw.win_amount,0)), 2) AS ggr
+    SELECT cb.game_name, cb.game_provider, cb.game_cateogry AS categoria,
+           COUNT(*) AS apostas,
+           COUNT(DISTINCT cb.user_ext_id) AS usuarios,
+           ROUND(SUM(cb.bet_amount), 2) AS stake,
+           ROUND(SUM(cb.bet_amount) - SUM(COALESCE(cw.win_amount,0)), 2) AS ggr
     FROM workspace.default.v_casino_bets cb
     LEFT JOIN workspace.default.v_casino_wins cw ON cb.bet_id = cw.bet_id
-    LEFT JOIN workspace.default.v_users_summary u  ON cb.user_ext_id = u.user_ext_id
+    LEFT JOIN workspace.default.v_users_summary u ON cb.user_ext_id = u.user_ext_id
     WHERE cb.dt BETWEEN '{ini}' AND '{fim} 23:59:59'
     {canal_w}
-    GROUP BY 1,2,3
-    ORDER BY stake DESC
-    LIMIT 15
+    GROUP BY 1,2,3 ORDER BY stake DESC LIMIT 15
     """
     return execute_query(q)
 
@@ -217,171 +223,167 @@ def load_top_jogos(ini, fim, canal_w):
 @st.cache_data(ttl=300, show_spinner=False)
 def load_top_providers(ini, fim, canal_w):
     q = f"""
-    SELECT
-      cb.game_provider,
-      COUNT(DISTINCT cb.user_ext_id)          AS usuarios,
-      ROUND(SUM(cb.bet_amount), 2)            AS stake,
-      ROUND(SUM(COALESCE(cw.win_amount,0)),2) AS wins,
-      ROUND(SUM(cb.bet_amount) - SUM(COALESCE(cw.win_amount,0)), 2) AS ggr
+    SELECT cb.game_provider,
+           ROUND(SUM(cb.bet_amount) - SUM(COALESCE(cw.win_amount,0)), 2) AS ggr
     FROM workspace.default.v_casino_bets cb
     LEFT JOIN workspace.default.v_casino_wins cw ON cb.bet_id = cw.bet_id
-    LEFT JOIN workspace.default.v_users_summary u  ON cb.user_ext_id = u.user_ext_id
+    LEFT JOIN workspace.default.v_users_summary u ON cb.user_ext_id = u.user_ext_id
     WHERE cb.dt BETWEEN '{ini}' AND '{fim} 23:59:59'
     {canal_w}
-    GROUP BY 1
-    ORDER BY stake DESC
-    LIMIT 10
+    GROUP BY 1 ORDER BY ggr DESC LIMIT 10
     """
     return execute_query(q)
 
 
-# ── KPIs ──────────────────────────────────────────────────────────────────────
-with st.spinner("Carregando..."):
+# ── Montar payload ────────────────────────────────────────────────────────────
+def build_payload() -> dict:
+    # KPIs
     try:
-        kpi = load_kpis(ini_str, fim_str, produto_opt, canal_where).iloc[0]
-        stake   = float(kpi["stake_total"] or 0)
-        ggr     = float(kpi["ggr"]         or 0)
-        ngr     = float(kpi["ngr"]         or 0)
-        apostas = int(kpi["n_apostas"]     or 0)
-        users   = int(kpi["n_users"]       or 0)
-        spu     = float(kpi["stake_por_usuario"] or 0)
+        row = load_kpis(ini_str, fim_str, produto_opt, canal_where).iloc[0]
+        stake_total = float(row["stake_total"] or 0)
+        ggr         = float(row["ggr"]         or 0)
+        ngr         = float(row["ngr"]         or 0)
+        n_apostas   = int(row["n_apostas"]     or 0)
+        n_users     = int(row["n_users"]       or 0)
+        spu         = float(row["stake_por_usuario"] or 0)
+    except Exception:
+        stake_total = ggr = ngr = spu = 0.0
+        n_apostas = n_users = 0
 
-        cards = [
-            {"label": "Stake Total",     "value": fmt_money(stake),   "sub": "volume apostado"},
-            {"label": "GGR",             "value": fmt_money(ggr),     "sub": "receita bruta"},
-            {"label": "NGR",             "value": fmt_money(ngr),     "sub": "receita líquida", "delta": {"dir": "up" if ngr >= 0 else "down", "v": ""}},
-            {"label": "Apostas",         "value": fmt_num(apostas),   "sub": "total de rodadas"},
-            {"label": "Usuários Apost.", "value": fmt_num(users),     "sub": "jogadores únicos"},
-            {"label": "Stake / Usuário", "value": fmt_money(spu),     "sub": "ticket médio"},
-        ]
-        st.markdown(kpi_group(cards), unsafe_allow_html=True)
-    except Exception as e:
-        st.error(f"Erro nos KPIs: {e}")
-        stake = ggr = ngr = apostas = users = spu = 0
+    kpis = [
+        {"key": "stake",  "label": "Stake total",     "value": fmt_money_short(stake_total), "sub": "volume apostado", "delta": {"dir": "up",   "v": ""}, "spark": [], "color": "#2540ea"},
+        {"key": "ggr",    "label": "GGR",             "value": fmt_money_short(ggr),         "sub": "receita bruta",   "delta": {"dir": "up",   "v": ""}, "spark": [], "color": "#2540ea"},
+        {"key": "ngr",    "label": "NGR",             "value": fmt_money_short(ngr),         "sub": "receita líquida", "delta": {"dir": "up" if ngr >= 0 else "down", "v": ""}, "spark": [], "color": "#2540ea"},
+        {"key": "rod",    "label": "Apostas",         "value": fmt_int(n_apostas),           "sub": "total de rodadas","delta": {"dir": "up",   "v": ""}, "spark": [], "color": "#2540ea"},
+        {"key": "users",  "label": "Usuários apost.", "value": fmt_int(n_users),             "sub": "jogadores únicos","delta": {"dir": "up",   "v": ""}, "spark": [], "color": "#2540ea"},
+        {"key": "stk_u",  "label": "Stake / usuário", "value": fmt_money_short(spu),         "sub": "ticket médio",    "delta": {"dir": "flat", "v": ""}, "spark": [], "color": "#6b7280"},
+    ]
 
-st.markdown("<br>", unsafe_allow_html=True)
-
-# ── Evolução + Distribuição ───────────────────────────────────────────────────
-col_evol, col_dist = st.columns([3, 2], gap="large")
-
-with col_evol:
-    section_head("Evolução — Stake & GGR")
+    # Evolução
+    months, bars_stake, ggr_line, users_line = [], [], [], []
     try:
         evol = load_evolucao(ini_str, fim_str, trunc, produto_opt, canal_where)
         evol["periodo"] = pd.to_datetime(evol["periodo"])
-        evol["label"]   = evol["periodo"].dt.strftime(fmt_lbl)
-        evol["stake"]   = pd.to_numeric(evol["stake"], errors="coerce")
-        evol["wins"]    = pd.to_numeric(evol["wins"],  errors="coerce")
-        evol["ggr"]     = evol["stake"] - evol["wins"]
+        evol["stake"]   = pd.to_numeric(evol["stake"], errors="coerce").fillna(0)
+        evol["wins"]    = pd.to_numeric(evol["wins"],  errors="coerce").fillna(0)
+        evol["usuarios"]= pd.to_numeric(evol["usuarios"], errors="coerce").fillna(0)
+        for _, r in evol.iterrows():
+            months.append(r["periodo"].strftime(fmt_lbl))
+            bars_stake.append(round(float(r["stake"]) / 1_000_000, 2))
+            ggr_val = float(r["stake"]) - float(r["wins"])
+            ggr_line.append(round(ggr_val / 1_000_000, 2))
+            users_line.append(int(r["usuarios"]))
+    except Exception:
+        pass
 
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
-            x=evol["label"], y=evol["stake"],
-            name="Stake", marker_color="rgba(37,99,235,0.18)",
-        ))
-        fig.add_trace(go.Scatter(
-            x=evol["label"], y=evol["ggr"],
-            name="GGR", mode="lines+markers",
-            line=dict(color="#2563EB", width=2), marker=dict(size=7),
-        ))
-        fig.add_trace(go.Scatter(
-            x=evol["label"], y=pd.to_numeric(evol["usuarios"], errors="coerce"),
-            name="Usuários", mode="lines+markers",
-            line=dict(color="#60A5FA", width=2, dash="dot"), marker=dict(size=6),
-            yaxis="y2",
-        ))
-        fig.update_layout(
-            height=300, margin=dict(l=50, r=40, t=36, b=44),
-            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
-            xaxis=dict(showgrid=False),
-            yaxis=dict(showgrid=True, gridcolor="#DBEAFE"),
-            yaxis2=dict(overlaying="y", side="right", showgrid=False, title="Usuários"),
-            hovermode="x unified",
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    except Exception as e:
-        st.error(f"Erro na evolução: {e}")
-
-with col_dist:
-    section_head("Distribuição de stake por usuário")
+    # Distribuição
+    buckets = []
     try:
         dist = load_distribuicao(ini_str, fim_str, canal_where)
-        dist["usuarios"] = pd.to_numeric(dist["usuarios"], errors="coerce")
         ordem = ["R$0-50","R$50-200","R$200-500","R$500-1k","R$1k-2k","R$2k-5k","R$5k+"]
+        label_map = {"R$0-50":"R$0–50","R$50-200":"R$50–200","R$200-500":"R$200–500",
+                     "R$500-1k":"R$500–1k","R$1k-2k":"R$1k–2k","R$2k-5k":"R$2k–5k","R$5k+":"R$5k+"}
+        dist["usuarios"] = pd.to_numeric(dist["usuarios"], errors="coerce").fillna(0)
         dist["faixa"] = pd.Categorical(dist["faixa"], categories=ordem, ordered=True)
         dist = dist.sort_values("faixa")
+        for _, r in dist.iterrows():
+            buckets.append({"label": label_map.get(str(r["faixa"]), str(r["faixa"])),
+                            "value": int(r["usuarios"])})
+    except Exception:
+        pass
 
-        n = len(dist)
-        cores = [f"rgba(37,99,235,{1 - i*0.10})" for i in range(n)]
-
-        fig_dist = go.Figure(go.Bar(
-            x=dist["faixa"], y=dist["usuarios"],
-            marker_color=cores,
-            text=dist["usuarios"].astype(int).astype(str),
-            textposition="outside",
-        ))
-        fig_dist.update_layout(
-            height=300, margin=dict(l=50, r=20, t=36, b=44),
-            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
-            xaxis=dict(showgrid=False),
-            yaxis=dict(showgrid=True, gridcolor="#DBEAFE"),
-            showlegend=False,
-        )
-        st.plotly_chart(fig_dist, use_container_width=True)
-    except Exception as e:
-        st.error(f"Erro na distribuição: {e}")
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# ── Top Jogos + Top Providers ─────────────────────────────────────────────────
-col_jogos, col_prov = st.columns([3, 2], gap="large")
-
-with col_jogos:
-    section_head("Top 15 jogos — Casino")
+    # Top jogos
+    games_rows = []
     try:
-        jogos = load_top_jogos(ini_str, fim_str, canal_where)
-        if not jogos.empty:
-            jogos["stake"] = pd.to_numeric(jogos["stake"], errors="coerce").apply(fmt_money)
-            jogos["ggr"]   = pd.to_numeric(jogos["ggr"],   errors="coerce").apply(fmt_money)
-            jogos = jogos.rename(columns={
-                "game_name": "Jogo", "game_provider": "Provider",
-                "categoria": "Categoria", "apostas": "Apostas",
-                "usuarios": "Usuários", "stake": "Stake", "ggr": "GGR",
+        jg = load_top_jogos(ini_str, fim_str, canal_where)
+        for _, r in jg.iterrows():
+            games_rows.append({
+                "jogo": str(r.get("game_name") or "—"),
+                "provider": str(r.get("game_provider") or "—"),
+                "cat": str(r.get("categoria") or "—"),
+                "apostas": int(r.get("apostas") or 0),
+                "users":   int(r.get("usuarios") or 0),
+                "stake":   fmt_money(r.get("stake")),
+                "ggr":     fmt_money(r.get("ggr")),
             })
-            st.markdown(render_table(jogos[["Jogo","Provider","Categoria","Apostas","Usuários","Stake","GGR"]]), unsafe_allow_html=True)
-    except Exception as e:
-        st.error(f"Erro nos jogos: {e}")
+    except Exception:
+        pass
 
-with col_prov:
-    section_head("Top providers")
+    # Top providers
+    prov_rows = []
     try:
-        prov = load_top_providers(ini_str, fim_str, canal_where)
-        if not prov.empty:
-            prov["stake"] = pd.to_numeric(prov["stake"], errors="coerce")
-            prov["ggr"]   = pd.to_numeric(prov["ggr"],   errors="coerce")
-            total_stake   = prov["stake"].sum()
-            prov["share"] = (prov["stake"] / total_stake * 100).round(1).astype(str) + "%"
-            prov["stake_fmt"] = prov["stake"].apply(fmt_money)
-            prov["ggr_fmt"]   = prov["ggr"].apply(fmt_money)
+        pv = load_top_providers(ini_str, fim_str, canal_where)
+        pv["ggr"] = pd.to_numeric(pv["ggr"], errors="coerce").fillna(0)
+        for _, r in pv.iterrows():
+            ggr_v = float(r["ggr"])
+            prov_rows.append({
+                "name":  str(r.get("game_provider") or "—"),
+                "value": round(ggr_v / 1_000_000, 3),
+                "label": fmt_money(ggr_v),
+            })
+    except Exception:
+        pass
 
-            fig_prov = go.Figure(go.Bar(
-                y=prov["game_provider"][::-1],
-                x=prov["stake"][::-1],
-                orientation="h",
-                marker_color="#2563EB",
-                text=prov["stake_fmt"][::-1],
-                textposition="inside",
-                insidetextanchor="start",
-                textfont=dict(color="white", size=11),
-            ))
-            fig_prov.update_layout(
-                height=340, margin=dict(l=50, r=20, t=36, b=44),
-                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
-                xaxis=dict(showgrid=False, showticklabels=False, zeroline=False),
-                yaxis=dict(showgrid=False, tickfont=dict(size=12)),
-                showlegend=False,
-            )
-            st.plotly_chart(fig_prov, use_container_width=True)
-    except Exception as e:
-        st.error(f"Erro nos providers: {e}")
+    periodo_label = {
+        "Ano": str(dt_ini.year),
+        "Mês": dt_ini.strftime("%b/%y"),
+    }.get(safra_tipo, f"{dt_ini.strftime('%d/%m')}–{dt_fim.strftime('%d/%m/%y')}")
+
+    return {
+        "filters": {
+            "granularidade": granular,
+            "base":          produto_opt,
+            "periodo":       periodo_label,
+            "data_inicio":   dt_ini.strftime("%d/%m/%Y"),
+            "data_fim":      dt_fim.strftime("%d/%m/%Y"),
+            "atualizado":    datetime.now().strftime("%d/%m/%Y · %H:%M"),
+        },
+        "header": {
+            "eyebrow":      "Painel · Monetização",
+            "title":        "Performance",
+            "lede":         "Volume de apostas, monetização e comportamento — stake, GGR/NGR e top jogos no período.",
+            "base_analise": produto_opt,
+            "comparativo":  "Período anterior",
+        },
+        "user": {"name": "Analytics", "role": "EXA", "initials": "EX"},
+        "nav": [
+            {"key": "onboarding",  "label": "Onboarding",  "icon": "funnel"},
+            {"key": "retencao",    "label": "Retenção",    "icon": "retention"},
+            {"key": "performance", "label": "Performance", "icon": "perf", "active": True},
+            {"key": "chat",        "label": "Chat",        "icon": "chat"},
+        ],
+        "kpis": kpis,
+        "combo": {
+            "title":    "Evolução — Stake & GGR",
+            "subtitle": f"{granular} · período selecionado",
+            "months":   months or ["—"],
+            "stake":    bars_stake or [0],
+            "ggr":      ggr_line   or [0],
+            "users":    users_line or [0],
+        },
+        "dist": {
+            "title":    "Distribuição de stake por usuário",
+            "subtitle": "Por faixa de gasto",
+            "buckets":  buckets or [{"label": "—", "value": 0}],
+        },
+        "topGames": {
+            "title":    "Top 15 jogos — Casino",
+            "subtitle": "Por volume apostado no período",
+            "rows":     games_rows or [],
+        },
+        "topProviders": {
+            "title":    "Top Providers",
+            "subtitle": "Por GGR no período",
+            "rows":     prov_rows or [],
+        },
+    }
+
+
+# ── Render ────────────────────────────────────────────────────────────────────
+with st.spinner("Carregando dashboard..."):
+    payload = build_payload()
+
+template = _read_template()
+html = template.replace("__EXA_DATA_JSON__", json.dumps(payload, ensure_ascii=False))
+html = html.replace("</head>", _EMBED_OVERRIDES)
+components.html(html, height=1900, scrolling=True)

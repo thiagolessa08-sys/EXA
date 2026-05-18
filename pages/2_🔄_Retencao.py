@@ -2,24 +2,48 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import json
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
-import plotly.graph_objects as go
 from datetime import datetime, timedelta, date
+from pathlib import Path
 from core.databricks_client import execute_query
-from core.theme import inject_theme, page_header, kpi_group, section_head, render_table
+from core.theme import inject_theme
+
 
 inject_theme()
 
 
-def cell_class(val):
-    if val is None: return "cell-null", "—"
-    if val >= 99:   return "cell-100", f"{val:.0f}%"
-    if val >= 85:   return "cell-85",  f"{val:.0f}%"
-    if val >= 45:   return "cell-45",  f"{val:.0f}%"
-    if val >= 30:   return "cell-30",  f"{val:.0f}%"
-    if val >= 15:   return "cell-15",  f"{val:.0f}%"
-    return "cell-low", f"{val:.0f}%"
+# ── Helpers ───────────────────────────────────────────────────────────────────
+def fmt_int(n) -> str:
+    return f"{int(n or 0):,}".replace(",", ".")
+
+def fmt_money(v) -> str:
+    v = float(v or 0)
+    if abs(v) >= 1_000_000: return f"R${v/1_000_000:.1f}M".replace(".", ",")
+    if abs(v) >= 1_000:     return f"R${v/1_000:.0f}K"
+    return f"R${v:.0f}"
+
+def fmt_pct(n, d=1) -> str:
+    return f"{float(n or 0):.{d}f}".replace(".", ",")
+
+
+@st.cache_resource
+def _read_template() -> str:
+    p = Path(__file__).parent.parent / "static" / "dashboard_retencao.html"
+    return p.read_text(encoding="utf-8")
+
+
+_EMBED_OVERRIDES = """
+<style id="exa-streamlit-embed">
+  .app { grid-template-columns: 1fr !important; }
+  .sidebar { display: none !important; }
+  .topbar { display: none !important; }
+  .page { padding-top: 12px !important; }
+  body { background: transparent !important; }
+</style>
+</head>"""
 
 
 # ── Filtros (sidebar) ─────────────────────────────────────────────────────────
@@ -52,12 +76,6 @@ with st.sidebar:
     base_ret = st.selectbox("Base", ["Cadastro", "1º Depósito"])
     max_weeks = st.selectbox("Semanas", [4, 6, 8, 12], index=1)
 
-page_header(
-    "Retenção",
-    "Cohorts, recorrência e sobrevivência de usuários — coortes semanais a partir do registro.",
-    "Retenção",
-    eyebrow="Painel · Engajamento",
-)
 
 ini_str = str(dt_ini)
 fim_str = str(dt_fim)
@@ -71,32 +89,26 @@ elif canal_opt == "Orgânico":
 elif canal_opt == "Mobile":
     canal_filter = "AND u.platform = 'mobile'"
 
-# filtro produto para atividade
+# atividade por produto
 if produto_opt == "Casino":
-    activity_sql = f"SELECT user_ext_id, DATE_TRUNC('WEEK', dt) AS aw, SUM(bet_amount) AS stake FROM workspace.default.v_casino_bets GROUP BY 1,2"
+    activity_sql = "SELECT user_ext_id, DATE_TRUNC('WEEK', dt) AS aw, SUM(bet_amount) AS stake FROM workspace.default.v_casino_bets GROUP BY 1,2"
 elif produto_opt == "Sports":
-    activity_sql = f"SELECT user_ext_id, DATE_TRUNC('WEEK', dt_update) AS aw, SUM(sport_last_bet_amount) AS stake FROM workspace.default.v_sports_bets GROUP BY 1,2"
+    activity_sql = "SELECT user_ext_id, DATE_TRUNC('WEEK', dt_update) AS aw, SUM(sport_last_bet_amount) AS stake FROM workspace.default.v_sports_bets GROUP BY 1,2"
 else:
-    activity_sql = f"""
+    activity_sql = """
     SELECT user_ext_id, DATE_TRUNC('WEEK', dt) AS aw, SUM(bet_amount) AS stake
     FROM workspace.default.v_casino_bets GROUP BY 1,2
     UNION ALL
     SELECT user_ext_id, DATE_TRUNC('WEEK', dt_update) AS aw, SUM(sport_last_bet_amount) AS stake
     FROM workspace.default.v_sports_bets GROUP BY 1,2"""
 
-# granularidade do cohort — Ano sempre usa MONTH para ver os 12 meses
 trunc_map = {"Semanal": "WEEK", "Quinzenal": "WEEK", "Mensal": "MONTH"}
 cohort_trunc = "MONTH" if safra_tipo == "Ano" else trunc_map[visao]
-
-if base_ret == "Cadastro":
-    cohort_date = "u.core_registration_date"
-else:
-    cohort_date = "u.core_registration_date"  # fallback; idealmente seria primeira data de depósito
 
 
 # ── Queries ───────────────────────────────────────────────────────────────────
 @st.cache_data(ttl=300, show_spinner=False)
-def load_cohort_matrix(ini: str, fim: str, trunc: str, act_sql: str, canal_f: str, n_weeks: int):
+def load_cohort_matrix(ini, fim, trunc, act_sql, canal_f, n_weeks):
     q = f"""
     WITH cohort_users AS (
       SELECT u.user_ext_id,
@@ -106,9 +118,7 @@ def load_cohort_matrix(ini: str, fim: str, trunc: str, act_sql: str, canal_f: st
         {canal_f}
     ),
     activity AS (
-      SELECT user_ext_id, aw, SUM(stake) AS stake_sum
-      FROM ({act_sql}) t
-      GROUP BY 1, 2
+      SELECT user_ext_id, aw, SUM(stake) AS stake_sum FROM ({act_sql}) t GROUP BY 1,2
     ),
     cohort_size AS (
       SELECT cohort_week, COUNT(DISTINCT user_ext_id) AS n_users
@@ -117,25 +127,23 @@ def load_cohort_matrix(ini: str, fim: str, trunc: str, act_sql: str, canal_f: st
     joined AS (
       SELECT c.cohort_week,
              DATEDIFF(WEEK, c.cohort_week, a.aw) AS week_num,
-             COUNT(DISTINCT a.user_ext_id)         AS retained,
-             SUM(a.stake_sum)                       AS stake_ret
+             COUNT(DISTINCT a.user_ext_id) AS retained
       FROM cohort_users c
       JOIN activity a ON c.user_ext_id = a.user_ext_id
       WHERE DATEDIFF(WEEK, c.cohort_week, a.aw) BETWEEN 0 AND {n_weeks}
       GROUP BY 1, 2
     )
-    SELECT j.cohort_week, j.week_num, j.retained, j.stake_ret,
+    SELECT j.cohort_week, j.week_num, j.retained,
            s.n_users AS cohort_size,
            ROUND(j.retained * 100.0 / s.n_users, 1) AS retention_pct
-    FROM joined j
-    JOIN cohort_size s ON j.cohort_week = s.cohort_week
+    FROM joined j JOIN cohort_size s ON j.cohort_week = s.cohort_week
     ORDER BY 1, 2
     """
     return execute_query(q)
 
 
 @st.cache_data(ttl=300, show_spinner=False)
-def load_kpis_ret(ini: str, fim: str, act_sql: str, canal_f: str):
+def load_kpis_ret(ini, fim, act_sql, canal_f):
     q = f"""
     WITH cohort_users AS (
       SELECT u.user_ext_id,
@@ -145,9 +153,7 @@ def load_kpis_ret(ini: str, fim: str, act_sql: str, canal_f: str):
         {canal_f}
     ),
     activity AS (
-      SELECT user_ext_id, aw, SUM(stake_sum) AS stake_sum
-      FROM (SELECT user_ext_id, aw, SUM(stake) AS stake_sum FROM ({act_sql}) t GROUP BY 1,2) x
-      GROUP BY 1, 2
+      SELECT user_ext_id, aw, SUM(stake) AS stake_sum FROM ({act_sql}) t GROUP BY 1,2
     ),
     w0 AS (SELECT COUNT(DISTINCT user_ext_id) AS n FROM cohort_users),
     w1 AS (
@@ -156,13 +162,11 @@ def load_kpis_ret(ini: str, fim: str, act_sql: str, canal_f: str):
       WHERE DATEDIFF(WEEK, c.cohort_week, a.aw) = 1
     ),
     w4 AS (
-      SELECT COUNT(DISTINCT c.user_ext_id) AS n
-      FROM cohort_users c JOIN activity a ON c.user_ext_id = a.user_ext_id
+      SELECT COUNT(DISTINCT c.user_ext_id) AS n FROM cohort_users c JOIN activity a ON c.user_ext_id = a.user_ext_id
       WHERE DATEDIFF(WEEK, c.cohort_week, a.aw) = 4
     ),
     w8 AS (
-      SELECT COUNT(DISTINCT c.user_ext_id) AS n
-      FROM cohort_users c JOIN activity a ON c.user_ext_id = a.user_ext_id
+      SELECT COUNT(DISTINCT c.user_ext_id) AS n FROM cohort_users c JOIN activity a ON c.user_ext_id = a.user_ext_id
       WHERE DATEDIFF(WEEK, c.cohort_week, a.aw) = 8
     ),
     wins AS (
@@ -171,20 +175,27 @@ def load_kpis_ret(ini: str, fim: str, act_sql: str, canal_f: str):
       JOIN cohort_users c ON w.user_ext_id = c.user_ext_id
       WHERE DATEDIFF(WEEK, c.cohort_week, DATE_TRUNC('WEEK', w.dt)) >= 1
     )
-    SELECT
-      w0.n AS n_w0,
-      w1.n AS n_w1, ROUND(w1.n * 100.0 / NULLIF(w0.n,0), 1) AS ret_w1,
-      w4.n AS n_w4, ROUND(w4.n * 100.0 / NULLIF(w0.n,0), 1) AS ret_w4,
-      w8.n AS n_w8, ROUND(w8.n * 100.0 / NULLIF(w0.n,0), 1) AS ret_w8,
-      w1.stake AS stake_ret,
-      wins.total_win AS total_win
+    SELECT w0.n AS n_w0,
+           w1.n AS n_w1, ROUND(w1.n * 100.0 / NULLIF(w0.n,0), 1) AS ret_w1,
+           w4.n AS n_w4, ROUND(w4.n * 100.0 / NULLIF(w0.n,0), 1) AS ret_w4,
+           w8.n AS n_w8, ROUND(w8.n * 100.0 / NULLIF(w0.n,0), 1) AS ret_w8,
+           w1.stake AS stake_ret, wins.total_win AS total_win
     FROM w0, w1, w4, w8, wins
     """
     return execute_query(q)
 
 
-# ── KPIs ──────────────────────────────────────────────────────────────────────
-with st.spinner("Carregando indicadores..."):
+def cohort_label(dt) -> str:
+    mes = dt.strftime("%b").capitalize()
+    if safra_tipo == "Ano" or cohort_trunc == "MONTH":
+        return f"{mes}/{dt.strftime('%y')}"
+    week_of_month = (dt.day - 1) // 14 + 1
+    return f"{mes} W{week_of_month}"
+
+
+# ── Montar payload ────────────────────────────────────────────────────────────
+def build_payload() -> dict:
+    # KPIs
     try:
         kpi = load_kpis_ret(ini_str, fim_str, activity_sql, canal_filter).iloc[0]
         ret_w1 = float(kpi["ret_w1"] or 0)
@@ -195,156 +206,115 @@ with st.spinner("Carregando indicadores..."):
         stake  = float(kpi["stake_ret"] or 0)
         win    = float(kpi["total_win"]  or 0)
         ngr    = stake - win
+    except Exception:
+        ret_w1 = ret_w4 = ret_w8 = 0.0
+        n_w0 = n_w1 = 0
+        stake = win = ngr = 0.0
 
-        def fmt_money(v):
-            if v >= 1_000_000: return f"R${v/1_000_000:.1f}M"
-            if v >= 1_000:     return f"R${v/1_000:.0f}K"
-            return f"R${v:.0f}"
+    kpis = [
+        {"key": "w1",  "label": "Retenção W1",     "value": fmt_pct(ret_w1), "unit": "%", "sub": "semana 1",       "delta": {"dir": "up" if ret_w1 > 0 else "flat", "v": ""}, "spark": [], "color": "#2540ea"},
+        {"key": "w4",  "label": "Retenção W4",     "value": fmt_pct(ret_w4), "unit": "%", "sub": "semana 4",       "delta": {"dir": "up" if ret_w4 > 0 else "flat", "v": ""}, "spark": [], "color": "#2540ea"},
+        {"key": "w8",  "label": "Retenção W8",     "value": fmt_pct(ret_w8), "unit": "%", "sub": "semana 8",       "delta": {"dir": "up" if ret_w8 > 0 else "flat", "v": ""}, "spark": [], "color": "#2540ea"},
+        {"key": "act", "label": "Usuários ativos", "value": fmt_int(n_w1),                "sub": "recorrentes W1", "delta": {"dir": "up", "v": ""}, "spark": [], "color": "#1f9d57"},
+        {"key": "stk", "label": "Stake retido",    "value": fmt_money(stake),             "sub": "no período",     "delta": {"dir": "up", "v": ""}, "spark": [], "color": "#2540ea"},
+        {"key": "rec", "label": "Receita retida",  "value": fmt_money(abs(ngr)),          "sub": "NGR retenção",   "delta": {"dir": "up", "v": ""}, "spark": [], "color": "#2540ea"},
+    ]
 
-        cards = [
-            {"label": "Retenção W1",     "value": f"{ret_w1:.1f}", "unit": "%", "sub": "semana 1",      "delta": {"dir": "up" if ret_w1 > 0 else "down", "v": ""}},
-            {"label": "Retenção W4",     "value": f"{ret_w4:.1f}", "unit": "%", "sub": "semana 4",      "delta": {"dir": "up" if ret_w4 > 0 else "down", "v": ""}},
-            {"label": "Retenção W8",     "value": f"{ret_w8:.1f}", "unit": "%", "sub": "semana 8",      "delta": {"dir": "up" if ret_w8 > 0 else "down", "v": ""}},
-            {"label": "Usuários Ativos", "value": f"{n_w1:,}".replace(",", "."), "sub": "recorrentes W1"},
-            {"label": "Stake Retido",    "value": fmt_money(stake),  "sub": "no período"},
-            {"label": "Receita Retida",  "value": fmt_money(abs(ngr)),"sub": "NGR retenção"},
-        ]
-        st.markdown(kpi_group(cards), unsafe_allow_html=True)
-    except Exception as e:
-        st.error(f"Erro nos KPIs: {e}")
+    # Cohort matrix
+    cohort_header = [f"W{w}" for w in range(0, max_weeks + 1)]
+    cohort_rows = []
+    users_rows = []
+    avg_curve_points = [100.0]
+    avg_curve_labels = ["W0"]
 
-st.markdown("<br>", unsafe_allow_html=True)
-
-# ── Cohort Matrix ─────────────────────────────────────────────────────────────
-section_head("Cohort de retenção por usuários (%)")
-
-try:
-    df_raw = load_cohort_matrix(ini_str, fim_str, cohort_trunc, activity_sql, canal_filter, max_weeks)
-
-    if not df_raw.empty:
-        df_raw["cohort_week"]   = pd.to_datetime(df_raw["cohort_week"])
-        df_raw["retention_pct"] = pd.to_numeric(df_raw["retention_pct"], errors="coerce")
-        df_raw["week_num"]      = pd.to_numeric(df_raw["week_num"],      errors="coerce")
-        df_raw["cohort_size"]   = pd.to_numeric(df_raw["cohort_size"],   errors="coerce")
-        cohorts = sorted(df_raw["cohort_week"].unique())
-
-        # Pivotear
-        pivot = df_raw.pivot_table(
-            index="cohort_week", columns="week_num",
-            values="retention_pct", aggfunc="first"
-        )
-        sizes = df_raw[df_raw["week_num"] == 0].set_index("cohort_week")["cohort_size"]
-
-        weeks = list(range(0, max_weeks + 1))
-        week_labels = [f"W{w}" for w in weeks]
-
-        # Rótulo da linha
-        def cohort_label(dt):
-            mes = dt.strftime("%b").capitalize()
-            if safra_tipo == "Ano" or cohort_trunc == "MONTH":
-                return f"{mes}/{dt.strftime('%y')}"
-            week_of_month = (dt.day - 1) // 14 + 1
-            return f"{mes} W{week_of_month}"
-
-        # Montar HTML da tabela
-        header = "<tr><th>Cohort</th>" + "".join(f"<th>{w}</th>" for w in week_labels) + "</tr>"
-        rows_html = ""
-        for cohort in cohorts:
-            label = cohort_label(cohort)
-            row = f"<tr><td>{label}</td>"
-            for w in weeks:
-                val = pivot.loc[cohort, w] if cohort in pivot.index and w in pivot.columns else None
-                cls, txt = cell_class(val)
-                if cls == "cell-null":
-                    row += f'<td><span class="cell-null">—</span></td>'
-                else:
-                    row += f'<td><span class="{cls}">{txt}</span></td>'
-            row += "</tr>"
-            rows_html += row
-
-        legend = """
-        <div style="text-align:center;margin-top:8px;font-size:11px;color:#334155;">
-          Retenção:
-          <span style="background:#1D3186;color:white;padding:2px 8px;border-radius:4px;margin:0 3px">100%</span>
-          <span style="background:#2563EB;color:white;padding:2px 8px;border-radius:4px;margin:0 3px">≥85%</span>
-          <span style="background:#93C5FD;color:#1D3186;padding:2px 8px;border-radius:4px;margin:0 3px">≥45%</span>
-          <span style="background:#BFDBFE;color:#1D3186;padding:2px 8px;border-radius:4px;margin:0 3px">≥30%</span>
-          <span style="background:#DBEAFE;color:#334155;padding:2px 8px;border-radius:4px;margin:0 3px">≥15%</span>
-          <span style="background:#F0F4FF;color:#64748B;padding:2px 8px;border-radius:4px;margin:0 3px">&lt;15%</span>
-        </div>"""
-
-        st.markdown(
-            f'<div style="background:white;border-radius:22px;padding:20px;border:1px solid #e2e8e4;overflow-x:auto;box-shadow:0 1px 3px rgba(0,0,0,.07)">'
-            f'<table class="cohort-table"><thead>{header}</thead><tbody>{rows_html}</tbody></table>'
-            f'{legend}</div>',
-            unsafe_allow_html=True
-        )
-    else:
-        st.info("Sem dados de cohort para o período selecionado.")
-
-except Exception as e:
-    st.error(f"Erro no cohort: {e}")
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# ── Curva de Retenção Média ───────────────────────────────────────────────────
-col_curve, col_detail = st.columns([1, 1], gap="large")
-
-with col_curve:
-    section_head("Curva de retenção média")
     try:
-        if not df_raw.empty:
-            df_raw["retention_pct"] = pd.to_numeric(df_raw["retention_pct"], errors="coerce")
-            df_raw["week_num"]      = pd.to_numeric(df_raw["week_num"],      errors="coerce")
-            avg_curve = df_raw.groupby("week_num")["retention_pct"].mean().reset_index()
-            avg_curve = avg_curve[avg_curve["week_num"] <= max_weeks]
+        df = load_cohort_matrix(ini_str, fim_str, cohort_trunc, activity_sql, canal_filter, max_weeks)
+        if not df.empty:
+            df["cohort_week"]   = pd.to_datetime(df["cohort_week"])
+            df["retention_pct"] = pd.to_numeric(df["retention_pct"], errors="coerce")
+            df["week_num"]      = pd.to_numeric(df["week_num"], errors="coerce")
+            df["cohort_size"]   = pd.to_numeric(df["cohort_size"], errors="coerce")
+            df["retained"]      = pd.to_numeric(df["retained"], errors="coerce")
 
-            fig_curve = go.Figure()
-            fig_curve.add_trace(go.Scatter(
-                x=[f"W{int(w)}" for w in avg_curve["week_num"]],
-                y=avg_curve["retention_pct"].round(1),
-                mode="lines+markers",
-                name="Usuários %",
-                line=dict(color="#2563EB", width=3),
-                marker=dict(size=9, color="#2563EB"),
-                fill="tozeroy", fillcolor="rgba(37,99,235,0.08)",
-            ))
-            fig_curve.update_layout(
-                height=300, margin=dict(l=50, r=20, t=36, b=44),
-                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
-                xaxis=dict(showgrid=False),
-                yaxis=dict(showgrid=True, gridcolor="#DBEAFE",
-                           ticksuffix="%", range=[0, 110]),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02),
-                hovermode="x unified",
-            )
-            st.plotly_chart(fig_curve, use_container_width=True)
-    except Exception as e:
-        st.error(f"Erro na curva: {e}")
+            pivot_pct = df.pivot_table(index="cohort_week", columns="week_num",
+                                       values="retention_pct", aggfunc="first")
+            pivot_abs = df.pivot_table(index="cohort_week", columns="week_num",
+                                       values="retained", aggfunc="first")
+            sizes = df[df["week_num"] == 0].set_index("cohort_week")["cohort_size"]
 
-with col_detail:
-    section_head("Tabela de cohorts")
-    try:
-        if not df_raw.empty:
-            tbl = df_raw[df_raw["week_num"] <= 6].copy()
-            tbl["cohort_week"] = pd.to_datetime(tbl["cohort_week"])
-            tbl["Cohort"] = tbl["cohort_week"].apply(cohort_label)
+            for ck in sorted(df["cohort_week"].unique()):
+                label = cohort_label(pd.Timestamp(ck).to_pydatetime())
+                row_pct = []
+                row_abs = []
+                for w in range(0, max_weeks + 1):
+                    v_pct = pivot_pct.loc[ck, w] if (ck in pivot_pct.index and w in pivot_pct.columns) else None
+                    v_abs = pivot_abs.loc[ck, w] if (ck in pivot_abs.index and w in pivot_abs.columns) else None
+                    row_pct.append(None if pd.isna(v_pct) else round(float(v_pct), 1))
+                    row_abs.append(None if pd.isna(v_abs) else int(v_abs))
+                cohort_rows.append({"label": label, "row": row_pct})
+                users_rows.append({"label": label, "values": [int(sizes.get(ck, 0))] + row_abs[1:]})
 
-            detail = tbl.pivot_table(
-                index="Cohort", columns="week_num",
-                values="retained", aggfunc="first"
-            ).reset_index()
+            # curva média
+            avg = df.groupby("week_num")["retention_pct"].mean().reset_index().sort_values("week_num")
+            avg = avg[avg["week_num"] <= max_weeks]
+            pts = [100.0] + [round(float(v), 1) for v in avg[avg["week_num"] > 0]["retention_pct"].tolist()]
+            lbls = ["W0"] + [f"W{int(w)}" for w in avg[avg["week_num"] > 0]["week_num"].tolist()]
+            avg_curve_points = pts
+            avg_curve_labels = lbls
+    except Exception:
+        pass
 
-            # Adiciona tamanho do cohort (W0)
-            size_map = dict(zip(
-                [cohort_label(c) for c in cohorts],
-                [int(sizes.get(c, 0)) for c in cohorts]
-            ))
-            detail.insert(1, "Usuários W0", detail["Cohort"].map(size_map))
+    periodo_label = {
+        "Ano": str(dt_ini.year),
+        "Mês": dt_ini.strftime("%b/%y"),
+    }.get(safra_tipo, f"{dt_ini.strftime('%d/%m')}–{dt_fim.strftime('%d/%m/%y')}")
 
-            detail.columns = ["COHORT", "USUÁRIOS W0"] + [f"W{int(c)}" for c in detail.columns[2:]]
-            detail = detail.drop(columns=["W0"], errors="ignore")
+    return {
+        "filters": {
+            "granularidade": safra_tipo,
+            "base":          base_ret,
+            "periodo":       periodo_label,
+            "data_inicio":   dt_ini.strftime("%d/%m/%Y"),
+            "data_fim":      dt_fim.strftime("%d/%m/%Y"),
+            "atualizado":    datetime.now().strftime("%d/%m/%Y · %H:%M"),
+        },
+        "header": {
+            "eyebrow":      "Painel · Engajamento",
+            "title":        "Retenção",
+            "lede":         "Cohorts, recorrência e sobrevivência de usuários — coortes semanais a partir do registro.",
+            "base_analise": base_ret,
+            "comparativo":  "Período anterior",
+        },
+        "user": {"name": "Analytics", "role": "EXA", "initials": "EX"},
+        "nav": [
+            {"key": "onboarding",  "label": "Onboarding",  "icon": "funnel"},
+            {"key": "retencao",    "label": "Retenção",    "icon": "retention", "active": True},
+            {"key": "performance", "label": "Performance", "icon": "perf"},
+            {"key": "chat",        "label": "Chat",        "icon": "chat"},
+        ],
+        "kpis": kpis,
+        "cohortHeader": cohort_header,
+        "cohort": cohort_rows or [{"label": "—", "row": [None] * (max_weeks + 1)}],
+        "curve": {
+            "title":    "Curva de Retenção Média",
+            "subtitle": f"Sobrevivência média dos cohorts · W0 → W{max_weeks}",
+            "points":   avg_curve_points,
+            "labels":   avg_curve_labels,
+        },
+        "usersTable": {
+            "title":    "Tabela de Cohorts",
+            "subtitle": "Volumes absolutos de usuários por semana",
+            "cols":     ["Usuários W0"] + [f"W{w}" for w in range(1, max_weeks + 1)],
+            "rows":     users_rows or [{"label": "—", "values": [0] * (max_weeks + 1)}],
+        },
+    }
 
-            st.markdown(render_table(detail), unsafe_allow_html=True)
-    except Exception as e:
-        st.error(f"Erro na tabela: {e}")
+
+# ── Render ────────────────────────────────────────────────────────────────────
+with st.spinner("Carregando dashboard..."):
+    payload = build_payload()
+
+template = _read_template()
+html = template.replace("__EXA_DATA_JSON__", json.dumps(payload, ensure_ascii=False))
+html = html.replace("</head>", _EMBED_OVERRIDES)
+components.html(html, height=1480, scrolling=True)
