@@ -22,11 +22,6 @@ def fmt_int(n) -> str:
 def fmt_pct(n, d=1) -> str:
     return f"{float(n or 0):.{d}f}".replace(".", ",")
 
-def delta_dir(current, prev):
-    if prev == 0:
-        return "flat"
-    return "up" if current >= prev else "down"
-
 
 # ── Template HTML ─────────────────────────────────────────────────────────────
 @st.cache_resource
@@ -35,56 +30,49 @@ def _read_template() -> str:
     return p.read_text(encoding="utf-8")
 
 
-# ── Filtros ───────────────────────────────────────────────────────────────────
-with st.container():
-    st.markdown('''<div class="exa-topbar-row">
-      <span class="exa-topbar-pulse"></span>
-      <span class="exa-topbar-brand">EXA &middot; Analytics</span>
-      <span class="exa-topbar-sep"></span>
-      <span class="exa-topbar-live-badge"><span></span>Live</span>
-    </div>''', unsafe_allow_html=True)
+# CSS injetado no iframe para esconder o sidebar do React (Streamlit cuida da navegação)
+_EMBED_OVERRIDES = """
+<style id="exa-streamlit-embed">
+  .app { grid-template-columns: 1fr !important; }
+  .sidebar { display: none !important; }
+  body { background: transparent !important; }
+</style>
+</head>"""
 
-    f1, f2, f3, f4 = st.columns([2, 2, 3, 2])
+
+# ── Filtros na sidebar do Streamlit ───────────────────────────────────────────
+with st.sidebar:
+    st.markdown("---")
+    st.markdown("**Filtros**")
+
+    safra_tipo = st.selectbox(
+        "Granularidade",
+        ["Ano", "Mês", "Semana", "Dia", "Data aberta"],
+    )
+    base_safra = st.selectbox("Base da safra", ["Cadastro", "1º Depósito"])
+
     today = date.today()
-
-    with f1:
-        safra_tipo = st.selectbox(
-            "Granularidade",
-            ["Ano", "Mês", "Semana", "Dia", "Data aberta"],
-            label_visibility="collapsed",
-        )
-    with f2:
-        base_safra = st.selectbox(
-            "Base da safra",
-            ["Cadastro", "1º Depósito"],
-            label_visibility="collapsed",
-        )
-    with f3:
-        if safra_tipo == "Ano":
-            anos = list(range(today.year, today.year - 5, -1))
-            ano_sel = st.selectbox("Ano", anos, label_visibility="collapsed")
-            dt_ini = date(ano_sel, 1, 1)
-            dt_fim = date(ano_sel, 12, 31) if ano_sel < today.year else today
-        elif safra_tipo == "Mês":
-            meses = pd.date_range(end=today, periods=24, freq="MS").strftime("%Y-%m").tolist()[::-1]
-            mes_sel = st.selectbox("Mês", meses, label_visibility="collapsed")
-            dt_ini = datetime.strptime(mes_sel, "%Y-%m").date()
-            dt_fim = (dt_ini.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
-        elif safra_tipo == "Semana":
-            semana_ini = today - timedelta(days=today.weekday())
-            data_sel = st.date_input("Semana", value=semana_ini, label_visibility="collapsed")
-            dt_ini = data_sel - timedelta(days=data_sel.weekday())
-            dt_fim = dt_ini + timedelta(days=6)
-        elif safra_tipo == "Dia":
-            data_sel = st.date_input("Dia", value=today, label_visibility="collapsed")
-            dt_ini = dt_fim = data_sel
-        else:
-            c1, c2 = st.columns(2)
-            dt_ini = c1.date_input("De", value=today - timedelta(days=30), label_visibility="collapsed")
-            dt_fim = c2.date_input("Até", value=today, label_visibility="collapsed")
-    with f4:
-        st.caption(f"📅 {dt_ini.strftime('%d/%m/%Y')} → {dt_fim.strftime('%d/%m/%Y')}")
-        st.caption(f"Base: **{base_safra}**")
+    if safra_tipo == "Ano":
+        anos = list(range(today.year, today.year - 5, -1))
+        ano_sel = st.selectbox("Ano", anos)
+        dt_ini = date(ano_sel, 1, 1)
+        dt_fim = date(ano_sel, 12, 31) if ano_sel < today.year else today
+    elif safra_tipo == "Mês":
+        meses = pd.date_range(end=today, periods=24, freq="MS").strftime("%Y-%m").tolist()[::-1]
+        mes_sel = st.selectbox("Mês", meses)
+        dt_ini = datetime.strptime(mes_sel, "%Y-%m").date()
+        dt_fim = (dt_ini.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+    elif safra_tipo == "Semana":
+        semana_ini = today - timedelta(days=today.weekday())
+        data_sel = st.date_input("Semana", value=semana_ini)
+        dt_ini = data_sel - timedelta(days=data_sel.weekday())
+        dt_fim = dt_ini + timedelta(days=6)
+    elif safra_tipo == "Dia":
+        data_sel = st.date_input("Dia", value=today)
+        dt_ini = dt_fim = data_sel
+    else:
+        dt_ini = st.date_input("De", value=today - timedelta(days=30))
+        dt_fim = st.date_input("Até", value=today)
 
 
 ini_str = str(dt_ini)
@@ -148,7 +136,6 @@ def build_payload(ini: str, fim: str, base: str, granular: str) -> dict:
     churn_fts_q  = ftds - fts
     churn_fts_p  = churn_fts_q / max(ftds, 1)
 
-    # Evolução mensal para o gráfico
     months, bars, line = [], [], []
     try:
         evol = load_evolucao(ini, fim)
@@ -175,18 +162,18 @@ def build_payload(ini: str, fim: str, base: str, granular: str) -> dict:
             "atualizado":    datetime.now().strftime("%d/%m/%Y · %H:%M"),
         },
         "header": {
-            "eyebrow":       "Painel · Aquisição",
-            "title":         "Onboarding",
-            "lede":          "Aquisição, ativação e velocidade de jornada — do cadastro à primeira aposta esportiva.",
-            "base_analise":  base,
-            "comparativo":   "Período anterior",
+            "eyebrow":      "Painel · Aquisição",
+            "title":        "Onboarding",
+            "lede":         "Aquisição, ativação e velocidade de jornada — do cadastro à primeira aposta esportiva.",
+            "base_analise": base,
+            "comparativo":  "Período anterior",
         },
         "user": {"name": "Analytics", "role": "EXA", "initials": "EX"},
         "nav": [
             {"key": "onboarding",  "label": "Onboarding",  "icon": "funnel",     "active": True},
-            {"key": "retencao",    "label": "Retenção",     "icon": "retention"},
-            {"key": "performance", "label": "Performance",  "icon": "perf"},
-            {"key": "chat",        "label": "Chat",         "icon": "chat"},
+            {"key": "retencao",    "label": "Retenção",    "icon": "retention"},
+            {"key": "performance", "label": "Performance", "icon": "perf"},
+            {"key": "chat",        "label": "Chat",        "icon": "chat"},
         ],
         "ativacao": [
             {"key": "cadastros", "label": "Cadastros",       "value": fmt_int(cadastros),         "sub": f"{fmt_pct(conv_cad_ftd * 100)}% de conv. p/ FTD", "delta": {"dir": "up",   "v": ""},  "spark": [],  "color": "#2540ea"},
@@ -206,10 +193,10 @@ def build_payload(ini: str, fim: str, base: str, granular: str) -> dict:
             "title":    "Funil de Ativação",
             "subtitle": "Cadastro → KYC → Primeiro depósito → Primeira aposta esportiva",
             "stages": [
-                {"name": "Cadastros",     "count": fmt_int(cadastros), "pct": 100.0,                              "conv": 100.0,                           "classN": "blue",   "from": None},
-                {"name": "KYC Aprovados", "count": fmt_int(kyc),       "pct": round(kyc  / max(cadastros,1)*100,1),"conv": round(kyc  / max(cadastros,1)*100,1),"classN": "blue-2", "from": "Cadastros"},
-                {"name": "FTD",           "count": fmt_int(ftds),      "pct": round(ftds / max(cadastros,1)*100,1),"conv": round(ftds / max(kyc,1)*100,1),       "classN": "blue-3", "from": "KYC"},
-                {"name": "FTS",           "count": fmt_int(fts),       "pct": round(fts  / max(cadastros,1)*100,1),"conv": round(fts  / max(ftds,1)*100,1),       "classN": "blue-4", "from": "FTD"},
+                {"name": "Cadastros",     "count": fmt_int(cadastros), "pct": 100.0,                              "conv": 100.0,                              "classN": "blue",   "from": None},
+                {"name": "KYC Aprovados", "count": fmt_int(kyc),       "pct": round(kyc  / max(cadastros,1)*100,1), "conv": round(kyc  / max(cadastros,1)*100,1), "classN": "blue-2", "from": "Cadastros"},
+                {"name": "FTD",           "count": fmt_int(ftds),      "pct": round(ftds / max(cadastros,1)*100,1), "conv": round(ftds / max(kyc,1)*100,1),       "classN": "blue-3", "from": "KYC"},
+                {"name": "FTS",           "count": fmt_int(fts),       "pct": round(fts  / max(cadastros,1)*100,1), "conv": round(fts  / max(ftds,1)*100,1),      "classN": "blue-4", "from": "FTD"},
             ],
             "notes": [
                 {"lbl": "Gargalo principal",    "prefix": "FTD → FTS", "suffix": f" ({fmt_pct(churn_fts_p*100)}% queda)", "bold": "prefix"},
@@ -232,4 +219,5 @@ with st.spinner("Carregando dashboard..."):
 
 template = _read_template()
 html = template.replace("__EXA_DATA_JSON__", json.dumps(payload, ensure_ascii=False))
+html = html.replace("</head>", _EMBED_OVERRIDES)
 components.html(html, height=1480, scrolling=True)
