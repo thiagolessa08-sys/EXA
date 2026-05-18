@@ -1319,11 +1319,14 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 
 // Auto-resize: informa ao Streamlit a altura real do conteúdo
 function sendHeight() {
-  const h = document.documentElement.scrollHeight;
+  const main = document.querySelector('main.page') || document.querySelector('.page') || document.body;
+  const rect = main.getBoundingClientRect();
+  const h = Math.ceil(rect.bottom + window.scrollY + 8);
   window.parent.postMessage({ type: "streamlit:setFrameHeight", height: h }, "*");
 }
-[50, 200, 500, 1000].forEach(t => setTimeout(sendHeight, t));
+[50, 200, 500, 1000, 1800].forEach(t => setTimeout(sendHeight, t));
 new ResizeObserver(sendHeight).observe(document.documentElement);
+window.addEventListener('load', sendHeight);
 
 </script>
 </body>

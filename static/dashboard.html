@@ -1061,11 +1061,15 @@ function App() {
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 
 function sendHeight() {
-  const h = document.documentElement.scrollHeight;
+  // Mede o bottom real do conteúdo (imune à altura do iframe)
+  const main = document.querySelector('main.page') || document.querySelector('.page') || document.body;
+  const rect = main.getBoundingClientRect();
+  const h = Math.ceil(rect.bottom + window.scrollY + 8);
   window.parent.postMessage({ type: "streamlit:setFrameHeight", height: h }, "*");
 }
-[50, 200, 500, 1000].forEach(t => setTimeout(sendHeight, t));
+[50, 200, 500, 1000, 1800].forEach(t => setTimeout(sendHeight, t));
 new ResizeObserver(sendHeight).observe(document.documentElement);
+window.addEventListener('load', sendHeight);
 
 </script>
 </body>
