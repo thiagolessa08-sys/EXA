@@ -232,7 +232,6 @@ KALLAS_CSS = """
   [data-testid="stSidebarNavSectionHeader"],
   .stSidebarNavSectionHeader,
   [data-testid="stSidebarNavSeparator"],
-  [data-testid="stSidebarHeader"],
   [data-testid="stSidebarNav"] > div:first-child:not(:has(a)),
   [data-testid="stSidebarNav"] > ul:first-child > li:first-child:not(:has(a)),
   [data-testid="stSidebarNav"] h1,
@@ -258,6 +257,18 @@ KALLAS_CSS = """
     visibility: hidden !important;
     pointer-events: none !important;
   }
+  /* Esconder link de nav que aponta para /app (entry script) */
+  [data-testid="stSidebarNav"] a[href$="/app"],
+  [data-testid="stSidebarNav"] a[href$="/app/"],
+  [data-testid="stSidebarNav"] a[href*="/app?"],
+  [data-testid="stSidebarNav"] li:has(a[href$="/app"]),
+  [data-testid="stSidebarNav"] li:has(a[href$="/app/"]) {
+    display: none !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
+  }
+
   /* Restaura visibilidade do label do link em si */
   [data-testid="stSidebarNavLink"] span,
   [data-testid="stSidebarNavLink"] p {

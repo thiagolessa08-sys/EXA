@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 pg = st.navigation([
-    st.Page("pages/1_📈_Onboarding.py",  title="Onboarding",  icon=":material/how_to_reg:"),
+    st.Page("pages/1_📈_Onboarding.py",  title="Onboarding",  icon=":material/how_to_reg:", default=True),
     st.Page("pages/2_🔄_Retencao.py",    title="Retenção",    icon=":material/loop:"),
     st.Page("pages/3_💰_Performance.py", title="Performance", icon=":material/bar_chart:"),
     st.Page("pages/4_💬_Chat.py",         title="Chat",        icon=":material/forum:"),
