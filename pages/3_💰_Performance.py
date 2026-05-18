@@ -34,11 +34,11 @@ def fmt_money_short(v) -> str:
 
 _EMBED_OVERRIDES = """
 <style id="exa-streamlit-embed">
-  .app { grid-template-columns: 1fr !important; }
+  .app { grid-template-columns: 1fr !important; min-height: 0 !important; }
   .sidebar { display: none !important; }
   .topbar { display: none !important; }
   .page { padding-top: 12px !important; }
-  body { background: transparent !important; }
+  body { background: transparent !important; min-height: 0 !important; }
 </style>
 </head>"""
 

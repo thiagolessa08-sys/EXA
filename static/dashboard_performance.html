@@ -1493,8 +1493,8 @@ function sendHeight() {
   const h = document.documentElement.scrollHeight;
   window.parent.postMessage({ type: "streamlit:setFrameHeight", height: h }, "*");
 }
-setTimeout(sendHeight, 200);
-new ResizeObserver(sendHeight).observe(document.body);
+[50, 200, 500, 1000].forEach(t => setTimeout(sendHeight, t));
+new ResizeObserver(sendHeight).observe(document.documentElement);
 
 </script>
 </body>
