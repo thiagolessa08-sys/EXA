@@ -172,22 +172,46 @@ KALLAS_CSS = """
     margin: 0 !important;
   }
 
-  /* ── Esconder labels de seção do sidebar nav ("app", "chat") ── */
+  /* ── Esconder labels de seção do sidebar nav ("app", "chat", etc) ── */
   [data-testid="stSidebarNavSectionHeader"],
   .stSidebarNavSectionHeader,
+  [data-testid="stSidebarNavSeparator"],
+  [data-testid="stSidebarHeader"],
+  [data-testid="stSidebarNav"] > div:first-child:not(:has(a)),
+  [data-testid="stSidebarNav"] > ul:first-child > li:first-child:not(:has(a)),
+  [data-testid="stSidebarNav"] h1,
+  [data-testid="stSidebarNav"] h2,
+  [data-testid="stSidebarNav"] h3,
+  [data-testid="stSidebarNav"] > div > p,
+  [data-testid="stSidebarNav"] > p,
   /* div que contém <p> mas não contém links (= section header) */
   [data-testid="stSidebar"] nav div:has(> p):not(:has(a)),
   [data-testid="stSidebar"] nav > div > div > p,
   [data-testid="stSidebar"] nav > * > div > p,
-  [data-testid="stSidebar"] nav p {
+  [data-testid="stSidebar"] nav > p,
+  [data-testid="stSidebar"] nav > div > p,
+  [data-testid="stSidebar"] nav p:not([data-testid="stSidebarNavLinkLabel"]):not([class*="NavLink"]) {
     display: none !important;
     height: 0 !important;
     min-height: 0 !important;
+    max-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
     opacity: 0 !important;
+    visibility: hidden !important;
     pointer-events: none !important;
+  }
+  /* Restaura visibilidade do label do link em si */
+  [data-testid="stSidebarNavLink"] span,
+  [data-testid="stSidebarNavLink"] p {
+    display: inline-block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
   }
 
   /* ── Scrollbar ── */
