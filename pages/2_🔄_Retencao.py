@@ -309,7 +309,13 @@ def build_payload() -> dict:
 with st.spinner("Carregando dashboard..."):
     payload = build_payload()
 
-template = load_template("dashboard_retencao.html")
-html = template.replace("__EXA_DATA_JSON__", json.dumps(payload, ensure_ascii=False))
-html = html.replace("</head>", _EMBED_OVERRIDES)
-components.html(html, height=1480, scrolling=True)
+try:
+    template = load_template("dashboard_retencao.html")
+    html = template.replace("__EXA_DATA_JSON__", json.dumps(payload, ensure_ascii=False))
+    html = html.replace("</head>", _EMBED_OVERRIDES)
+    # debug: se o iframe aparecer vazio, o erro é no JS (não no Python)
+    st.caption(f"🔍 template {len(template):,}B · payload kpis={len(payload.get('kpis',[]))} cohort={len(payload.get('cohort',[]))}")
+    components.html(html, height=1480, scrolling=True)
+except Exception as exc:
+    st.error(f"Erro ao montar dashboard: {exc}")
+    st.json(payload)
