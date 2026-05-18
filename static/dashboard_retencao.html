@@ -1317,6 +1317,15 @@ function App() {
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 
+// Auto-resize: informa ao Streamlit a altura real do conteúdo
+function sendHeight() {
+  const h = document.documentElement.scrollHeight;
+  window.parent.postMessage({ type: "streamlit:setFrameHeight", height: h }, "*");
+}
+// Aguarda o React renderizar e observa mudanças subsequentes
+setTimeout(sendHeight, 200);
+new ResizeObserver(sendHeight).observe(document.body);
+
 </script>
 </body>
 </html>
