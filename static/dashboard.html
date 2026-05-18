@@ -1061,15 +1061,20 @@ function App() {
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 
 function sendHeight() {
-  // Mede o bottom real do conteúdo (imune à altura do iframe)
-  const main = document.querySelector('main.page') || document.querySelector('.page') || document.body;
-  const rect = main.getBoundingClientRect();
-  const h = Math.ceil(rect.bottom + window.scrollY + 8);
-  window.parent.postMessage({ type: "streamlit:setFrameHeight", height: h }, "*");
+  const page = document.querySelector('.page') || document.body;
+  const rect = page.getBoundingClientRect();
+  const h = Math.max(50, Math.ceil(rect.bottom + window.scrollY + 8));
+  const msg = { type: "streamlit:setFrameHeight", height: h };
+  try { window.parent.postMessage(msg, "*"); } catch(e) {}
+  try { window.top.postMessage(msg, "*"); } catch(e) {}
 }
-[50, 200, 500, 1000, 1800].forEach(t => setTimeout(sendHeight, t));
+[50, 200, 500, 1000, 1800, 3000].forEach(t => setTimeout(sendHeight, t));
 new ResizeObserver(sendHeight).observe(document.documentElement);
 window.addEventListener('load', sendHeight);
+const _pageWatch = setInterval(() => {
+  const p = document.querySelector('.page');
+  if (p) { new ResizeObserver(sendHeight).observe(p); clearInterval(_pageWatch); }
+}, 100);
 
 </script>
 </body>
