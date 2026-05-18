@@ -1491,7 +1491,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 
 function sendHeight() {
   var h = document.documentElement.scrollHeight;
-  try { if (window.frameElement) { window.frameElement.style.height = h + 'px'; window.frameElement.setAttribute('height', h); } } catch(e) {}
+  try { if (window.frameElement) { window.frameElement.style.minHeight = '0'; window.frameElement.style.height = h + 'px'; window.frameElement.setAttribute('height', h); } } catch(e) {}
   try { window.parent.postMessage({ type: "streamlit:setFrameHeight", height: h }, "*"); } catch(e) {}
 }
 [100, 400, 1000, 2000].forEach(function(t){ setTimeout(sendHeight, t); });
