@@ -216,4 +216,4 @@ with st.spinner("Carregando dashboard..."):
 template = load_template("dashboard.html")
 html = template.replace("__EXA_DATA_JSON__", json.dumps(payload, ensure_ascii=False))
 html = html.replace("</head>", _EMBED_OVERRIDES)
-components.html(html, height=800, scrolling=True)
+components.html(html, height=10, scrolling=False)
