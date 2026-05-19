@@ -122,7 +122,8 @@ def build_payload(ini: str, fim: str, base: str, granular: str) -> dict:
         ftds      = int(row["ftds"]      or 0)
         kyc       = int(row["kyc"]       or 0)
         fts       = int(row["fts"]       or 0)
-    except Exception:
+    except Exception as e:
+        st.error(f"Falha ao carregar KPIs do Databricks: {e}")
         cadastros = ftds = kyc = fts = 0
 
     conv_cad_ftd = ftds / max(cadastros, 1)

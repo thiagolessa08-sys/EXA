@@ -20,12 +20,25 @@ def get_connection():
 
 
 def execute_query(query: str) -> pd.DataFrame:
-    conn = get_connection()
-    with conn.cursor() as cursor:
-        cursor.execute(query)
-        result = cursor.fetchall()
-        columns = [desc[0] for desc in cursor.description]
-    return pd.DataFrame(result, columns=columns)
+    global _connection
+    last_error = None
+    for attempt in range(2):
+        try:
+            conn = get_connection()
+            with conn.cursor() as cursor:
+                cursor.execute(query)
+                result = cursor.fetchall()
+                columns = [desc[0] for desc in cursor.description]
+            return pd.DataFrame(result, columns=columns)
+        except Exception as e:
+            last_error = e
+            try:
+                if _connection is not None:
+                    _connection.close()
+            except Exception:
+                pass
+            _connection = None
+    raise last_error
 
 
 def test_connection() -> tuple[bool, str]:
