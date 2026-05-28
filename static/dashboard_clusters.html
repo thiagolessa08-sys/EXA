@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>exa — Clusters de Aquisição</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;450;500;600;700&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --ink-900: #0a0d14; --ink-800: #14171f; --ink-700: #1f242e;
+  --ink-600: #2c3340; --ink-500: #4a5160; --ink-400: #6b7280;
+  --ink-300: #8a93a3; --ink-200: #b9bfc9; --ink-100: #dde1e8; --ink-50: #eef0f4;
+  --paper: #fbfaf7; --paper-2: #f5f3ee; --card: #ffffff;
+  --hair: #e7e4dc; --hair-2: #efece5;
+  --exa-700: #1a2dc9; --exa-600: #2540ea; --exa-500: #3a5bff;
+  --exa-100: #e6ebff; --exa-50: #f2f4ff;
+  --good-700: #15683a; --good-500: #1f9d57; --good-100: #d1f0de; --good-50: #ecf6ef;
+  --warn-700: #8a4b00; --warn-500: #c66a00; --warn-100: #ffe4b3; --warn-50: #fff7ed;
+  --bad-700: #9a1f2a; --bad-600: #b8232f; --bad-500: #d62a39;
+  --bad-100: #fbd0d4; --bad-50: #fbecee;
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-serif: "Instrument Serif", "Times New Roman", serif;
+  --sidebar-w: 232px; --content-pad: 32px;
+  --radius-sm: 6px; --radius: 10px; --radius-lg: 14px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01","cv11";
+  color: var(--ink-900);
+  background: var(--paper);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; cursor: pointer; }
+
+/* Layout */
+.app { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
+
+/* Sidebar */
+.sidebar {
+  background: var(--ink-900); color: var(--ink-200);
+  padding: 22px 16px 24px;
+  display: flex; flex-direction: column; gap: 28px;
+  position: sticky; top: 0; height: 100vh;
+}
+.sb-brand { display: flex; align-items: baseline; gap: 8px; padding: 4px 8px 0; }
+.sb-brand .wordmark { font-family: var(--font-serif); font-style: italic; font-size: 38px; color: #fff; letter-spacing: -0.02em; line-height: 1; }
+.sb-brand .meta { font-family: var(--font-mono); font-size: 10px; color: var(--ink-400); letter-spacing: 0.08em; text-transform: uppercase; }
+.sb-section-label { font-family: var(--font-mono); font-size: 10px; color: var(--ink-400); letter-spacing: 0.12em; text-transform: uppercase; padding: 0 10px 6px; }
+.sb-nav { display: flex; flex-direction: column; gap: 1px; }
+.sb-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 6px; color: var(--ink-200); font-size: 13px; font-weight: 450; cursor: pointer; transition: background 120ms ease, color 120ms ease; border: 1px solid transparent; }
+.sb-item:hover { background: rgba(255,255,255,0.04); color: #fff; }
+.sb-item.active { background: rgba(255,255,255,0.06); color: #fff; border-color: rgba(255,255,255,0.08); }
+.sb-item .ico { color: var(--ink-300); }
+.sb-item.active .ico { color: var(--exa-500); }
+.sb-item .chev { margin-left: auto; opacity: 0.4; }
+.sb-footer { margin-top: auto; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 10px; color: var(--ink-300); font-size: 12px; }
+.sb-avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg,#2540ea,#6b7280); display: grid; place-items: center; color: #fff; font-size: 11px; font-weight: 600; }
+
+/* Main */
+.main { display: flex; flex-direction: column; min-width: 0; }
+
+/* Topbar */
+.topbar { display: flex; align-items: center; gap: 8px; padding: 12px var(--content-pad); border-bottom: 1px solid var(--hair); background: var(--paper); position: sticky; top: 0; z-index: 10; backdrop-filter: saturate(140%) blur(8px); flex-wrap: wrap; row-gap: 8px; }
+.tb-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tb-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.filter { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px 6px 12px; background: var(--card); border: 1px solid var(--hair); border-radius: 7px; font-size: 12.5px; color: var(--ink-700); cursor: pointer; }
+.filter .lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-400); }
+.filter .val { font-weight: 500; color: var(--ink-800); }
+.daterange { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--card); border: 1px solid var(--hair); border-radius: 7px; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-700); }
+.daterange .arrow { color: var(--ink-300); }
+.status-pill { display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px 5px 8px; border: 1px solid var(--hair); border-radius: 999px; background: var(--card); font-size: 11.5px; color: var(--ink-500); font-family: var(--font-mono); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good-500); box-shadow: 0 0 0 3px rgba(31,157,87,0.15); }
+
+/* Page */
+.page { padding: 28px var(--content-pad) 56px; display: flex; flex-direction: column; gap: 32px; }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding-bottom: 8px; }
+.page-head .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-400); margin-bottom: 10px; }
+.page-head h1 { font-family: var(--font-serif); font-style: italic; font-weight: 400; font-size: 56px; line-height: 1; letter-spacing: -0.02em; color: var(--ink-900); margin: 0 0 10px; }
+.page-head .lede { font-size: 15px; color: var(--ink-500); max-width: 56ch; letter-spacing: -0.005em; }
+.head-aside { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.head-base { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-400); }
+.head-base b { color: var(--ink-800); font-weight: 500; }
+
+/* Section */
+.section { display: flex; flex-direction: column; gap: 14px; }
+.section-head { display: flex; align-items: center; gap: 12px; }
+.section-head .tag { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-500); }
+.section-head .rule { flex: 1; height: 1px; background: linear-gradient(to right, var(--ink-100), transparent); }
+
+/* Resumo KPIs */
+.resumo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px; background: var(--hair); border: 1px solid var(--hair); border-radius: var(--radius-lg); overflow: hidden; }
+.resumo-kpi { background: var(--card); padding: 18px 20px 16px; display: flex; flex-direction: column; gap: 6px; }
+.resumo-kpi .r-lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-400); }
+.resumo-kpi .r-val { font-size: clamp(22px, 1.9vw, 28px); font-weight: 500; letter-spacing: -0.025em; color: var(--ink-900); line-height: 1; font-feature-settings: "tnum" 1; }
+.resumo-kpi .r-sub { font-size: 12px; color: var(--ink-400); }
+
+/* Cluster cards */
+.cluster-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 900px) { .cluster-grid { grid-template-columns: 1fr; } }
+
+.cluster-card {
+  background: var(--card);
+  border: 1px solid var(--hair);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.cluster-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.cluster-card.bad::before  { background: var(--bad-500); }
+.cluster-card.warn::before { background: var(--warn-500); }
+.cluster-card.good::before { background: var(--good-500); }
+
+.cluster-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.cluster-label { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink-900); }
+.cluster-desc  { font-size: 12px; color: var(--ink-400); margin-top: 4px; line-height: 1.5; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.badge.bad  { background: var(--bad-50);  color: var(--bad-700);  border: 1px solid var(--bad-100); }
+.badge.warn { background: var(--warn-50); color: var(--warn-700); border: 1px solid var(--warn-100); }
+.badge.good { background: var(--good-50); color: var(--good-700); border: 1px solid var(--good-100); }
+
+.cluster-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.cluster-metric { display: flex; flex-direction: column; gap: 3px; }
+.cluster-metric .cm-lbl { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-400); }
+.cluster-metric .cm-val { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink-900); font-feature-settings: "tnum" 1; }
+.cluster-metric .cm-sub { font-size: 11px; color: var(--ink-400); }
+
+.cluster-rule {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 11.5px;
+  color: var(--ink-600);
+  line-height: 1.55;
+  border: 1px solid var(--hair-2);
+  background: var(--paper-2);
+}
+.cluster-rule .rule-lbl { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-400); margin-bottom: 4px; }
+
+/* Score section */
+.score-wrap {
+  background: var(--card);
+  border: 1px solid var(--hair);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.score-header {
+  padding: 18px 24px 16px;
+  border-bottom: 1px solid var(--hair);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.score-header h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink-900); margin: 0 0 3px; }
+.score-header .sub { font-size: 12px; color: var(--ink-400); }
+
+.score-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 20px; }
+
+.score-indicator { display: flex; flex-direction: column; gap: 8px; }
+.ind-top { display: flex; align-items: center; justify-content: space-between; }
+.ind-label { font-size: 13px; font-weight: 500; color: var(--ink-700); }
+.ind-meta  { font-family: var(--font-mono); font-size: 11px; color: var(--ink-400); }
+.ind-track {
+  height: 8px;
+  background: var(--paper-2);
+  border-radius: 999px;
+  position: relative;
+  overflow: visible;
+}
+.ind-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
+  position: relative;
+}
+.ind-fill.ok  { background: var(--good-500); }
+.ind-fill.nok { background: var(--bad-500); }
+.ind-fill.close { background: var(--warn-500); }
+
+.ind-marker {
+  position: absolute;
+  top: -4px;
+  width: 2px;
+  height: 16px;
+  background: var(--ink-300);
+  border-radius: 1px;
+}
+.ind-marker-lbl {
+  position: absolute;
+  top: -22px;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-400);
+  white-space: nowrap;
+  letter-spacing: 0.06em;
+}
+.ind-bottom { display: flex; align-items: center; justify-content: space-between; }
+.ind-real { font-family: var(--font-mono); font-size: 12px; font-weight: 600; }
+.ind-real.ok   { color: var(--good-700); }
+.ind-real.nok  { color: var(--bad-700); }
+.ind-real.close{ color: var(--warn-700); }
+.ind-pts { font-family: var(--font-mono); font-size: 11px; color: var(--ink-400); }
+.ind-pts b { color: var(--ink-700); }
+.ind-hist { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-300); }
+
+/* Score card */
+.score-footer {
+  border-top: 1px solid var(--hair);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.score-total-wrap { display: flex; align-items: baseline; gap: 8px; }
+.score-num { font-family: var(--font-sans); font-size: 52px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; font-feature-settings: "tnum" 1; }
+.score-num.good  { color: var(--good-500); }
+.score-num.warn  { color: var(--warn-500); }
+.score-num.bad   { color: var(--bad-500); }
+.score-denom { font-size: 20px; color: var(--ink-300); font-weight: 400; letter-spacing: -0.02em; }
+.score-verdict {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.verdict-badge {
+  display: inline-flex; align-items: center;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.verdict-badge.good  { background: var(--good-50);  color: var(--good-700);  border: 1px solid var(--good-100); }
+.verdict-badge.warn  { background: var(--warn-50);  color: var(--warn-700);  border: 1px solid var(--warn-100); }
+.verdict-badge.bad   { background: var(--bad-50);   color: var(--bad-700);   border: 1px solid var(--bad-100); }
+.verdict-acao { font-size: 12px; color: var(--ink-500); max-width: 36ch; text-align: right; }
+
+/* Score thresholds legend */
+.score-legend {
+  display: flex;
+  gap: 16px;
+  padding: 0 24px 16px;
+  flex-wrap: wrap;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-400); }
+.legend-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* Utility */
+.row { display: flex; align-items: center; gap: 8px; }
+.muted { color: var(--ink-400); }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script id="exa-data" type="application/json">__EXA_DATA_JSON__</script>
+<script type="text/babel" data-presets="react">
+
+// ── Icons ──────────────────────────────────────────────────────────────────
+const Ico = ({ children, size = 16, ...rest }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+    {...rest}>{children}</svg>
+);
+const IcoFunnel    = (p) => <Ico {...p}><path d="M3 5h18l-7 8v6l-4 1v-7z" /></Ico>;
+const IcoRetention = (p) => <Ico {...p}><path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 4v5h-5" /></Ico>;
+const IcoPerf      = (p) => <Ico {...p}><path d="M3 17 9 11l4 4 8-8" /><path d="M14 7h7v7" /></Ico>;
+const IcoChat      = (p) => <Ico {...p}><path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z" /></Ico>;
+const IcoCluster   = (p) => <Ico {...p}><circle cx="12" cy="5" r="2" /><circle cx="5" cy="19" r="2" /><circle cx="19" cy="19" r="2" /><path d="M12 7v4M12 11l-5.5 6M12 11l5.5 6" /></Ico>;
+const IcoChevRight = (p) => <Ico size={14} {...p}><path d="m9 6 6 6-6 6" /></Ico>;
+const IcoChevDown  = (p) => <Ico size={14} {...p}><path d="m6 9 6 6 6-6" /></Ico>;
+const IcoCal       = (p) => <Ico {...p}><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></Ico>;
+const IcoSettings  = (p) => <Ico {...p}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></Ico>;
+const IcoCheck     = (p) => <Ico size={14} {...p}><path d="m5 13 4 4L19 7" /></Ico>;
+const IcoX         = (p) => <Ico size={14} {...p}><path d="m6 18 12-12M6 6l12 12" /></Ico>;
+
+// ── Data ───────────────────────────────────────────────────────────────────
+const DEFAULT_DATA = {
+  filters: { granularidade: "Mês", base: "FTD", periodo: "Mai/26", data_inicio: "01/05/2026", data_fim: "31/05/2026", atualizado: "—" },
+  header: { eyebrow: "Painel · Aquisição", title: "Clusters", lede: "Classificação de FTDs em Baixo, Médio e Alto Propenso.", base_analise: "Primeiro Depósito", comparativo: "Período anterior" },
+  user: { name: "Analytics", role: "EXA", initials: "EX" },
+  nav: [
+    { key: "onboarding", label: "Onboarding", icon: "funnel" },
+    { key: "retencao",   label: "Retenção",   icon: "retention" },
+    { key: "performance",label: "Performance",icon: "perf" },
+    { key: "clusters",   label: "Clusters",   icon: "cluster", active: true },
+    { key: "chat",       label: "Chat",       icon: "chat" },
+  ],
+  resumo: { total_ftds: "—" },
+  clusters: [
+    { key: "baixo", label: "Baixo Propenso",  badge: "CORTAR",    badge_cor: "bad",  qtd: "—", pct_base: "—", ticket_medio: "—", ticket_min: "—", ticket_max: "—", descricao: "Baixíssimo potencial de LTV.", regra: "FTD < R$20", color: "#d62a39" },
+    { key: "medio", label: "Médio Propenso",  badge: "MONITORAR", badge_cor: "warn", qtd: "—", pct_base: "—", ticket_medio: "—", ticket_min: "—", ticket_max: "—", descricao: "LTV moderado. Corpo operacional.", regra: "Exclusão de Baixo e Alto", color: "#c66a00" },
+    { key: "alto",  label: "Alto Propenso",   badge: "PRIORIZAR", badge_cor: "good", qtd: "—", pct_base: "—", ticket_medio: "—", ticket_min: "—", ticket_max: "—", descricao: "Whale / Potencial — 59% do GGR.", regra: "Masc. 35–54 · FTD > R$60 · DF/RS/PE/PR/MG/RJ", color: "#1f9d57" },
+  ],
+  score: {
+    total: 0, status: "RECUSAR", cor: "bad",
+    acao: "Acionar TIM formalmente para revisão do targeting.",
+    indicadores: [
+      { label: "% FTDs com ticket ≥ R$30",           meta: 60, meta_lbl: "> 60%", historico: "~37%", real: 0, real_lbl: "0%", pts_max: 40, pts: 0, atingiu: false },
+      { label: "% Homem 35–54 anos",                  meta: 35, meta_lbl: "> 35%", historico: "~31%", real: 0, real_lbl: "0%", pts_max: 30, pts: 0, atingiu: false },
+      { label: "% Estados Tier Alto (DF+RS+PE+PR+MG+RJ)", meta: 50, meta_lbl: "> 50%", historico: "~45%", real: 0, real_lbl: "0%", pts_max: 30, pts: 0, atingiu: false },
+    ],
+  },
+};
+
+function loadData() {
+  try {
+    const el = document.getElementById("exa-data");
+    if (el && el.textContent.trim()) {
+      const p = JSON.parse(el.textContent);
+      return {
+        ...DEFAULT_DATA, ...p,
+        filters:  { ...DEFAULT_DATA.filters,  ...(p.filters  || {}) },
+        header:   { ...DEFAULT_DATA.header,   ...(p.header   || {}) },
+        user:     { ...DEFAULT_DATA.user,     ...(p.user     || {}) },
+        resumo:   { ...DEFAULT_DATA.resumo,   ...(p.resumo   || {}) },
+        clusters: p.clusters  || DEFAULT_DATA.clusters,
+        score:    p.score     ? { ...DEFAULT_DATA.score, ...p.score, indicadores: p.score.indicadores || DEFAULT_DATA.score.indicadores } : DEFAULT_DATA.score,
+      };
+    }
+  } catch (e) { console.warn("Parse error", e); }
+  return DEFAULT_DATA;
+}
+
+const D = loadData();
+const ICON_MAP = { funnel: IcoFunnel, retention: IcoRetention, perf: IcoPerf, cluster: IcoCluster, chat: IcoChat };
+
+// ── Components ─────────────────────────────────────────────────────────────
+function Sidebar() {
+  return (
+    <aside className="sidebar">
+      <div className="sb-brand"><span className="wordmark">exa</span><span className="meta">app</span></div>
+      <div>
+        <div className="sb-section-label">Painéis</div>
+        <nav className="sb-nav">
+          {D.nav.map(it => {
+            const I = ICON_MAP[it.icon] || IcoFunnel;
+            return (
+              <div key={it.key} className={`sb-item ${it.active ? "active" : ""}`}>
+                <I className="ico" size={15} /><span>{it.label}</span>
+                {it.active && <IcoChevRight className="chev" />}
+              </div>
+            );
+          })}
+        </nav>
+      </div>
+      <div>
+        <div className="sb-section-label">Geral</div>
+        <nav className="sb-nav">
+          <div className="sb-item"><IcoSettings className="ico" size={15} /><span>Configurações</span></div>
+        </nav>
+      </div>
+      <div className="sb-footer">
+        <div className="sb-avatar">{D.user.initials}</div>
+        <div style={{ display:"flex", flexDirection:"column", lineHeight:1.2 }}>
+          <span style={{ color:"#fff", fontSize:12, fontWeight:500 }}>{D.user.name}</span>
+          <span style={{ fontSize:10.5, fontFamily:"var(--font-mono)", color:"var(--ink-400)" }}>{D.user.role}</span>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function Topbar() {
+  const f = D.filters;
+  return (
+    <div className="topbar">
+      <div className="tb-left">
+        <div className="filter"><span className="lbl">Granularidade</span><span className="val">{f.granularidade}</span><IcoChevDown className="chev" /></div>
+        <div className="filter"><span className="lbl">Base</span><span className="val">{f.base}</span><IcoChevDown className="chev" /></div>
+        <div className="filter"><span className="lbl">Período</span><span className="val">{f.periodo}</span><IcoChevDown className="chev" /></div>
+        <div className="daterange">
+          <IcoCal size={13} style={{ color:"var(--ink-400)" }} />
+          <span>{f.data_inicio}</span><span className="arrow">→</span><span>{f.data_fim}</span>
+        </div>
+      </div>
+      <div className="tb-right">
+        <div className="status-pill"><span className="dot"></span><span>Atualizado {f.atualizado}</span></div>
+      </div>
+    </div>
+  );
+}
+
+function PageHeader() {
+  const h = D.header;
+  return (
+    <div className="page-head">
+      <div>
+        <div className="eyebrow">{h.eyebrow}</div>
+        <h1>{h.title}</h1>
+        <p className="lede">{h.lede}</p>
+      </div>
+      <div className="head-aside">
+        <div className="head-base">Base de análise · <b>{h.base_analise}</b></div>
+        <div className="head-base">Comparativo · <b>{h.comparativo}</b></div>
+      </div>
+    </div>
+  );
+}
+
+function ResumoKPIs() {
+  const r = D.resumo;
+  const clusters = D.clusters;
+  const baixo = clusters.find(c => c.key === "baixo") || {};
+  const medio = clusters.find(c => c.key === "medio") || {};
+  const alto  = clusters.find(c => c.key === "alto")  || {};
+
+  const items = [
+    { lbl: "Total de FTDs no período", val: r.total_ftds, sub: "Primeiro depósito" },
+    { lbl: "Baixo Propenso",            val: baixo.qtd,    sub: (baixo.pct_base || "—") + "% do lote", cor: "#d62a39" },
+    { lbl: "Médio Propenso",            val: medio.qtd,    sub: (medio.pct_base || "—") + "% do lote", cor: "#c66a00" },
+    { lbl: "Alto Propenso",             val: alto.qtd,     sub: (alto.pct_base  || "—") + "% do lote", cor: "#1f9d57" },
+  ];
+
+  return (
+    <div className="resumo-grid">
+      {items.map((it, i) => (
+        <div className="resumo-kpi" key={i}>
+          <div className="r-lbl">{it.lbl}</div>
+          <div className="r-val" style={it.cor ? { color: it.cor } : {}}>{it.val}</div>
+          <div className="r-sub">{it.sub}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ClusterCard({ c }) {
+  return (
+    <div className={`cluster-card ${c.badge_cor}`}>
+      <div className="cluster-card-head">
+        <div>
+          <div className="cluster-label">{c.label}</div>
+          <div className="cluster-desc">{c.descricao}</div>
+        </div>
+        <span className={`badge ${c.badge_cor}`}>{c.badge}</span>
+      </div>
+
+      <div className="cluster-metrics">
+        <div className="cluster-metric">
+          <div className="cm-lbl">Usuários</div>
+          <div className="cm-val" style={{ color: c.color }}>{c.qtd}</div>
+          <div className="cm-sub">{c.pct_base}% do lote</div>
+        </div>
+        <div className="cluster-metric">
+          <div className="cm-lbl">Ticket Médio</div>
+          <div className="cm-val">{c.ticket_medio}</div>
+          <div className="cm-sub">avg FTD</div>
+        </div>
+        <div className="cluster-metric">
+          <div className="cm-lbl">Range</div>
+          <div className="cm-val" style={{ fontSize: 13, paddingTop: 3 }}>{c.ticket_min}</div>
+          <div className="cm-sub">até {c.ticket_max}</div>
+        </div>
+      </div>
+
+      <div className="cluster-rule">
+        <div className="rule-lbl">Regra de negócio</div>
+        {c.regra}
+      </div>
+    </div>
+  );
+}
+
+function ScoreIndicator({ ind }) {
+  const pct  = Math.min(ind.real, 100);
+  const meta = ind.meta;
+  const cls  = ind.atingiu ? "ok" : (ind.real >= meta * 0.9 ? "close" : "nok");
+
+  return (
+    <div className="score-indicator">
+      <div className="ind-top">
+        <span className="ind-label">{ind.label}</span>
+        <span className="ind-meta">Meta: <b>{ind.meta_lbl}</b> · Histórico: {ind.historico}</span>
+      </div>
+      <div className="ind-track" style={{ marginTop: 24 }}>
+        <div className={`ind-fill ${cls}`} style={{ width: `${pct}%` }} />
+        {/* Meta marker */}
+        <div className="ind-marker" style={{ left: `${meta}%` }}>
+          <div className="ind-marker-lbl">{ind.meta_lbl}</div>
+        </div>
+      </div>
+      <div className="ind-bottom">
+        <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+          {ind.atingiu
+            ? <IcoCheck style={{ color:"var(--good-500)" }} />
+            : <IcoX    style={{ color:"var(--bad-500)" }}  />
+          }
+          <span className={`ind-real ${cls}`}>{ind.real_lbl}</span>
+          <span className="ind-hist">Histórico: {ind.historico}</span>
+        </div>
+        <span className="ind-pts">
+          {ind.atingiu
+            ? <b style={{ color:"var(--good-700)" }}>+{ind.pts_max} pts</b>
+            : <><b>0</b> / {ind.pts_max} pts</>
+          }
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function ScoreCard() {
+  const s = D.score;
+  return (
+    <div className="score-wrap">
+      <div className="score-header">
+        <div>
+          <h3>Score de Auditoria TIM</h3>
+          <div className="sub">Pontuação do lote de FTDs · 0–100 pontos</div>
+        </div>
+        <div style={{ display:"flex", gap:16 }}>
+          <div style={{ textAlign:"center" }}>
+            <div style={{ fontFamily:"var(--font-mono)", fontSize:10, color:"var(--ink-400)", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:2 }}>≥ 90 pts</div>
+            <span className="badge good">APROVADO</span>
+          </div>
+          <div style={{ textAlign:"center" }}>
+            <div style={{ fontFamily:"var(--font-mono)", fontSize:10, color:"var(--ink-400)", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:2 }}>60–89 pts</div>
+            <span className="badge warn">ATENÇÃO</span>
+          </div>
+          <div style={{ textAlign:"center" }}>
+            <div style={{ fontFamily:"var(--font-mono)", fontSize:10, color:"var(--ink-400)", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:2 }}>&lt; 60 pts</div>
+            <span className="badge bad">RECUSAR</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="score-body">
+        {s.indicadores.map((ind, i) => <ScoreIndicator key={i} ind={ind} />)}
+      </div>
+
+      <div className="score-footer">
+        <div className="score-total-wrap">
+          <span className={`score-num ${s.cor}`}>{s.total}</span>
+          <span className="score-denom">/100</span>
+        </div>
+        <div className="score-verdict">
+          <span className={`verdict-badge ${s.cor}`}>{s.status}</span>
+          <span className="verdict-acao">{s.acao}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── App ────────────────────────────────────────────────────────────────────
+function App() {
+  return (
+    <div className="app">
+      <Sidebar />
+      <div className="main">
+        <Topbar />
+        <div className="page">
+          <PageHeader />
+
+          {/* Resumo */}
+          <div className="section">
+            <div className="section-head">
+              <span className="tag">Resumo do Lote</span>
+              <div className="rule" />
+            </div>
+            <ResumoKPIs />
+          </div>
+
+          {/* Cluster Cards */}
+          <div className="section">
+            <div className="section-head">
+              <span className="tag">Perfil dos Clusters</span>
+              <div className="rule" />
+            </div>
+            <div className="cluster-grid">
+              {D.clusters.map(c => <ClusterCard key={c.key} c={c} />)}
+            </div>
+          </div>
+
+          {/* Score TIM */}
+          <div className="section">
+            <div className="section-head">
+              <span className="tag">Auditoria · Score TIM</span>
+              <div className="rule" />
+            </div>
+            <ScoreCard />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+// Auto-resize
+function sendHeight() {
+  var h = document.documentElement.scrollHeight;
+  try { if (window.frameElement) { window.frameElement.style.height = h + "px"; window.frameElement.setAttribute("height", h); } } catch(e) {}
+  try { window.parent.postMessage({ type: "streamlit:setFrameHeight", height: h }, "*"); } catch(e) {}
+}
+[150, 400, 900, 1800].forEach(function(t){ setTimeout(sendHeight, t); });
+new ResizeObserver(sendHeight).observe(document.documentElement);
+
+</script>
+</body>
+</html>
