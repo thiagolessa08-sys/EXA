@@ -17,5 +17,6 @@ pg = st.navigation([
     st.Page("pages/4_💬_Chat.py",         title="Chat",        icon=":material/forum:"),
     st.Page("pages/5_📥_Exportar.py",    title="Exportar",    icon=":material/download:"),
     st.Page("pages/6_🎯_Clusters.py",    title="Clusters",    icon=":material/hub:"),
+    st.Page("pages/7_🌱_Safras.py",      title="Safras",      icon=":material/eco:"),
 ])
 pg.run()
