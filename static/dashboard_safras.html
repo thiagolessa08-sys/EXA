@@ -203,9 +203,9 @@ const DEFAULT_DATA = {
     { key: "safras",     label: "Safras",     icon: "safra", active: true },
     { key: "chat",       label: "Chat",       icon: "chat" },
   ],
-  resumo: { cadastros: "—", pct_d0_d7: "—", ticket_medio: "—", pct_std_7d: "—", pct_kyc: "—" },
+  resumo: [],
   funil: [],
-  tabelas: { dia: [], semana: [], mes: [] },
+  tabelas: { dia: [], semana: [] },
 };
 
 function loadData() {
@@ -218,7 +218,7 @@ function loadData() {
         filters:  { ...DEFAULT_DATA.filters,  ...(p.filters  || {}) },
         header:   { ...DEFAULT_DATA.header,   ...(p.header   || {}) },
         user:     { ...DEFAULT_DATA.user,     ...(p.user     || {}) },
-        resumo:   { ...DEFAULT_DATA.resumo,   ...(p.resumo   || {}) },
+        resumo:   p.resumo   || DEFAULT_DATA.resumo,
         funil:    p.funil    || DEFAULT_DATA.funil,
         tabelas:  { ...DEFAULT_DATA.tabelas, ...(p.tabelas || {}) },
       };
@@ -301,14 +301,7 @@ function PageHeader() {
 }
 
 function ResumoKPIs() {
-  const r = D.resumo;
-  const items = [
-    { lbl: "Cadastros no período",     val: r.cadastros },
-    { lbl: "FTD D0–D7",                val: r.pct_d0_d7,    cor: "#2540ea" },
-    { lbl: "Ticket médio do FTD",      val: r.ticket_medio },
-    { lbl: "STD em 7 dias",            val: r.pct_std_7d,   cor: "#1f9d57", sub: "base: FTDs" },
-    { lbl: "KYC completo (FTDs)",      val: r.pct_kyc,      cor: "#4a5160" },
-  ];
+  const items = D.resumo || [];
   return (
     <div className="resumo-grid">
       {items.map((it, i) => (
@@ -337,12 +330,12 @@ function FunilSection() {
           </div>
           <div className="funil-right">
             <span className="funil-qtd">{s.qtd}</span>
-            <span className="funil-pct">{s.pct_base}% {s.base_alt || "do total"}</span>
+            <span className="funil-pct">{s.pct_base}% {s.base_lbl}</span>
           </div>
         </div>
       ))}
       <div className="funil-note">
-        STD em 7 dias é calculado <b>sobre o total de FTDs</b>, não sobre cadastros — mede quem já converteu e voltou a depositar.
+        <b>FTD Safra</b> = cadastro e 1º depósito no mesmo mês. As janelas <b>D0–D7</b> e o <b>STD</b> são calculados <b>sobre o FTD Safra</b>.
       </div>
     </div>
   );
@@ -351,7 +344,7 @@ function FunilSection() {
 function TabelaSafras() {
   const [tab, setTab] = React.useState("dia");
   const rows = D.tabelas[tab] || [];
-  const tabLabels = { dia: "Dia", semana: "Semana", mes: "Mês" };
+  const tabLabels = { dia: "Dia", semana: "Semana" };
 
   return (
     <div className="tabela-wrap">
@@ -363,6 +356,9 @@ function TabelaSafras() {
             </button>
           ))}
         </div>
+        <span style={{ fontSize:11, color:"var(--ink-400)", fontFamily:"var(--font-mono)" }}>
+          {tab === "semana" ? "semana domingo → sábado" : ""}
+        </span>
       </div>
       <div className="tabela-scroll" style={{ padding: "14px 0 0" }}>
         <table className="safras">
@@ -370,14 +366,15 @@ function TabelaSafras() {
             <tr>
               <th>Safra</th>
               <th>Cadastros</th>
-              <th>FTDs</th>
+              <th>FTD Safra</th>
+              <th>Remanesc.</th>
               <th>D0</th>
               <th>D0–D1</th>
               <th>D0–D3</th>
               <th>D0–D7</th>
-              <th>Ticket FTD</th>
+              <th>Tkt D0</th>
+              <th>Tkt D7</th>
               <th>STD 7d</th>
-              <th>KYC</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -386,19 +383,20 @@ function TabelaSafras() {
               <tr key={i} className={r.status === "Em maturação" ? "maturando" : ""}>
                 <td>{r.periodo}</td>
                 <td>{r.cadastros}</td>
-                <td>{r.ftds_total}</td>
+                <td className="pct-strong">{r.ftd_safra}</td>
+                <td>{r.ftd_reman}</td>
                 <td>{r.pct_d0}%</td>
                 <td>{r.pct_d0_d1}%</td>
                 <td>{r.pct_d0_d3}%</td>
                 <td className="pct-strong">{r.pct_d0_d7}%</td>
-                <td>{r.ticket_medio}</td>
-                <td className="pct-strong">{r.pct_std_7d}%</td>
-                <td>{r.pct_kyc}%</td>
+                <td>{r.ticket_d0}</td>
+                <td>{r.ticket_d7}</td>
+                <td className="pct-strong">{r.pct_std}%</td>
                 <td><span className={`badge ${r.status_cor}`}>{r.status}</span></td>
               </tr>
             ))}
             {!rows.length && (
-              <tr><td colSpan={11} style={{ textAlign:"center", color:"var(--ink-400)", padding:"24px" }}>Sem dados nesta granularidade.</td></tr>
+              <tr><td colSpan={12} style={{ textAlign:"center", color:"var(--ink-400)", padding:"24px" }}>Sem dados nesta granularidade.</td></tr>
             )}
           </tbody>
         </table>
