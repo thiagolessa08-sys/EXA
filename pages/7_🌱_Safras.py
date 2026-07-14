@@ -42,16 +42,22 @@ def safe_div(a, b):
     return (a / b * 100) if b else 0.0
 
 def parse_num(v):
-    """Converte valor numerico tolerando formatos BR/US e milhar com ponto."""
+    """Converte o ticket tolerando os formatos que o Google Sheets gera.
+    O Sheets (locale BR) exporta o ticket de 6 casas '22.060000' como
+    '22.060.000' (ponto de milhar) -> valor real = digitos / 1_000_000."""
     s = str(v).strip()
     if s in ("", "nan", "None"):
         return 0.0
-    if "," in s and "." in s:      # 1.234,56 -> 1234.56
-        s = s.replace(".", "").replace(",", ".")
-    elif "," in s:                 # 27,00 -> 27.00
-        s = s.replace(",", ".")
-    if s.count(".") > 1:           # 27.000.000 (milhar) -> 27000000
-        s = s.replace(".", "")
+    if "," in s:                    # formato BR: 22,06 ou 1.234,56
+        try:
+            return float(s.replace(".", "").replace(",", "."))
+        except ValueError:
+            return 0.0
+    if s.count(".") >= 2:           # 22.060.000 (6 casas com milhar) -> 22.06
+        try:
+            return int(s.replace(".", "")) / 1_000_000
+        except ValueError:
+            return 0.0
     try:
         return float(s)
     except ValueError:
@@ -230,8 +236,13 @@ except Exception as e:
     erro_carga = str(e)
     df_all = pd.DataFrame(columns=["dia_safra", "ym"] + NUM_COLS)
 
-# meses disponiveis (a query ja limita a atual + anterior)
-periodos = sorted(df_all["ym"].dropna().unique(), reverse=True) if not df_all.empty else []
+# Mostra SOMENTE mes atual + mes anterior (robusto a lixo antigo na planilha)
+if not df_all.empty:
+    cur_p = pd.Period(date.today(), freq="M")
+    allowed = {cur_p, cur_p - 1}
+    periodos = [p for p in sorted(df_all["ym"].dropna().unique(), reverse=True) if p in allowed]
+else:
+    periodos = []
 labels = [f"{MESES_PT[p.month - 1]}/{p.year}" for p in periodos]
 
 with st.sidebar:
