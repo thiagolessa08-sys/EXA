@@ -100,6 +100,10 @@ button { font-family: inherit; cursor: pointer; }
 .resumo-kpi .r-lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-400); }
 .resumo-kpi .r-val { font-size: clamp(22px, 1.9vw, 28px); font-weight: 500; letter-spacing: -0.025em; color: var(--ink-900); line-height: 1; font-feature-settings: "tnum" 1; }
 .resumo-kpi .r-sub { font-size: 12px; color: var(--ink-400); }
+/* STD ate 7d = metrica principal */
+.resumo-kpi.destaque { background: linear-gradient(180deg, var(--good-50), var(--card) 70%); box-shadow: inset 0 2px 0 var(--good-500); }
+table.safras td.std-main { background: var(--good-50); color: var(--good-700); }
+table.safras tr.maturando td.std-main { background: var(--paper-2); color: var(--ink-500); }
 
 /* Badge */
 .badge {
@@ -203,9 +207,11 @@ const DEFAULT_DATA = {
     { key: "safras",     label: "Safras",     icon: "safra", active: true },
     { key: "chat",       label: "Chat",       icon: "chat" },
   ],
-  resumo: [],
+  kpis_1: [],
+  kpis_2: [],
   funil: [],
-  tabelas: { dia: [], semana: [] },
+  maturacao_dias: 37,
+  tabelas: { semana: [], mes: [] },
 };
 
 function loadData() {
@@ -218,8 +224,10 @@ function loadData() {
         filters:  { ...DEFAULT_DATA.filters,  ...(p.filters  || {}) },
         header:   { ...DEFAULT_DATA.header,   ...(p.header   || {}) },
         user:     { ...DEFAULT_DATA.user,     ...(p.user     || {}) },
-        resumo:   p.resumo   || DEFAULT_DATA.resumo,
+        kpis_1:   p.kpis_1   || DEFAULT_DATA.kpis_1,
+        kpis_2:   p.kpis_2   || DEFAULT_DATA.kpis_2,
         funil:    p.funil    || DEFAULT_DATA.funil,
+        maturacao_dias: p.maturacao_dias || DEFAULT_DATA.maturacao_dias,
         tabelas:  { ...DEFAULT_DATA.tabelas, ...(p.tabelas || {}) },
       };
     }
@@ -300,17 +308,26 @@ function PageHeader() {
   );
 }
 
-function ResumoKPIs() {
-  const items = D.resumo || [];
+function KpiRow({ items, cols }) {
+  if (!items || !items.length) return null;
   return (
-    <div className="resumo-grid">
+    <div className="resumo-grid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
       {items.map((it, i) => (
-        <div className="resumo-kpi" key={i}>
+        <div className={`resumo-kpi ${it.destaque ? "destaque" : ""}`} key={i}>
           <div className="r-lbl">{it.lbl}</div>
           <div className="r-val" style={it.cor ? { color: it.cor } : {}}>{it.val}</div>
           {it.sub && <div className="r-sub">{it.sub}</div>}
         </div>
       ))}
+    </div>
+  );
+}
+
+function ResumoKPIs() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <KpiRow items={D.kpis_1} cols={5} />
+      <KpiRow items={D.kpis_2} cols={4} />
     </div>
   );
 }
@@ -342,9 +359,9 @@ function FunilSection() {
 }
 
 function TabelaSafras() {
-  const [tab, setTab] = React.useState("dia");
+  const [tab, setTab] = React.useState("semana");
   const rows = D.tabelas[tab] || [];
-  const tabLabels = { dia: "Dia", semana: "Semana" };
+  const tabLabels = { semana: "Semana", mes: "Mês" };
 
   return (
     <div className="tabela-wrap">
@@ -367,14 +384,15 @@ function TabelaSafras() {
               <th>Safra</th>
               <th>Cadastros</th>
               <th>FTD Safra</th>
-              <th>Remanesc.</th>
+              <th>Conv.</th>
+              <th>Extra</th>
               <th>D0</th>
-              <th>D0–D1</th>
-              <th>D0–D3</th>
               <th>D0–D7</th>
               <th>Tkt D0</th>
               <th>Tkt D7</th>
               <th>STD 7d</th>
+              <th>STD pós 7d</th>
+              <th>Tkt STD 7d</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -384,26 +402,27 @@ function TabelaSafras() {
                 <td>{r.periodo}</td>
                 <td>{r.cadastros}</td>
                 <td className="pct-strong">{r.ftd_safra}</td>
-                <td>{r.ftd_reman}</td>
+                <td>{r.pct_conv}%</td>
+                <td>{r.ftd_extra}</td>
                 <td>{r.pct_d0}%</td>
-                <td>{r.pct_d0_d1}%</td>
-                <td>{r.pct_d0_d3}%</td>
-                <td className="pct-strong">{r.pct_d0_d7}%</td>
-                <td>{r.ticket_d0}</td>
-                <td>{r.ticket_d7}</td>
-                <td className="pct-strong">{r.pct_std}%</td>
+                <td>{r.pct_d0_d7}%</td>
+                <td>{r.tkt_d0}</td>
+                <td>{r.tkt_d7}</td>
+                <td className="pct-strong std-main">{r.pct_std_7d}%</td>
+                <td>{r.pct_std_pos7}%</td>
+                <td>{r.tkt_std7}</td>
                 <td><span className={`badge ${r.status_cor}`}>{r.status}</span></td>
               </tr>
             ))}
             {!rows.length && (
-              <tr><td colSpan={12} style={{ textAlign:"center", color:"var(--ink-400)", padding:"24px" }}>Sem dados nesta granularidade.</td></tr>
+              <tr><td colSpan={13} style={{ textAlign:"center", color:"var(--ink-400)", padding:"24px" }}>Sem dados nesta granularidade.</td></tr>
             )}
           </tbody>
         </table>
       </div>
       <div className="legend-row">
-        <div className="legend-item"><span className="badge warn">Em maturação</span> menos de 14 dias desde o fim da safra — janelas D7/STD ainda não fecharam, números podem subir.</div>
-        <div className="legend-item"><span className="badge good">Completa</span> 14+ dias desde o fim da safra — comparável com outras safras completas.</div>
+        <div className="legend-item"><span className="badge warn">Em maturação</span> menos de {D.maturacao_dias} dias desde o fim da safra — janelas de FTD (7d) e STD (até 30d) ainda não fecharam, números podem subir.</div>
+        <div className="legend-item"><span className="badge good">Completa</span> {D.maturacao_dias}+ dias — comparável com outras safras completas.</div>
       </div>
     </div>
   );
