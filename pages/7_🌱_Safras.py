@@ -22,6 +22,9 @@ MESES_PT = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
 # Safra so fecha de vez apos: 7 dias (janela do FTD) + 30 dias (janela do STD pos-7d)
 DIAS_MATURACAO = 37
 
+# Piso de data: ignora linhas antigas de schema velho que sobrem na planilha
+DATA_FLOOR = pd.Timestamp("2026-04-01")
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def fmt_int(n) -> str:
@@ -94,6 +97,7 @@ def load_sheet() -> pd.DataFrame:
     df.columns = [c.strip() for c in df.columns]
     df["dia_safra"] = pd.to_datetime(df["dia_safra"], errors="coerce")
     df = df.dropna(subset=["dia_safra"])
+    df = df[df["dia_safra"] >= DATA_FLOOR]
 
     for c in CNT_COLS:
         df[c] = pd.to_numeric(df.get(c, 0), errors="coerce").fillna(0)
