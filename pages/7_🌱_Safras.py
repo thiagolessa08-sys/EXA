@@ -77,17 +77,17 @@ _EMBED_OVERRIDES = """
 # ── Carga ─────────────────────────────────────────────────────────────────────
 # Colunas somaveis (contagens + somas de ticket p/ media ponderada ao reagregar)
 NUM_COLS = [
-    "cadastros", "ftd_safra", "ftd_total",
+    "cadastros", "ftd_safra", "ftd_extra",
     "ftd_d0", "ftd_d0_d1", "ftd_d0_d3", "ftd_d0_d7",
     "std_7d", "std_pos7",
-    "soma_tkt_d0", "soma_tkt_d7", "soma_tkt_safra", "soma_tkt_total",
+    "soma_tkt_d0", "soma_tkt_d7", "soma_tkt_safra", "soma_tkt_extra",
     "soma_tkt_std7", "soma_tkt_stdpos7",
 ]
 
-CNT_COLS = ["cadastros", "ftd_safra", "ftd_total", "ftd_d0", "ftd_d0_d1",
+CNT_COLS = ["cadastros", "ftd_safra", "ftd_extra", "ftd_d0", "ftd_d0_d1",
             "ftd_d0_d3", "ftd_d0_d7", "std_7d", "std_pos7"]
 
-TKT_COLS = ["ticket_d0", "ticket_d7", "ticket_ftd_safra", "ticket_ftd_total",
+TKT_COLS = ["ticket_d0", "ticket_d7", "ticket_ftd_safra", "ticket_ftd_extra",
             "ticket_std_7d", "ticket_std_pos7"]
 
 
@@ -112,7 +112,7 @@ def load_sheet() -> pd.DataFrame:
     df["soma_tkt_d0"]      = df["ticket_d0"]        * df["ftd_d0"]
     df["soma_tkt_d7"]      = df["ticket_d7"]        * df["ftd_d0_d7"]
     df["soma_tkt_safra"]   = df["ticket_ftd_safra"] * df["ftd_safra"]
-    df["soma_tkt_total"]   = df["ticket_ftd_total"] * df["ftd_total"]
+    df["soma_tkt_extra"]   = df["ticket_ftd_extra"] * df["ftd_extra"]
     df["soma_tkt_std7"]    = df["ticket_std_7d"]    * df["std_7d"]
     df["soma_tkt_stdpos7"] = df["ticket_std_pos7"]  * df["std_pos7"]
 
@@ -175,9 +175,9 @@ def aggregate(df: pd.DataFrame, granular: str) -> pd.DataFrame:
     d["status"] = d["dias_desde_fim"].apply(
         lambda x: "Completa" if x >= DIAS_MATURACAO else "Em maturação")
 
-    # FTD Extra Safra Anteriores = FTD Total (por data do FTD) - FTD Safra
-    d["ftd_extra_ant"]  = (d["ftd_total"] - d["ftd_safra"]).clip(lower=0)
-    d["soma_tkt_extra"] = (d["soma_tkt_total"] - d["soma_tkt_safra"]).clip(lower=0)
+    # FTD Extra Safra Anteriores: FTDs no periodo de coortes anteriores
+    # (a query ja entrega isso direto na coluna ftd_extra)
+    d["ftd_extra_ant"] = d["ftd_extra"]
 
     # % sempre sobre FTD Safra (exceto conversao de cadastro)
     d["pct_conv"]     = d.apply(lambda r: safe_div(r["ftd_safra"],  r["cadastros"]), axis=1)
@@ -236,10 +236,9 @@ def build_payload() -> dict:
     pct_std_7d   = safe_div(tot["std_7d"], tot["ftd_safra"])
     pct_std_pos7 = safe_div(tot["std_pos7"], tot["ftd_safra"])
 
-    # FTD Extra Safra Anteriores = FTD Total (por data do FTD) - FTD Safra
-    ftd_extra_ant  = max(tot["ftd_total"] - tot["ftd_safra"], 0)
-    soma_extra_ant = max(tot["soma_tkt_total"] - tot["soma_tkt_safra"], 0)
-    tkt_extra_ant  = (soma_extra_ant / ftd_extra_ant) if ftd_extra_ant else 0
+    # FTD Extra Safra Anteriores: FTDs no periodo de coortes anteriores (coluna ftd_extra)
+    ftd_extra_ant = tot["ftd_extra"]
+    tkt_extra_ant = (tot["soma_tkt_extra"] / ftd_extra_ant) if ftd_extra_ant else 0
 
     # Linha 1: Cadastros | FTD Safra | FTD Extra Safra Anteriores | TKM FTD Safra | TKM FTD Extra
     kpis_1 = [
