@@ -135,6 +135,28 @@ table.safras tr.maturando td.std-main { background: var(--paper-2); color: var(-
 .funil-pct { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-400); }
 .funil-note { font-size: 11px; color: var(--ink-400); padding-top: 4px; border-top: 1px solid var(--hair-2); margin-top: 4px; }
 
+/* Grafico de evolucao STD */
+.chart-wrap { background: var(--card); border: 1px solid var(--hair); border-radius: var(--radius-lg); padding: 20px 22px 16px; }
+.chart-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 6px; }
+.chart-title { font-size: 14px; font-weight: 600; color: var(--ink-900); }
+.chart-sub { font-size: 12px; color: var(--ink-400); margin-top: 2px; }
+.chart-legend { display: flex; gap: 16px; align-items: center; }
+.chart-legend .li { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-600); }
+.chart-legend .sw { width: 20px; height: 10px; position: relative; flex-shrink: 0; }
+.chart-legend .sw i { position: absolute; top: 4px; left: 0; right: 0; height: 2px; }
+.chart-legend .sw b { position: absolute; top: 2px; left: 6px; width: 6px; height: 6px; }
+.chart-readout { display: flex; align-items: baseline; gap: 14px; margin: 8px 0 10px; flex-wrap: wrap; font-size: 12.5px; }
+.chart-readout .ro-wk { font-family: var(--font-mono); font-size: 11px; color: var(--ink-500); background: var(--paper-2); padding: 2px 8px; border-radius: 999px; }
+.chart-readout .ro-v { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-700); }
+.chart-readout .ro-v b { font-feature-settings: "tnum" 1; }
+.chart-readout .ro-dot { width: 9px; height: 9px; border-radius: 2px; }
+.chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart-grid line { stroke: var(--hair-2); stroke-width: 1; }
+.chart-zero { stroke: var(--ink-100); stroke-width: 1; }
+.chart-axis-lbl { font-family: var(--font-mono); font-size: 10px; fill: var(--ink-400); }
+.chart-hit { fill: transparent; cursor: crosshair; }
+.chart-cross { stroke: var(--ink-300); stroke-width: 1; stroke-dasharray: 3 3; }
+
 /* Tabs */
 .tabs { display: inline-flex; gap: 2px; background: var(--paper-2); border: 1px solid var(--hair); border-radius: 8px; padding: 3px; }
 .tab-btn { padding: 6px 16px; border: none; background: transparent; border-radius: 6px; font-size: 12.5px; font-weight: 500; color: var(--ink-500); transition: all 120ms ease; }
@@ -210,6 +232,7 @@ const DEFAULT_DATA = {
   kpis_1: [],
   kpis_2: [],
   funil: [],
+  evolucao: [],
   maturacao_dias: 37,
   tabelas: { semana: [], mes: [] },
 };
@@ -227,6 +250,7 @@ function loadData() {
         kpis_1:   p.kpis_1   || DEFAULT_DATA.kpis_1,
         kpis_2:   p.kpis_2   || DEFAULT_DATA.kpis_2,
         funil:    p.funil    || DEFAULT_DATA.funil,
+        evolucao: p.evolucao || DEFAULT_DATA.evolucao,
         maturacao_dias: p.maturacao_dias || DEFAULT_DATA.maturacao_dias,
         tabelas:  { ...DEFAULT_DATA.tabelas, ...(p.tabelas || {}) },
       };
@@ -328,6 +352,92 @@ function ResumoKPIs() {
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <KpiRow items={D.kpis_1} cols={5} />
       <KpiRow items={D.kpis_2} cols={4} />
+    </div>
+  );
+}
+
+const C_STD7 = "#1f9d57";     // STD ate 7d (verde)
+const C_STDPOS = "#c66a00";   // STD pos 7d (laranja)
+
+function EvolucaoChart() {
+  const pts = D.evolucao || [];
+  const [hi, setHi] = React.useState(null);
+  if (!pts.length) return <div className="chart-wrap muted">Sem dados de evolução no período.</div>;
+
+  const idx = hi == null ? pts.length - 1 : hi;
+  const cur = pts[idx];
+
+  // layout (viewBox — escala responsiva)
+  const W = 920, H = 300, ML = 42, MR = 64, MT = 16, MB = 30;
+  const iW = W - ML - MR, iH = H - MT - MB;
+  const n = pts.length;
+  const rawMax = Math.max(1, ...pts.map(p => Math.max(p.s7, p.sp)));
+  const niceMax = Math.ceil(rawMax / 10) * 10 || 10;
+  const xAt = i => ML + (n === 1 ? iW / 2 : iW * i / (n - 1));
+  const yAt = v => MT + iH * (1 - v / niceMax);
+  const path = key => pts.map((p, i) => (i ? "L" : "M") + xAt(i).toFixed(1) + " " + yAt(p[key]).toFixed(1)).join(" ");
+
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map(t => Math.round(niceMax * t));
+  const step = Math.max(1, Math.ceil(n / 11));
+  const showX = i => i === n - 1 || i % step === 0;
+
+  return (
+    <div className="chart-wrap">
+      <div className="chart-head">
+        <div>
+          <div className="chart-title">Evolução do STD por semana</div>
+          <div className="chart-sub">% do FTD Safra que fez 2º depósito · série completa desde abril</div>
+        </div>
+        <div className="chart-legend">
+          <div className="li"><span className="sw"><i style={{ background: C_STD7 }}></i><b style={{ background: C_STD7, borderRadius: "50%" }}></b></span>STD até 7 dias</div>
+          <div className="li"><span className="sw"><i style={{ background: C_STDPOS, borderTop: `2px dashed ${C_STDPOS}`, height: 0, background: "transparent" }}></i><b style={{ background: C_STDPOS }}></b></span>STD pós 7 dias</div>
+        </div>
+      </div>
+
+      <div className="chart-readout">
+        <span className="ro-wk">{cur.full}{cur.madura ? "" : " · em maturação"}</span>
+        <span className="ro-v"><span className="ro-dot" style={{ background: C_STD7 }}></span>STD 7d <b>{String(cur.s7).replace(".", ",")}%</b> <span className="muted">({cur.std7})</span></span>
+        <span className="ro-v"><span className="ro-dot" style={{ background: C_STDPOS }}></span>STD pós 7d <b>{String(cur.sp).replace(".", ",")}%</b> <span className="muted">({cur.stdpos})</span></span>
+      </div>
+
+      <svg className="chart-svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
+        {/* grid + eixo y */}
+        <g className="chart-grid">
+          {ticks.map((t, i) => (
+            <g key={i}>
+              <line x1={ML} x2={W - MR} y1={yAt(t)} y2={yAt(t)} className={t === 0 ? "chart-zero" : ""} />
+              <text x={ML - 8} y={yAt(t) + 3} textAnchor="end" className="chart-axis-lbl">{t}%</text>
+            </g>
+          ))}
+        </g>
+        {/* eixo x */}
+        {pts.map((p, i) => showX(i) && (
+          <text key={i} x={xAt(i)} y={H - MB + 16} textAnchor="middle" className="chart-axis-lbl">{p.x}</text>
+        ))}
+        {/* crosshair */}
+        <line className="chart-cross" x1={xAt(idx)} x2={xAt(idx)} y1={MT} y2={MT + iH} />
+        {/* linhas */}
+        <path d={path("sp")} fill="none" stroke={C_STDPOS} strokeWidth="2" strokeDasharray="5 4" strokeLinejoin="round" strokeLinecap="round" />
+        <path d={path("s7")} fill="none" stroke={C_STD7} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        {/* marcadores (quadrado = pos7, circulo = 7d) */}
+        {pts.map((p, i) => (
+          <rect key={"sp" + i} x={xAt(i) - 3.5} y={yAt(p.sp) - 3.5} width="7" height="7" fill={C_STDPOS}
+            stroke="var(--card)" strokeWidth={i === idx ? 2 : 1} opacity={i === idx ? 1 : 0.9} />
+        ))}
+        {pts.map((p, i) => (
+          <circle key={"s7" + i} cx={xAt(i)} cy={yAt(p.s7)} r={i === idx ? 5 : 3.5} fill={C_STD7}
+            stroke="var(--card)" strokeWidth={i === idx ? 2 : 1} />
+        ))}
+        {/* rotulos diretos no ultimo ponto */}
+        <text x={xAt(n - 1) + 9} y={yAt(pts[n - 1].s7) + 3} className="chart-axis-lbl" fill={C_STD7} style={{ fontWeight: 600 }}>7d</text>
+        <text x={xAt(n - 1) + 9} y={yAt(pts[n - 1].sp) + 3} className="chart-axis-lbl" fill={C_STDPOS} style={{ fontWeight: 600 }}>pós 7d</text>
+        {/* areas de hover */}
+        {pts.map((p, i) => (
+          <rect key={"hit" + i} className="chart-hit" x={ML + (iW * (i - 0.5) / Math.max(1, n - 1))}
+            y={MT} width={iW / Math.max(1, n - 1)} height={iH}
+            onMouseEnter={() => setHi(i)} onMouseLeave={() => setHi(null)} />
+        ))}
+      </svg>
     </div>
   );
 }
@@ -452,6 +562,14 @@ function App() {
               <div className="rule" />
             </div>
             <FunilSection />
+          </div>
+
+          <div className="section">
+            <div className="section-head">
+              <span className="tag">Evolução · Segundo Depósito (STD)</span>
+              <div className="rule" />
+            </div>
+            <EvolucaoChart />
           </div>
 
           <div className="section">

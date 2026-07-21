@@ -269,6 +269,21 @@ def build_payload() -> dict:
         f["qtd"] = fmt_int(f["qtd"])
         f["pct_base"] = fmt_pct(f["pct_base"])
 
+    # Evolução semanal do STD (série completa desde abril, ordem cronológica)
+    evolucao = []
+    if not df_all.empty:
+        evo = aggregate(df_all, "semana").sort_values("periodo_ini")
+        for _, r in evo.iterrows():
+            evolucao.append({
+                "x":      r["periodo_ini"].strftime("%d/%m"),
+                "full":   r["periodo_lbl"],
+                "s7":     round(float(r["pct_std_7d"]), 1),
+                "sp":     round(float(r["pct_std_pos7"]), 1),
+                "std7":   fmt_int(r["std_7d"]),
+                "stdpos": fmt_int(r["std_pos7"]),
+                "madura": r["status"] == "Completa",
+            })
+
     return {
         "filters": {
             "periodo":     label_periodo,
@@ -294,6 +309,7 @@ def build_payload() -> dict:
         "kpis_1": kpis_1,
         "kpis_2": kpis_2,
         "funil": funil,
+        "evolucao": evolucao,
         "maturacao_dias": DIAS_MATURACAO,
         "tabelas": {
             "semana": rows_to_payload(aggregate(d, "semana")),
@@ -308,4 +324,4 @@ with st.spinner("Carregando safras..."):
 template = load_template("dashboard_safras.html")
 html = template.replace("__EXA_DATA_JSON__", json.dumps(payload, ensure_ascii=False))
 html = html.replace("</head>", _EMBED_OVERRIDES)
-components.html(html, height=1500, scrolling=False)
+components.html(html, height=1850, scrolling=False)
