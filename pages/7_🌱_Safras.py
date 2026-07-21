@@ -246,7 +246,7 @@ def build_payload() -> dict:
         {"lbl": "FTD Total / Safra",            "val": fmt_int(tot["ftd_safra"]), "sub": fmt_pct(pct_conv) + "% dos cadastros", "cor": "#2540ea"},
         {"lbl": "FTD Extra Safra Anteriores",   "val": fmt_int(ftd_extra_ant),    "sub": "FTD no período de coortes anteriores", "cor": "#6b7280"},
         {"lbl": "TKM FTD Safra",                "val": fmt_brl(wtkt("soma_tkt_safra", "ftd_safra")), "sub": "ticket médio"},
-        {"lbl": "TKM FTD Extra Safra Anteriores", "val": fmt_brl(tkt_extra_ant),  "sub": "ticket médio"},
+        {"lbl": "TKM FTD Safra Anterior", "val": fmt_brl(tkt_extra_ant),  "sub": "ticket médio"},
     ]
     # Linha 2: STD ate 7d | STD pos 7d | TKM STD ate D7 | TKM STD pos 7d
     kpis_2 = [
