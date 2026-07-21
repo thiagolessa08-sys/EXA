@@ -77,17 +77,17 @@ _EMBED_OVERRIDES = """
 # ── Carga ─────────────────────────────────────────────────────────────────────
 # Colunas somaveis (contagens + somas de ticket p/ media ponderada ao reagregar)
 NUM_COLS = [
-    "cadastros", "ftd_safra", "ftd_extra",
+    "cadastros", "ftd_safra", "ftd_total",
     "ftd_d0", "ftd_d0_d1", "ftd_d0_d3", "ftd_d0_d7",
     "std_7d", "std_pos7",
-    "soma_tkt_d0", "soma_tkt_d7", "soma_tkt_safra", "soma_tkt_extra",
+    "soma_tkt_d0", "soma_tkt_d7", "soma_tkt_safra", "soma_tkt_total",
     "soma_tkt_std7", "soma_tkt_stdpos7",
 ]
 
-CNT_COLS = ["cadastros", "ftd_safra", "ftd_extra", "ftd_d0", "ftd_d0_d1",
+CNT_COLS = ["cadastros", "ftd_safra", "ftd_total", "ftd_d0", "ftd_d0_d1",
             "ftd_d0_d3", "ftd_d0_d7", "std_7d", "std_pos7"]
 
-TKT_COLS = ["ticket_d0", "ticket_d7", "ticket_ftd_safra", "ticket_ftd_extra",
+TKT_COLS = ["ticket_d0", "ticket_d7", "ticket_ftd_safra", "ticket_ftd_total",
             "ticket_std_7d", "ticket_std_pos7"]
 
 
@@ -100,16 +100,19 @@ def load_sheet() -> pd.DataFrame:
     df = df[df["dia_safra"] >= DATA_FLOOR]
 
     for c in CNT_COLS:
-        df[c] = pd.to_numeric(df.get(c, 0), errors="coerce").fillna(0)
+        if c not in df.columns:
+            df[c] = 0
+        df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0)
     for c in TKT_COLS:
-        df[c] = df.get(c, 0)
+        if c not in df.columns:
+            df[c] = 0
         df[c] = df[c].apply(parse_num)
 
     # somas para media ponderada na reagregacao
     df["soma_tkt_d0"]      = df["ticket_d0"]        * df["ftd_d0"]
     df["soma_tkt_d7"]      = df["ticket_d7"]        * df["ftd_d0_d7"]
     df["soma_tkt_safra"]   = df["ticket_ftd_safra"] * df["ftd_safra"]
-    df["soma_tkt_extra"]   = df["ticket_ftd_extra"] * df["ftd_extra"]
+    df["soma_tkt_total"]   = df["ticket_ftd_total"] * df["ftd_total"]
     df["soma_tkt_std7"]    = df["ticket_std_7d"]    * df["std_7d"]
     df["soma_tkt_stdpos7"] = df["ticket_std_pos7"]  * df["std_pos7"]
 
@@ -172,6 +175,10 @@ def aggregate(df: pd.DataFrame, granular: str) -> pd.DataFrame:
     d["status"] = d["dias_desde_fim"].apply(
         lambda x: "Completa" if x >= DIAS_MATURACAO else "Em maturação")
 
+    # FTD Extra Safra Anteriores = FTD Total (por data do FTD) - FTD Safra
+    d["ftd_extra_ant"]  = (d["ftd_total"] - d["ftd_safra"]).clip(lower=0)
+    d["soma_tkt_extra"] = (d["soma_tkt_total"] - d["soma_tkt_safra"]).clip(lower=0)
+
     # % sempre sobre FTD Safra (exceto conversao de cadastro)
     d["pct_conv"]     = d.apply(lambda r: safe_div(r["ftd_safra"],  r["cadastros"]), axis=1)
     d["pct_d0"]       = d.apply(lambda r: safe_div(r["ftd_d0"],     r["ftd_safra"]), axis=1)
@@ -188,6 +195,7 @@ def aggregate(df: pd.DataFrame, granular: str) -> pd.DataFrame:
     d["tkt_d7"]       = wavg("soma_tkt_d7", "ftd_d0_d7")
     d["tkt_std7"]     = wavg("soma_tkt_std7", "std_7d")
     d["tkt_stdpos7"]  = wavg("soma_tkt_stdpos7", "std_pos7")
+    d["tkt_extra_ant"] = wavg("soma_tkt_extra", "ftd_extra_ant")
 
     return d.sort_values("periodo_ini", ascending=False)
 
@@ -199,7 +207,7 @@ def rows_to_payload(d: pd.DataFrame) -> list:
             "periodo":      r["periodo_lbl"],
             "cadastros":    fmt_int(r["cadastros"]),
             "ftd_safra":    fmt_int(r["ftd_safra"]),
-            "ftd_extra":    fmt_int(r["ftd_extra"]),
+            "ftd_extra":    fmt_int(r["ftd_extra_ant"]),
             "pct_conv":     fmt_pct(r["pct_conv"]),
             "pct_d0":       fmt_pct(r["pct_d0"]),
             "pct_d0_d7":    fmt_pct(r["pct_d0_d7"]),
@@ -228,13 +236,18 @@ def build_payload() -> dict:
     pct_std_7d   = safe_div(tot["std_7d"], tot["ftd_safra"])
     pct_std_pos7 = safe_div(tot["std_pos7"], tot["ftd_safra"])
 
-    # Linha 1: Cadastros | FTD Safra | FTD Extra | TKM FTD Safra | TKM FTD Extra
+    # FTD Extra Safra Anteriores = FTD Total (por data do FTD) - FTD Safra
+    ftd_extra_ant  = max(tot["ftd_total"] - tot["ftd_safra"], 0)
+    soma_extra_ant = max(tot["soma_tkt_total"] - tot["soma_tkt_safra"], 0)
+    tkt_extra_ant  = (soma_extra_ant / ftd_extra_ant) if ftd_extra_ant else 0
+
+    # Linha 1: Cadastros | FTD Safra | FTD Extra Safra Anteriores | TKM FTD Safra | TKM FTD Extra
     kpis_1 = [
-        {"lbl": "Cadastros no período", "val": fmt_int(tot["cadastros"]), "sub": label_periodo},
-        {"lbl": "FTD Total / Safra",    "val": fmt_int(tot["ftd_safra"]), "sub": fmt_pct(pct_conv) + "% dos cadastros", "cor": "#2540ea"},
-        {"lbl": "FTD Extra Safra",      "val": fmt_int(tot["ftd_extra"]), "sub": "FTD em mês posterior", "cor": "#6b7280"},
-        {"lbl": "TKM FTD Safra",        "val": fmt_brl(wtkt("soma_tkt_safra", "ftd_safra")), "sub": "ticket médio"},
-        {"lbl": "TKM FTD Extra Safra",  "val": fmt_brl(wtkt("soma_tkt_extra", "ftd_extra")), "sub": "ticket médio"},
+        {"lbl": "Cadastros no período",         "val": fmt_int(tot["cadastros"]), "sub": label_periodo},
+        {"lbl": "FTD Total / Safra",            "val": fmt_int(tot["ftd_safra"]), "sub": fmt_pct(pct_conv) + "% dos cadastros", "cor": "#2540ea"},
+        {"lbl": "FTD Extra Safra Anteriores",   "val": fmt_int(ftd_extra_ant),    "sub": "FTD no período de coortes anteriores", "cor": "#6b7280"},
+        {"lbl": "TKM FTD Safra",                "val": fmt_brl(wtkt("soma_tkt_safra", "ftd_safra")), "sub": "ticket médio"},
+        {"lbl": "TKM FTD Extra Safra Anteriores", "val": fmt_brl(tkt_extra_ant),  "sub": "ticket médio"},
     ]
     # Linha 2: STD ate 7d | STD pos 7d | TKM STD ate D7 | TKM STD pos 7d
     kpis_2 = [
