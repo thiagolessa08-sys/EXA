@@ -175,9 +175,10 @@ def aggregate(df: pd.DataFrame, granular: str) -> pd.DataFrame:
     d["status"] = d["dias_desde_fim"].apply(
         lambda x: "Completa" if x >= DIAS_MATURACAO else "Em maturação")
 
-    # FTD Extra Safra Anteriores: FTDs no periodo de coortes anteriores
-    # (a query ja entrega isso direto na coluna ftd_extra)
-    d["ftd_extra_ant"] = d["ftd_extra"]
+    # A coluna ftd_extra guarda o FTD TOTAL (por data do FTD).
+    # FTD Extra Safra Anteriores = FTD Total - FTD Safra
+    d["ftd_extra_ant"]  = (d["ftd_extra"] - d["ftd_safra"]).clip(lower=0)
+    d["soma_extra_ant"] = (d["soma_tkt_extra"] - d["soma_tkt_safra"]).clip(lower=0)
 
     # % sempre sobre FTD Safra (exceto conversao de cadastro)
     d["pct_conv"]     = d.apply(lambda r: safe_div(r["ftd_safra"],  r["cadastros"]), axis=1)
@@ -195,7 +196,7 @@ def aggregate(df: pd.DataFrame, granular: str) -> pd.DataFrame:
     d["tkt_d7"]       = wavg("soma_tkt_d7", "ftd_d0_d7")
     d["tkt_std7"]     = wavg("soma_tkt_std7", "std_7d")
     d["tkt_stdpos7"]  = wavg("soma_tkt_stdpos7", "std_pos7")
-    d["tkt_extra_ant"] = wavg("soma_tkt_extra", "ftd_extra_ant")
+    d["tkt_extra_ant"] = wavg("soma_extra_ant", "ftd_extra_ant")
 
     return d.sort_values("periodo_ini", ascending=False)
 
@@ -236,9 +237,10 @@ def build_payload() -> dict:
     pct_std_7d   = safe_div(tot["std_7d"], tot["ftd_safra"])
     pct_std_pos7 = safe_div(tot["std_pos7"], tot["ftd_safra"])
 
-    # FTD Extra Safra Anteriores: FTDs no periodo de coortes anteriores (coluna ftd_extra)
-    ftd_extra_ant = tot["ftd_extra"]
-    tkt_extra_ant = (tot["soma_tkt_extra"] / ftd_extra_ant) if ftd_extra_ant else 0
+    # FTD Extra Safra Anteriores = FTD Total (coluna ftd_extra) - FTD Safra
+    ftd_extra_ant  = max(tot["ftd_extra"] - tot["ftd_safra"], 0)
+    soma_extra_ant = max(tot["soma_tkt_extra"] - tot["soma_tkt_safra"], 0)
+    tkt_extra_ant  = (soma_extra_ant / ftd_extra_ant) if ftd_extra_ant else 0
 
     # Linha 1: Cadastros | FTD Safra | FTD Extra Safra Anteriores | TKM FTD Safra | TKM FTD Extra
     kpis_1 = [
