@@ -193,6 +193,7 @@ table.safras tr:hover td { background: var(--paper-2); }
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/echarts@5.5.1/dist/echarts.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -361,26 +362,76 @@ const C_STDPOS = "#c66a00";   // STD pos 7d (laranja)
 
 function EvolucaoChart() {
   const pts = D.evolucao || [];
-  const [hi, setHi] = React.useState(null);
+  const ref = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!ref.current || !window.echarts || !pts.length) return;
+    const chart = window.echarts.init(ref.current, null, { renderer: "svg" });
+    const famMono = "'Geist Mono', ui-monospace, monospace";
+    const famSans = "'Geist', -apple-system, sans-serif";
+
+    chart.setOption({
+      textStyle: { fontFamily: famMono },
+      grid: { left: 46, right: 66, top: 14, bottom: 34 },
+      legend: {
+        top: 0, right: 4, itemGap: 20, itemWidth: 18, itemHeight: 10,
+        icon: "roundRect",
+        textStyle: { color: "#4a5160", fontSize: 12, fontFamily: famSans },
+        data: ["STD até 7 dias", "STD pós 7 dias"],
+      },
+      tooltip: {
+        trigger: "axis",
+        backgroundColor: "#0a0d14", borderWidth: 0, padding: [8, 11],
+        textStyle: { color: "#fff", fontSize: 12, fontFamily: famSans },
+        axisPointer: { type: "line", lineStyle: { color: "#8a93a3", type: "dashed" } },
+        formatter: function (ps) {
+          const p = pts[ps[0].dataIndex];
+          let s = '<div style="font-family:' + famMono + ';font-size:10px;color:#8a93a3;margin-bottom:5px">'
+                + p.full + (p.madura ? "" : " · em maturação") + "</div>";
+          s += '<div style="margin-bottom:2px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:'
+                + C_STD7 + ';margin-right:6px"></span>STD 7d <b>' + String(p.s7).replace(".", ",") + "%</b> <span style=\"color:#8a93a3\">(" + p.std7 + ")</span></div>";
+          s += '<div><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:'
+                + C_STDPOS + ';margin-right:6px"></span>STD pós 7d <b>' + String(p.sp).replace(".", ",") + "%</b> <span style=\"color:#8a93a3\">(" + p.stdpos + ")</span></div>";
+          return s;
+        },
+      },
+      xAxis: {
+        type: "category", data: pts.map(p => p.x), boundaryGap: false,
+        axisTick: { show: false },
+        axisLine: { lineStyle: { color: "#dde1e8" } },
+        axisLabel: { color: "#6b7280", fontSize: 10, interval: Math.max(0, Math.ceil(pts.length / 11) - 1) },
+      },
+      yAxis: {
+        type: "value", min: 0,
+        splitLine: { lineStyle: { color: "#efece5" } },
+        axisLabel: { color: "#6b7280", fontSize: 10, formatter: "{value}%" },
+      },
+      series: [
+        {
+          name: "STD até 7 dias", type: "line", data: pts.map(p => p.s7),
+          symbol: "circle", symbolSize: 8, showSymbol: true, smooth: false,
+          lineStyle: { width: 2, color: C_STD7 }, itemStyle: { color: C_STD7 },
+          emphasis: { focus: "series" },
+          endLabel: { show: true, formatter: "7d", color: C_STD7, fontFamily: famMono, fontSize: 11, fontWeight: "bold", offset: [6, 0] },
+        },
+        {
+          name: "STD pós 7 dias", type: "line", data: pts.map(p => p.sp),
+          symbol: "rect", symbolSize: 7, showSymbol: true, smooth: false,
+          lineStyle: { width: 2, type: "dashed", color: C_STDPOS }, itemStyle: { color: C_STDPOS },
+          emphasis: { focus: "series" },
+          endLabel: { show: true, formatter: "pós 7d", color: C_STDPOS, fontFamily: famMono, fontSize: 11, fontWeight: "bold", offset: [6, 0] },
+        },
+      ],
+    });
+
+    const onR = () => chart.resize();
+    window.addEventListener("resize", onR);
+    const t1 = setTimeout(onR, 300);
+    const t2 = setTimeout(onR, 1000);
+    return () => { window.removeEventListener("resize", onR); clearTimeout(t1); clearTimeout(t2); chart.dispose(); };
+  }, []);
+
   if (!pts.length) return <div className="chart-wrap muted">Sem dados de evolução no período.</div>;
-
-  const idx = hi == null ? pts.length - 1 : hi;
-  const cur = pts[idx];
-
-  // layout (viewBox — escala responsiva)
-  const W = 920, H = 300, ML = 42, MR = 64, MT = 16, MB = 30;
-  const iW = W - ML - MR, iH = H - MT - MB;
-  const n = pts.length;
-  const rawMax = Math.max(1, ...pts.map(p => Math.max(p.s7, p.sp)));
-  const niceMax = Math.ceil(rawMax / 10) * 10 || 10;
-  const xAt = i => ML + (n === 1 ? iW / 2 : iW * i / (n - 1));
-  const yAt = v => MT + iH * (1 - v / niceMax);
-  const path = key => pts.map((p, i) => (i ? "L" : "M") + xAt(i).toFixed(1) + " " + yAt(p[key]).toFixed(1)).join(" ");
-
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map(t => Math.round(niceMax * t));
-  const step = Math.max(1, Math.ceil(n / 11));
-  const showX = i => i === n - 1 || i % step === 0;
-
   return (
     <div className="chart-wrap">
       <div className="chart-head">
@@ -388,56 +439,8 @@ function EvolucaoChart() {
           <div className="chart-title">Evolução do STD por semana</div>
           <div className="chart-sub">% do FTD Safra que fez 2º depósito · série completa desde abril</div>
         </div>
-        <div className="chart-legend">
-          <div className="li"><span className="sw"><i style={{ background: C_STD7 }}></i><b style={{ background: C_STD7, borderRadius: "50%" }}></b></span>STD até 7 dias</div>
-          <div className="li"><span className="sw"><i style={{ background: C_STDPOS, borderTop: `2px dashed ${C_STDPOS}`, height: 0, background: "transparent" }}></i><b style={{ background: C_STDPOS }}></b></span>STD pós 7 dias</div>
-        </div>
       </div>
-
-      <div className="chart-readout">
-        <span className="ro-wk">{cur.full}{cur.madura ? "" : " · em maturação"}</span>
-        <span className="ro-v"><span className="ro-dot" style={{ background: C_STD7 }}></span>STD 7d <b>{String(cur.s7).replace(".", ",")}%</b> <span className="muted">({cur.std7})</span></span>
-        <span className="ro-v"><span className="ro-dot" style={{ background: C_STDPOS }}></span>STD pós 7d <b>{String(cur.sp).replace(".", ",")}%</b> <span className="muted">({cur.stdpos})</span></span>
-      </div>
-
-      <svg className="chart-svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
-        {/* grid + eixo y */}
-        <g className="chart-grid">
-          {ticks.map((t, i) => (
-            <g key={i}>
-              <line x1={ML} x2={W - MR} y1={yAt(t)} y2={yAt(t)} className={t === 0 ? "chart-zero" : ""} />
-              <text x={ML - 8} y={yAt(t) + 3} textAnchor="end" className="chart-axis-lbl">{t}%</text>
-            </g>
-          ))}
-        </g>
-        {/* eixo x */}
-        {pts.map((p, i) => showX(i) && (
-          <text key={i} x={xAt(i)} y={H - MB + 16} textAnchor="middle" className="chart-axis-lbl">{p.x}</text>
-        ))}
-        {/* crosshair */}
-        <line className="chart-cross" x1={xAt(idx)} x2={xAt(idx)} y1={MT} y2={MT + iH} />
-        {/* linhas */}
-        <path d={path("sp")} fill="none" stroke={C_STDPOS} strokeWidth="2" strokeDasharray="5 4" strokeLinejoin="round" strokeLinecap="round" />
-        <path d={path("s7")} fill="none" stroke={C_STD7} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-        {/* marcadores (quadrado = pos7, circulo = 7d) */}
-        {pts.map((p, i) => (
-          <rect key={"sp" + i} x={xAt(i) - 3.5} y={yAt(p.sp) - 3.5} width="7" height="7" fill={C_STDPOS}
-            stroke="var(--card)" strokeWidth={i === idx ? 2 : 1} opacity={i === idx ? 1 : 0.9} />
-        ))}
-        {pts.map((p, i) => (
-          <circle key={"s7" + i} cx={xAt(i)} cy={yAt(p.s7)} r={i === idx ? 5 : 3.5} fill={C_STD7}
-            stroke="var(--card)" strokeWidth={i === idx ? 2 : 1} />
-        ))}
-        {/* rotulos diretos no ultimo ponto */}
-        <text x={xAt(n - 1) + 9} y={yAt(pts[n - 1].s7) + 3} className="chart-axis-lbl" fill={C_STD7} style={{ fontWeight: 600 }}>7d</text>
-        <text x={xAt(n - 1) + 9} y={yAt(pts[n - 1].sp) + 3} className="chart-axis-lbl" fill={C_STDPOS} style={{ fontWeight: 600 }}>pós 7d</text>
-        {/* areas de hover */}
-        {pts.map((p, i) => (
-          <rect key={"hit" + i} className="chart-hit" x={ML + (iW * (i - 0.5) / Math.max(1, n - 1))}
-            y={MT} width={iW / Math.max(1, n - 1)} height={iH}
-            onMouseEnter={() => setHi(i)} onMouseLeave={() => setHi(null)} />
-        ))}
-      </svg>
+      <div ref={ref} style={{ width: "100%", height: 340 }} />
     </div>
   );
 }
