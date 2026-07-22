@@ -223,6 +223,44 @@ def rows_to_payload(d: pd.DataFrame) -> list:
     return out
 
 
+def build_series(granular: str) -> list:
+    """Serie completa (todas as semanas/meses desde abril), ordem cronologica,
+    com campos tanto do grafico (x, s7, sp...) quanto da tabela."""
+    if df_all.empty:
+        return []
+    agg = aggregate(df_all, granular).sort_values("periodo_ini")
+    out = []
+    for _, r in agg.iterrows():
+        if granular == "semana":
+            xlbl = r["periodo_ini"].strftime("%d/%m")
+        else:
+            xlbl = f"{MESES_PT[r['periodo_ini'].month - 1][:3]}/{r['periodo_ini'].strftime('%y')}"
+        out.append({
+            "x":      xlbl,
+            "full":   r["periodo_lbl"],
+            "s7":     round(float(r["pct_std_7d"]), 1),
+            "sp":     round(float(r["pct_std_pos7"]), 1),
+            "std7":   fmt_int(r["std_7d"]),
+            "stdpos": fmt_int(r["std_pos7"]),
+            "madura": r["status"] == "Completa",
+            "periodo":      r["periodo_lbl"],
+            "cadastros":    fmt_int(r["cadastros"]),
+            "ftd_safra":    fmt_int(r["ftd_safra"]),
+            "ftd_extra":    fmt_int(r["ftd_extra_ant"]),
+            "pct_conv":     fmt_pct(r["pct_conv"]),
+            "pct_d0":       fmt_pct(r["pct_d0"]),
+            "pct_d0_d7":    fmt_pct(r["pct_d0_d7"]),
+            "tkt_d0":       fmt_brl(r["tkt_d0"]),
+            "tkt_d7":       fmt_brl(r["tkt_d7"]),
+            "pct_std_7d":   fmt_pct(r["pct_std_7d"]),
+            "pct_std_pos7": fmt_pct(r["pct_std_pos7"]),
+            "tkt_std7":     fmt_brl(r["tkt_std7"]),
+            "status":       r["status"],
+            "status_cor":   "warn" if r["status"] == "Em maturação" else "good",
+        })
+    return out
+
+
 # ── Payload ───────────────────────────────────────────────────────────────────
 def build_payload() -> dict:
     d = df_all[(df_all["dia_safra"].dt.date >= dt_ini) &
@@ -271,21 +309,6 @@ def build_payload() -> dict:
         f["qtd"] = fmt_int(f["qtd"])
         f["pct_base"] = fmt_pct(f["pct_base"])
 
-    # Evolução semanal do STD (série completa desde abril, ordem cronológica)
-    evolucao = []
-    if not df_all.empty:
-        evo = aggregate(df_all, "semana").sort_values("periodo_ini")
-        for _, r in evo.iterrows():
-            evolucao.append({
-                "x":      r["periodo_ini"].strftime("%d/%m"),
-                "full":   r["periodo_lbl"],
-                "s7":     round(float(r["pct_std_7d"]), 1),
-                "sp":     round(float(r["pct_std_pos7"]), 1),
-                "std7":   fmt_int(r["std_7d"]),
-                "stdpos": fmt_int(r["std_pos7"]),
-                "madura": r["status"] == "Completa",
-            })
-
     return {
         "filters": {
             "periodo":     label_periodo,
@@ -311,11 +334,10 @@ def build_payload() -> dict:
         "kpis_1": kpis_1,
         "kpis_2": kpis_2,
         "funil": funil,
-        "evolucao": evolucao,
         "maturacao_dias": DIAS_MATURACAO,
-        "tabelas": {
-            "semana": rows_to_payload(aggregate(d, "semana")),
-            "mes":    rows_to_payload(aggregate(d, "mes")),
+        "series": {
+            "semana": build_series("semana"),
+            "mes":    build_series("mes"),
         },
     }
 

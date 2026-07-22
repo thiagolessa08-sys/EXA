@@ -161,6 +161,9 @@ table.safras tr.maturando td.std-main { background: var(--paper-2); color: var(-
 .tabs { display: inline-flex; gap: 2px; background: var(--paper-2); border: 1px solid var(--hair); border-radius: 8px; padding: 3px; }
 .tab-btn { padding: 6px 16px; border: none; background: transparent; border-radius: 6px; font-size: 12.5px; font-weight: 500; color: var(--ink-500); transition: all 120ms ease; }
 .tab-btn.active { background: var(--card); color: var(--ink-900); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+.qtd-select { font-family: var(--font-sans); font-size: 12.5px; color: var(--ink-800); background: var(--card); border: 1px solid var(--hair); border-radius: 7px; padding: 5px 26px 5px 10px; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+.qtd-select:hover { border-color: var(--ink-200); }
+.qtd-select:focus { outline: none; border-color: var(--exa-500); }
 
 /* Tabela */
 .tabela-wrap { background: var(--card); border: 1px solid var(--hair); border-radius: var(--radius-lg); overflow: hidden; }
@@ -233,9 +236,8 @@ const DEFAULT_DATA = {
   kpis_1: [],
   kpis_2: [],
   funil: [],
-  evolucao: [],
   maturacao_dias: 37,
-  tabelas: { semana: [], mes: [] },
+  series: { semana: [], mes: [] },
 };
 
 function loadData() {
@@ -251,9 +253,8 @@ function loadData() {
         kpis_1:   p.kpis_1   || DEFAULT_DATA.kpis_1,
         kpis_2:   p.kpis_2   || DEFAULT_DATA.kpis_2,
         funil:    p.funil    || DEFAULT_DATA.funil,
-        evolucao: p.evolucao || DEFAULT_DATA.evolucao,
         maturacao_dias: p.maturacao_dias || DEFAULT_DATA.maturacao_dias,
-        tabelas:  { ...DEFAULT_DATA.tabelas, ...(p.tabelas || {}) },
+        series:   p.series   ? { ...DEFAULT_DATA.series, ...p.series } : DEFAULT_DATA.series,
       };
     }
   } catch (e) { console.warn("Parse error", e); }
@@ -360,8 +361,9 @@ function ResumoKPIs() {
 const C_STD7 = "#1f9d57";     // STD ate 7d (verde)
 const C_STDPOS = "#c66a00";   // STD pos 7d (laranja)
 
-function EvolucaoChart() {
-  const pts = D.evolucao || [];
+function EvolucaoChart({ gran, qtd }) {
+  const all = (D.series && D.series[gran]) || [];
+  const pts = qtd === "all" ? all : all.slice(-qtd);
   const ref = React.useRef(null);
 
   React.useEffect(() => {
@@ -429,15 +431,20 @@ function EvolucaoChart() {
     const t1 = setTimeout(onR, 300);
     const t2 = setTimeout(onR, 1000);
     return () => { window.removeEventListener("resize", onR); clearTimeout(t1); clearTimeout(t2); chart.dispose(); };
-  }, []);
+  }, [gran, qtd]);
+
+  const gLbl = gran === "mes" ? "por mês" : "por semana";
+  const qLbl = qtd === "all"
+    ? "toda a série desde abril"
+    : (gran === "mes" ? `últimos ${qtd} meses` : `últimas ${qtd} semanas`);
 
   if (!pts.length) return <div className="chart-wrap muted">Sem dados de evolução no período.</div>;
   return (
     <div className="chart-wrap">
       <div className="chart-head">
         <div>
-          <div className="chart-title">Evolução do STD por semana</div>
-          <div className="chart-sub">% do FTD Safra que fez 2º depósito · série completa desde abril</div>
+          <div className="chart-title">Evolução do STD {gLbl}</div>
+          <div className="chart-sub">% do FTD Safra que fez 2º depósito · {qLbl}</div>
         </div>
       </div>
       <div ref={ref} style={{ width: "100%", height: 340 }} />
@@ -471,24 +478,38 @@ function FunilSection() {
   );
 }
 
-function TabelaSafras() {
-  const [tab, setTab] = React.useState("semana");
-  const rows = D.tabelas[tab] || [];
+function TabelaSafras({ gran, qtd, qopts, onGran, onQtd }) {
+  const all = (D.series && D.series[gran]) || [];
+  const sliced = qtd === "all" ? all.slice() : all.slice(-qtd);
+  const rows = sliced.slice().reverse();   // mais recente primeiro
   const tabLabels = { semana: "Semana", mes: "Mês" };
 
   return (
     <div className="tabela-wrap">
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px 0" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px 0", gap:12, flexWrap:"wrap" }}>
         <div className="tabs">
           {Object.keys(tabLabels).map(k => (
-            <button key={k} className={`tab-btn ${tab === k ? "active" : ""}`} onClick={() => setTab(k)}>
+            <button key={k} className={`tab-btn ${gran === k ? "active" : ""}`} onClick={() => onGran(k)}>
               {tabLabels[k]}
             </button>
           ))}
         </div>
-        <span style={{ fontSize:11, color:"var(--ink-400)", fontFamily:"var(--font-mono)" }}>
-          {tab === "semana" ? "semana domingo → sábado" : ""}
-        </span>
+        <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
+          {gran === "semana" && (
+            <span style={{ fontSize:11, color:"var(--ink-400)", fontFamily:"var(--font-mono)" }}>domingo → sábado</span>
+          )}
+          <label style={{ display:"flex", alignItems:"center", gap:7, fontSize:11.5, color:"var(--ink-500)" }}>
+            <span style={{ fontFamily:"var(--font-mono)", fontSize:10, letterSpacing:"0.06em", textTransform:"uppercase", color:"var(--ink-400)" }}>Mostrar</span>
+            <select className="qtd-select" value={String(qtd)}
+              onChange={e => onQtd(e.target.value === "all" ? "all" : Number(e.target.value))}>
+              {qopts.map(o => (
+                <option key={o} value={String(o)}>
+                  {o === "all" ? "Tudo" : o + (gran === "mes" ? " meses" : " semanas")}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
       <div className="tabela-scroll" style={{ padding: "14px 0 0" }}>
         <table className="safras">
@@ -542,7 +563,14 @@ function TabelaSafras() {
 }
 
 // ── App ────────────────────────────────────────────────────────────────────
+const QOPTS = { semana: [4, 8, 12, 26, "all"], mes: [3, 6, 12, "all"] };
+const QDEFAULT = { semana: 12, mes: 6 };
+
 function App() {
+  const [gran, setGran] = React.useState("semana");
+  const [qtd, setQtd]   = React.useState(QDEFAULT.semana);
+  const changeGran = (g) => { setGran(g); setQtd(QDEFAULT[g]); };
+
   return (
     <div className="app">
       <Sidebar />
@@ -572,7 +600,7 @@ function App() {
               <span className="tag">Evolução · Segundo Depósito (STD)</span>
               <div className="rule" />
             </div>
-            <EvolucaoChart />
+            <EvolucaoChart gran={gran} qtd={qtd} />
           </div>
 
           <div className="section">
@@ -580,7 +608,8 @@ function App() {
               <span className="tag">Safras por Período</span>
               <div className="rule" />
             </div>
-            <TabelaSafras />
+            <TabelaSafras gran={gran} qtd={qtd} qopts={QOPTS[gran]}
+              onGran={changeGran} onQtd={setQtd} />
           </div>
         </div>
       </div>
