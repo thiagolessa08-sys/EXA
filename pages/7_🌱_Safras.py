@@ -217,6 +217,7 @@ def rows_to_payload(d: pd.DataFrame) -> list:
             "pct_std_7d":   fmt_pct(r["pct_std_7d"]),
             "pct_std_pos7": fmt_pct(r["pct_std_pos7"]),
             "tkt_std7":     fmt_brl(r["tkt_std7"]),
+            "tkt_stdpos7":  fmt_brl(r["tkt_stdpos7"]),
             "status":       r["status"],
             "status_cor":   "warn" if r["status"] == "Em maturação" else "good",
         })
@@ -255,6 +256,7 @@ def build_series(granular: str) -> list:
             "pct_std_7d":   fmt_pct(r["pct_std_7d"]),
             "pct_std_pos7": fmt_pct(r["pct_std_pos7"]),
             "tkt_std7":     fmt_brl(r["tkt_std7"]),
+            "tkt_stdpos7":  fmt_brl(r["tkt_stdpos7"]),
             "status":       r["status"],
             "status_cor":   "warn" if r["status"] == "Em maturação" else "good",
         })

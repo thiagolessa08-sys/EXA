@@ -527,6 +527,7 @@ function TabelaSafras({ gran, qtd, qopts, onGran, onQtd }) {
               <th>STD 7d</th>
               <th>STD pós 7d</th>
               <th>Tkt STD 7d</th>
+              <th>Tkt STD pós 7d</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -545,11 +546,12 @@ function TabelaSafras({ gran, qtd, qopts, onGran, onQtd }) {
                 <td className="pct-strong std-main">{r.pct_std_7d}%</td>
                 <td>{r.pct_std_pos7}%</td>
                 <td>{r.tkt_std7}</td>
+                <td>{r.tkt_stdpos7}</td>
                 <td><span className={`badge ${r.status_cor}`}>{r.status}</span></td>
               </tr>
             ))}
             {!rows.length && (
-              <tr><td colSpan={13} style={{ textAlign:"center", color:"var(--ink-400)", padding:"24px" }}>Sem dados nesta granularidade.</td></tr>
+              <tr><td colSpan={14} style={{ textAlign:"center", color:"var(--ink-400)", padding:"24px" }}>Sem dados nesta granularidade.</td></tr>
             )}
           </tbody>
         </table>
